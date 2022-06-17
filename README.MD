@@ -101,7 +101,7 @@ Actions can be run from dispatching. There are two types of actions, regular "ac
 ```
 In the above example we have an asynchronous action GET_COUNT. Notice unlike regular actions instead of only having "state" we also have "onSuccess", "onFail", and "onProgress". On success and on fail are to give the final status of your get count and should be returned by the async function. On progress however can run throughout the asynchronous funtion until a final status is needed.
 ### Add reducer to global state
-In order to use global state dffuse will need to be exported into the root App of your project like so:
+In order to use global state, diffuse will need to be imported into the root App of your project like so:
 ```
     import Diffuse from "./Diffuse";
     import count from "./StateManagement/count";
@@ -123,7 +123,7 @@ In order to use global state dffuse will need to be exported into the root App o
 
     export default App;
 ```
-In the above example we provided we import the count reducer and initialize it with a <b>unique reducer name</b> AReducer (AReducer is equal to the string "AReducer"). We then take the context Diffuse and wrap it around our main app. Now the global state can be <b>wired</b> to any component n our App.
+In the above example we import the count reducer and initialize it with a <b>unique reducer name</b> AReducer (AReducer is equal to the string "AReducer"). We then take the context Diffuse and wrap it around our main app. Now the global state can be <b>wired</b> to any component in our App.
 
 ### <b>Wire</b>
 Lastly, we have wire. Wire is used to wire a component to a global state. Below we will wire a Text compononent to a global state AReducer
