@@ -48,6 +48,7 @@ var Reduce = function Reduce(_ref2) {
       middleware = _ref2.middleware,
       _ref2$asyncReducer = _ref2.asyncReducer,
       asyncReducer = _ref2$asyncReducer === void 0 ? null : _ref2$asyncReducer,
+      actions = _ref2.actions,
       asyncActions = _ref2.asyncActions;
 
   var _React$useReducer = React__default.useReducer(function (state, action) {
@@ -150,9 +151,33 @@ var Reduce = function Reduce(_ref2) {
     }
   };
 
+  var actionsDispatch = function actionsDispatch() {
+    var actionKeys = Object.keys(actions);
+    var asyncActionKeys = Object.keys(asyncActions);
+    var actionDispatch = {};
+    actionKeys.map(function (a) {
+      actionDispatch[a] = function (payload) {
+        return dispatchWithMiddleWare({
+          type: a,
+          payload: payload
+        });
+      };
+    });
+    asyncActionKeys.map(function (a) {
+      actionDispatch[a] = function (payload) {
+        return dispatchWithMiddleWare({
+          type: a,
+          payload: payload
+        });
+      };
+    });
+    return actionDispatch;
+  };
+
   var value = {
     store: state,
-    dispatch: dispatchWithMiddleWare
+    dispatch: dispatchWithMiddleWare,
+    actions: actionsDispatch()
   };
   return value;
 };
@@ -253,7 +278,10 @@ var createReducer = function createReducer(_ref4) {
     asyncReducer: function (action, onSuccess, onFail, onProgress, onLoading) {
       try {
         onLoading();
-        return Promise.resolve(_reducer.asyncActionsDict[action.type](action.store, onSuccess, onFail, onProgress)).then(function (_reducer$asyncActions) {
+        return Promise.resolve(_reducer.asyncActionsDict[action.type]({
+          state: action.store,
+          payload: action.payload
+        }, onSuccess, onFail, onProgress)).then(function (_reducer$asyncActions) {
           return _extends({}, _reducer$asyncActions, {
             type: action.type
           });

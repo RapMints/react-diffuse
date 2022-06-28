@@ -9,7 +9,7 @@ const reducer = createReducer({
   actions: {
     INCREMENT: {
       type: "action",
-      job: (state) => {
+      job: (state, payload) => {
         return {
           item: state.item + 1
         };
@@ -25,8 +25,9 @@ const reducer = createReducer({
     },
     GET_COUNT: {
       type: "async",
-      job: async (state, onSuccess, onFail, onProgress) => {
+      job: async ({state, payload}, onSuccess, onFail, onProgress) => {
         try {
+          console.log(payload)
           // Replace the url with your own on beeceptor
           let ApiRes = await axios
             .get("https://diffusenew.free.beeceptor.com")

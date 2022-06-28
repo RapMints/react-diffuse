@@ -34,7 +34,7 @@ Firstly, we have the reducer, which will look something like this:
         actions: { 
             INCREMENT: {
                 type: "action",
-                job: (state) => {
+                job: (state, payload) => {
                     return {
                         item: state.item + 1
                     }
@@ -79,7 +79,7 @@ Actions can be run from dispatching. There are two types of actions, regular "ac
             },
             GET_COUNT: {
                 type: "async",
-                job: async (state, onSuccess, onFail, onProgress) => {
+                job: async ({state, payload}, onSuccess, onFail, onProgress) => {
                     try {
                         let res = await axios.get('http://www.example.com')
                         
@@ -136,9 +136,7 @@ Lastly, we have wire. Wire is used to wire a component to a global state. Below 
     const Text = (props) => {
         return (
             <div style={{ backgroundColor: 'red' }} onClick={() =>
-                props.AReducer.dispatch({
-                    type: "INCREMENT",
-                })
+                props.AReducer.action.INCREMENT()
             }>
             Items: {props.AReducer.store.item} 
             <Text2 />

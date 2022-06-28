@@ -6,7 +6,8 @@ const reducer = createReducer({
   actions: {
     INCREMENT: {
       type: "action",
-      job: (state) => {
+      job: (state, payload) => {
+        console.log(payload)
         return {
           item: state.item + 1
         };

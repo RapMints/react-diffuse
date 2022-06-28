@@ -140,10 +140,36 @@ const Reduce = ({
     return newAction
   }
 
+  let actionsDispatch = () => {
+    let actionKeys = Object.keys(actions)
+    let asyncActionKeys = Object.keys(asyncActions)
+    let actionDispatch = {}
+    actionKeys.map((a)=> {
+      actionDispatch[a] = (payload) => dispatchWithMiddleWare({type: a, payload: payload})
+    })
+
+    asyncActionKeys.map((a)=>{
+      actionDispatch[a] = (payload) => dispatchWithMiddleWare({type: a, payload: payload})
+    })
+
+    return actionDispatch
+  }
   // Return state as store and dispatch as dispatch middleware
   const value = {
+    /**
+     * Current state of reducer
+     * @type object
+     */
     store: state,
-    dispatch: dispatchWithMiddleWare
+    /**
+     * @deprecated Use actions instead
+     */
+    dispatch: dispatchWithMiddleWare,
+    /**
+     * Dispatch actions for reducer
+     * @type object
+     */
+    actions: actionsDispatch()
   }
 
   return value
@@ -262,8 +288,10 @@ const createReducer = ({
     asyncReducer: async (action, onSuccess, onFail, onProgress, onLoading) => {
       onLoading()
       return {
-        ...(await reducer.asyncActionsDict[action.type](
-          action.store,
+        ...(await reducer.asyncActionsDict[action.type]({
+            state: action.store,
+            payload: action.payload
+          },
           onSuccess,
           onFail,
           onProgress

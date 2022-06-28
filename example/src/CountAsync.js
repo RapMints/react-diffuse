@@ -10,13 +10,11 @@ function randomColor() {
 }
 
 const CountAsync = (props) => {
+  let {AsyncReducer} = props
   return (
     <div style={{ backgroundColor: `${randomColor()}` }} onClick={() => {
-        props.AsyncReducer.dispatch({
-          type: "GET_COUNT",
-          payload: {
-            test: "SomeText"
-          }
+        AsyncReducer.actions.GET_COUNT({
+          test: "SomeText"
         })
       }
       }

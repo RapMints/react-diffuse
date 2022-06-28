@@ -9,13 +9,12 @@ function randomColor() {
 }
 
 const Number = (props) => {
+  let {BReducer} = props
   return (
     <div
       style={{ backgroundColor: `${randomColor()}` }}
       onClick={() =>
-        props.BReducer.dispatch({
-          type: "INCREMENT"
-        })
+        BReducer.actions.INCREMENT({test: "PAYLOAD"})
       }
     >
       Number: {props.BReducer.store.item} Times clicked! Color changes on click
