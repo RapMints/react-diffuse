@@ -224,6 +224,18 @@ var createReducer = function createReducer(_ref4) {
       }
     }, initialState),
     actionsDict: {
+      INITIALIZE_STORE: function INITIALIZE_STORE(state, payload) {
+        if (payload === void 0) {
+          payload = {};
+        }
+
+        return _extends({
+          diffuse: {
+            loading: false,
+            error: false
+          }
+        }, initialState, payload);
+      },
       LOADING: function LOADING(state) {
         return {
           diffuse: {

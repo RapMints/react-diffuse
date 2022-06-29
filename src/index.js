@@ -231,6 +231,16 @@ const createReducer = ({
       ...initialState
     },
     actionsDict: {
+      INITIALIZE_STORE: (state, payload = {}) => {
+        return {
+          diffuse: {
+            loading: false,
+            error: false
+          },
+          ...initialState,
+          ...payload
+        }
+      },
       LOADING: (state) => {
         return {
           diffuse: {

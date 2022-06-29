@@ -57,7 +57,7 @@ First we have an  <b>initialState</b>, the initial state of your reducer, in the
 ### <b>Actions</b>
 Actions can be run from dispatching. There are two types of actions, regular "actions" and "async". Use async actions if you want to run async functions. Each actions name is specified by its key (ex. The "INCREMENT" action is the name of the action). 
 
-<b>*** NOTE The names LOADING, SUCCESS, FAIL, and PROGRESS are reserved and may not be used as action names</b>
+<b>*** NOTE The names INITIALIZE_STORE, LOADING, SUCCESS, FAIL, and PROGRESS are reserved and may not be used as action names</b>
 
 ```
     actions: { 
@@ -134,9 +134,14 @@ Lastly, we have wire. Wire is used to wire a component to a global state. Below 
     import { AReducer } from "./StateManagement/States";
 
     const Text = (props) => {
+        useEffect(()=>{
+            return () => {
+                props.AReducer.actions.INITIALIZE_STORE()
+            }
+        }, [])
         return (
             <div style={{ backgroundColor: 'red' }} onClick={() =>
-                props.AReducer.action.INCREMENT()
+                props.AReducer.actions.INCREMENT()
             }>
             Items: {props.AReducer.store.item} 
             <Text2 />
@@ -148,5 +153,7 @@ Lastly, we have wire. Wire is used to wire a component to a global state. Below 
 
 ```
 (AReducer is a string equal to AReducer). Notice that we import "wire" at the top and use it at export on the bottom. We pass two parameters to the object the <b>fuseName</b> which is the reducer you'd like to reference and the <b>Child</b> which represents the component to wire the fuses to to get the store and dispatch of the reducer in your props. In this case Text will be fused to the AReducer component, causing it to rerender only when its props or AReducer's state changes.
+
+You can use INITIALIZE_STORE as shown above to initialize a global state to its initial state. You can pass through a payload that will be stored in the state on unmount
 
 Notice above we call the dispatch of AReducer by referencing it from props. ```props.AReducer.dispatch({type: 'INCREMENT'})``` this will cause ```props.AReducer.store.item``` to increment. Any other component inheriting the same reducer will rerender every time that dispatcher is called.
