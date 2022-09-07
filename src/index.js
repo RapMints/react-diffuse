@@ -396,10 +396,14 @@ const getParts = (reducers) => {
  */
 const Diffuse = ({ reducers, children }) => {
   const mergedReducers = getParts(reducers)  
+  const [state] = useState({dispatch: mergedReducers.dispatch})
+
   // Return diffusion provider
   return (
-    <DiffuseContext.Provider value={mergedReducers}>  
+    <DiffuseContext.Provider value={mergedReducers.store}>  
+      <DiffuseActionContext.Provider value={state.dispatch}>
           {children}
+      </DiffuseActionContext.Provider>
     </DiffuseContext.Provider>
   )
 }

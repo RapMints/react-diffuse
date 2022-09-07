@@ -8,9 +8,9 @@ function randomColor() {
 }
 
 const Number = (props) => {
-  const item = useFuseSelector(cntxt => cntxt.store.BReducer.item)
-  const dispatch = useFuseSelector(cntxt => cntxt.dispatch)
-  
+  const item = useFuseSelector(cntxt => cntxt)
+  const dispatch = useAction(cntxt => cntxt)
+  console.log(item)
   return (
     <div
       style={{ backgroundColor: `${randomColor()}` }}
@@ -18,7 +18,7 @@ const Number = (props) => {
         dispatch('BReducer', {type: 'INCREMENT'})
       }
     >
-      Number: {item} Times clicked! Color changes on click
+      Number: {item?.BReducer?.item} Times clicked! Color changes on click
       from Number or Text
     </div>
   );

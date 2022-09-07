@@ -94,6 +94,7 @@ function useContextSelector(context, selector) {
 
 var DiffuseContext = createContext();
 var DiffuseActionContext = createContext();
+var DiffuseDispatchContext = createContext();
 
 var useFuseSelector = function useFuseSelector(selection) {
   return useContextSelector(DiffuseContext, selection);
@@ -455,9 +456,17 @@ var Diffuse = function Diffuse(_ref5) {
   var reducers = _ref5.reducers,
       children = _ref5.children;
   var mergedReducers = getParts(reducers);
+
+  var _useState = React.useState({
+    dispatch: mergedReducers.dispatch
+  }),
+      state = _useState[0];
+
   return /*#__PURE__*/React__default.createElement(DiffuseContext.Provider, {
-    value: mergedReducers
-  }, children);
+    value: mergedReducers.store
+  }, /*#__PURE__*/React__default.createElement(DiffuseActionContext.Provider, {
+    value: state.dispatch
+  }, children));
 };
 
 exports.createReducer = createReducer;

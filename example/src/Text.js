@@ -28,8 +28,8 @@ const Text2 = (props) => {
 };
 
 const Text = (props) => {
-  const store = useFuseSelector(cntxt => cntxt.store.AReducer.item)
-  const dispatch = useFuseSelector(cntxt => cntxt.dispatch)
+  const store = useFuseSelector(cntxt => cntxt)
+  const dispatch = useAction(cntxt => cntxt)
   console.log('STORE', store)
   // const INCREMENT = () => null
   console.log('RERENDER TEXT')
@@ -40,7 +40,7 @@ const Text = (props) => {
         dispatch('AReducer', {type: 'INCREMENT'})
       }
     >
-      Text: {store?.item ?? undefined} Times clicked! Color changes on click
+      Text: {store?.AReducer?.item ?? undefined} Times clicked! Color changes on click
       from Text
       <Text2 />
     </div>
