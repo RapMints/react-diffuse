@@ -1,4 +1,4 @@
-import React, { useContext, useMemo } from 'react';
+import React, { createContext as createContext$1, useRef, useEffect, useContext, useState, useMemo } from 'react';
 
 function _extends() {
   _extends = Object.assign ? Object.assign.bind() : function (target) {
@@ -17,20 +17,113 @@ function _extends() {
   return _extends.apply(this, arguments);
 }
 
-var DiffuseContext = React.createContext();
+function createProvider(ProviderOriginal) {
+  return function (_ref) {
+    var value = _ref.value,
+        children = _ref.children;
+    var valueRef = useRef(value);
+    var listenersRef = useRef(new Set());
+    var contextValue = useRef({
+      value: valueRef,
+      registerListener: function registerListener(listener) {
+        listenersRef.current.add(listener);
+        return function () {
+          return listenersRef.current["delete"](listener);
+        };
+      },
+      listeners: new Set()
+    });
+    useEffect(function () {
+      valueRef.current = value;
+      listenersRef.current.forEach(function (listener) {
+        listener(value);
+      });
+    }, [value]);
+    return /*#__PURE__*/React.createElement(ProviderOriginal, {
+      value: contextValue.current
+    }, children);
+  };
+}
+
+function createContext(defaultValue) {
+  var context = createContext$1({
+    value: {
+      current: defaultValue
+    },
+    register: function register() {
+      return function () {};
+    }
+  });
+  delete context.Consumer;
+  context.Provider = createProvider(context.Provider);
+  return context;
+}
+
+function useContextSelector(context, selector) {
+  var _useContext = useContext(context),
+      value = _useContext.value,
+      registerListener = _useContext.registerListener;
+
+  var selectorRef = useRef(selector);
+
+  var _useState = useState(function () {
+    return selector(value.current);
+  }),
+      selectedValue = _useState[0],
+      setSelectedValue = _useState[1];
+
+  useEffect(function () {
+    selectorRef.current = selector;
+  });
+  useEffect(function () {
+    var updateValueIfNeeded = function updateValueIfNeeded(newValue) {
+      var newSelectedValue = selectorRef.current(newValue);
+      setSelectedValue(function () {
+        return newSelectedValue;
+      });
+    };
+
+    var unregisterListener = registerListener(updateValueIfNeeded);
+    return unregisterListener;
+  }, [registerListener, value]);
+  return selectedValue;
+}
+
+var DiffuseContext = createContext();
+var DiffuseActionContext = createContext();
+
+var useFuseSelector = function useFuseSelector(selection) {
+  return useContextSelector(DiffuseContext, selection);
+};
+
+var useAction = function useAction(selection) {
+  return useContextSelector(DiffuseActionContext, selection);
+};
 
 var wire = function wire(_ref) {
   var _ref$fuseName = _ref.fuseName,
       fuseName = _ref$fuseName === void 0 ? [] : _ref$fuseName,
       Child = _ref.Child;
   return function (props) {
-    var context = useContext(DiffuseContext);
     var fuses = {};
     var memoConstraint = [];
 
+    var _loop = function _loop(i) {
+      var context = useContextSelector(DiffuseContext, function (cntxt) {
+        return cntxt[fuseName[i]];
+      });
+      var actionContext = useContextSelector(DiffuseActionContext, function (cntxt) {
+        return cntxt[fuseName[i]];
+      });
+      fuses[fuseName[i]] = {
+        store: context,
+        actions: actionContext
+      };
+      memoConstraint.push(context.store);
+    };
+
     for (var i = 0; i < fuseName.length; i++) {
-      fuses[fuseName[i]] = context[fuseName[i]];
-      memoConstraint.push(context[fuseName[i]].store);
+      _loop(i);
     }
 
     return useMemo(function () {
@@ -48,11 +141,9 @@ var Reduce = function Reduce(_ref2) {
       actions = _ref2.actions,
       asyncActions = _ref2.asyncActions;
 
-  var _React$useReducer = React.useReducer(function (state, action) {
-    return action.store;
-  }, initialState),
-      state = _React$useReducer[0],
-      dispatch = _React$useReducer[1];
+  var _React$useState = React.useState(initialState),
+      state = _React$useState[0],
+      dispatch = _React$useState[1];
 
   var enhancedDispatch = function enhancedDispatch(newAction) {
     var res = reducer(newAction.store, newAction);
@@ -61,14 +152,15 @@ var Reduce = function Reduce(_ref2) {
       newAction.store = res;
     }
 
-    dispatch(newAction);
+    dispatch(res);
     return res;
   };
 
   var enhancedAsyncDispatch = function enhancedAsyncDispatch(newAction) {
     try {
-      return Promise.resolve(asyncReducer(newAction, onSuccess, onFail, onProgress, onLoading)).then(function (_asyncReducer) {
-        return _asyncReducer.store;
+      return Promise.resolve(asyncReducer(newAction, onSuccess, onFail, onProgress, onLoading)).then(function (res) {
+        dispatch(res);
+        return res.store;
       });
     } catch (e) {
       return Promise.reject(e);
@@ -162,10 +254,14 @@ var Reduce = function Reduce(_ref2) {
     });
     asyncActionKeys.map(function (a) {
       actionDispatch[a] = function (payload) {
-        return dispatchWithMiddleWare({
-          type: a,
-          payload: payload
-        });
+        try {
+          return dispatchWithMiddleWare({
+            type: a,
+            payload: payload
+          });
+        } catch (e) {
+          return Promise.reject(e);
+        }
       };
     });
     return actionDispatch;
@@ -329,22 +425,38 @@ var createReducer = function createReducer(_ref4) {
   return _reducer;
 };
 
-var Diffuse = function Diffuse(_ref5) {
-  var reducers = _ref5.reducers,
-      children = _ref5.children;
+var getParts = function getParts(reducers) {
   var mergedReducers = MergeReducers(reducers);
   var values = {};
+  var store = {};
+  var dispatch = {};
 
   for (var i = 0; i < mergedReducers.length; i++) {
     var keys = Object.keys(mergedReducers[i])[0];
     values[keys] = mergedReducers[i][keys]();
+    store[keys] = values[keys].store;
+    dispatch[keys] = values[keys].dispatch;
   }
 
+  var dispatchFunction = function dispatchFunction(reducerName, action) {
+    dispatch[reducerName](action);
+  };
+
+  return {
+    store: store,
+    dispatch: dispatchFunction
+  };
+};
+
+var Diffuse = function Diffuse(_ref5) {
+  var reducers = _ref5.reducers,
+      children = _ref5.children;
+  var mergedReducers = getParts(reducers);
   return /*#__PURE__*/React.createElement(DiffuseContext.Provider, {
-    value: values
+    value: mergedReducers
   }, children);
 };
 
 export default Diffuse;
-export { createReducer, wire };
+export { createReducer, useAction, useFuseSelector, wire };
 //# sourceMappingURL=index.modern.js.map

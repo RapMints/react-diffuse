@@ -21,6 +21,7 @@
     "test:unit": "cross-env CI=1 react-scripts test --env=jsdom",
     "test:watch": "react-scripts test --env=jsdom",
     "predeploy": "cd example && npm install && npm run build",
+    "dev": "npm run build && cd example && npm install && npm start",
     "deploy": "gh-pages -d example/build"
   },
   "files": [

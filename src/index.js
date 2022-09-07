@@ -5,10 +5,22 @@
  * @author Kyle Watkins, Paul Scala
  * @example https://codesandbox.io/s/wispy-leaf-iyp9k6
  ************************************************/
-import React, { useContext, useMemo } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
+import createContext from './createContext'
+import useContextSelector from './useContextSelector'
 
 // Create diffuse context
-const DiffuseContext = React.createContext()
+const DiffuseContext = createContext()
+const DiffuseActionContext = createContext()
+const DiffuseDispatchContext = createContext()
+
+const useFuseSelector = (selection) => {
+  return useContextSelector(DiffuseContext, selection)
+}
+
+const useAction = (selection) => {
+  return useContextSelector(DiffuseActionContext, selection)
+}
 
 /**
  * Wires component to a specified fuse
@@ -21,12 +33,16 @@ const wire =
   ({ fuseName = [], Child }) =>
   (props) => {
     // Use diffusion context
-    const context = useContext(DiffuseContext)
     const fuses = {}
     const memoConstraint = []
     for (let i = 0; i < fuseName.length; i++) {
-      fuses[fuseName[i]] = context[fuseName[i]]
-      memoConstraint.push(context[fuseName[i]].store)
+      let context =  useContextSelector(DiffuseContext, cntxt => cntxt[fuseName[i]])
+      let actionContext = useContextSelector(DiffuseActionContext, cntxt => cntxt[fuseName[i]])
+      fuses[fuseName[i]] = {
+        store: context,
+        actions: actionContext
+      }
+      memoConstraint.push(context.store)
     }
 
     // Set up memoization
@@ -51,10 +67,7 @@ const Reduce = ({
   asyncActions
 }) => {
   // Create initial dispatch
-  const [state, dispatch] = React.useReducer(
-    (state, action) => action.store,
-    initialState
-  )
+  const [state, dispatch] = React.useState(initialState)
 
   // Create enhanced dispatch
   const enhancedDispatch = (newAction) => {
@@ -63,14 +76,16 @@ const Reduce = ({
       newAction.store = res
     }
 
-    dispatch(newAction)
+    dispatch(res)
     return res
   }
 
   // Create enhanced async dispatch
   const enhancedAsyncDispatch = async (newAction) => {
+    const res = await asyncReducer(newAction, onSuccess, onFail, onProgress, onLoading)
+    dispatch(res)
     return (
-      await asyncReducer(newAction, onSuccess, onFail, onProgress, onLoading)
+      res
     ).store
   }
 
@@ -149,7 +164,7 @@ const Reduce = ({
     })
 
     asyncActionKeys.map((a)=>{
-      actionDispatch[a] = (payload) => dispatchWithMiddleWare({type: a, payload: payload})
+      actionDispatch[a] = async (payload) => dispatchWithMiddleWare({type: a, payload: payload})
     })
 
     return actionDispatch
@@ -183,7 +198,7 @@ const MergeReducers = (globalState = []) => {
   // Reduce each state into reducers
   const reducers = globalState.map((state) => {
     return {
-      [state.name]: () =>{
+      [state.name]: () => {
         const reducer = Reduce({
           reducer: state.reducer,
           initialState: state.initialState,
@@ -346,32 +361,49 @@ const createReducer = ({
 
   return reducer
 }
+
+const getParts = (reducers) => {
+  const mergedReducers = MergeReducers(reducers)
+  // Init Fuse
+  const values = {}
+
+  const store = {}
+
+  const actions = {}
+  
+  const dispatch = {}
+
+  for (let i = 0; i < mergedReducers.length; i++) {
+    let keys = Object.keys(mergedReducers[i])[0]
+    values[keys] = mergedReducers[i][keys]()
+    store[keys] = values[keys].store
+    actions[keys] = values[keys].actions
+    dispatch[keys] = values[keys].dispatch
+  }
+
+  const dispatchFunction = (reducerName, action) => {
+    dispatch[reducerName](action)
+  }
+
+  return {
+    store, dispatch: dispatchFunction
+  }
+}
 /**
  * Diffuse Provider
  * @param {object} properties Properties for Diffusion
  * @param {Component} properties.children Main App
  */
 const Diffuse = ({ reducers, children }) => {
-  // Merge reducers from global state
-  const mergedReducers = MergeReducers(reducers)
-
-  // Init Fuse
-  const values = {}
-
-  
-
-  // Initialize fuses
-  for (let i = 0; i < mergedReducers.length; i++) {
-    let keys = Object.keys(mergedReducers[i])[0]
-    values[keys] = mergedReducers[i][keys]()
-  }
-
+  const mergedReducers = getParts(reducers)  
   // Return diffusion provider
   return (
-    <DiffuseContext.Provider value={values}>{children}</DiffuseContext.Provider>
+    <DiffuseContext.Provider value={mergedReducers}>  
+          {children}
+    </DiffuseContext.Provider>
   )
 }
 
-export { wire, createReducer }
+export { wire, createReducer, useFuseSelector, useAction }
 
 export default Diffuse
