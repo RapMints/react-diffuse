@@ -1,6 +1,6 @@
 /* eslint-disable react/react-in-jsx-scope */
 import React, { useEffect, useState } from "react";
-import { wire } from "react-diffuse";
+import { useDispatch, useFuse, wire } from "react-diffuse";
 import { AReducer } from "./StateManagement/States";
 
 function randomColor() {
@@ -29,20 +29,21 @@ const Text2 = (props) => {
 };
 
 const Text = (props) => {
+  const item = useFuse(context => context[AReducer].item)
+  const setValue = useDispatch('AReducer')
+
   return (
     <div
       style={{ backgroundColor: `${randomColor()}` }}
       onClick={() =>
-        props.AReducer.dispatch({
-          type: "INCREMENT"
-        })
+        setValue({type: 'INCREMENT'})
       }
     >
-      Text: {props.AReducer.store.item} Times clicked! Color changes on click
+      Text: {item} Times clicked! Color changes on click
       from Text
       <Text2 />
     </div>
   );
 };
 
-export default wire({ fuseName: [AReducer], Child: Text });
+export default Text;
