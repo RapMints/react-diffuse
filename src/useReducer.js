@@ -49,6 +49,8 @@ export function useReducerEnhanced(reducer, initState, asyncReducer, middleware,
 
     const setValue = useCallback(
         (reducerName) => async (action) => {
+            let noAction = false
+
             // Initialize next state
             let nextState = state.current[reducerName]
             let newAction = action
@@ -68,6 +70,7 @@ export function useReducerEnhanced(reducer, initState, asyncReducer, middleware,
             // If action is a regular function
             if (actions[reducerName].includes(action.type)) {
                 nextState = reducer[reducerName](state.current[reducerName], action)
+                newAction.store = nextState
             } 
             // If action is asyncronous
             else if (asyncActions[reducerName].includes(action.type)) {
@@ -76,8 +79,8 @@ export function useReducerEnhanced(reducer, initState, asyncReducer, middleware,
             } 
             // If action doesn't exist
             else {
+                noAction = true
                 logger.warn('No state change, no update')
-                return nextState
             }
 
             if (middleware?.[reducerName]?.afterWare !== undefined && middleware[reducerName].afterWare.length !== 0) {
@@ -88,8 +91,11 @@ export function useReducerEnhanced(reducer, initState, asyncReducer, middleware,
 
             state.current[reducerName] = nextState
 
-            forceUpdate({ ...state.current, [reducerName]: nextState })
-            
+            // Trigger only if an action was performed
+            if (noAction === false) {
+                forceUpdate({ ...state.current, [reducerName]: nextState })
+            }
+
             return nextState
         },
         [getState]

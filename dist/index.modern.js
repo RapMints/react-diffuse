@@ -116,6 +116,7 @@ function useReducerEnhanced(reducer, initState, asyncReducer, middleware, action
         var _temp4 = function () {
           if (actions[reducerName].includes(action.type)) {
             nextState = reducer[reducerName](state.current[reducerName], action);
+            newAction.store = nextState;
           } else return function () {
             if (asyncActions[reducerName].includes(action.type)) {
               return Promise.resolve(asyncReducer[reducerName](state.current[reducerName], action)).then(function (_asyncReducer$reducer) {
