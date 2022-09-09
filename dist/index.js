@@ -123,6 +123,7 @@ function useReducerEnhanced(reducer, initState, asyncReducer, middleware, action
             if (asyncActions[reducerName].includes(action.type)) {
               return Promise.resolve(asyncReducer[reducerName](state.current[reducerName], action)).then(function (_asyncReducer$reducer) {
                 nextState = _asyncReducer$reducer;
+                newAction.store = nextState;
               });
             } else {
               logger.warn('No state change, no update');

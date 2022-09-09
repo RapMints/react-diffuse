@@ -72,6 +72,7 @@ export function useReducerEnhanced(reducer, initState, asyncReducer, middleware,
             // If action is asyncronous
             else if (asyncActions[reducerName].includes(action.type)) {
                 nextState = await asyncReducer[reducerName](state.current[reducerName], action)
+                newAction.store = nextState
             } 
             // If action doesn't exist
             else {
