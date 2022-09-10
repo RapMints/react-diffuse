@@ -103,15 +103,14 @@ In the above example we have an asynchronous action GET_COUNT. Notice unlike reg
 ### Add reducer to global state
 In order to use global state, diffuse will need to be imported into the root App of your project like so:
 ```
-    import Diffuse from "./Diffuse";
+    import Diffuse, {createGlobalState} from "./Diffuse";
     import count from "./StateManagement/count";
     import { AReducer } from "./StateManagement/States";
-
+    
     function App() {
         const reducers = [
             count.initialize(AReducer),
         ]
-
         return (
             <Diffuse reducers={reducers}>
             <div className="App">
@@ -125,7 +124,50 @@ In order to use global state, diffuse will need to be imported into the root App
 ```
 In the above example we import the count reducer and initialize it with a <b>unique reducer name</b> AReducer (AReducer is equal to the string "AReducer"). We then take the context Diffuse and wrap it around our main app. Now the global state can be <b>wired</b> to any component in our App.
 
-### <b>Wire</b>
+Alternative way: 
+```
+    import Diffuse, {createGlobalState} from "./Diffuse";
+    import count from "./StateManagement/count";
+    import { AReducer } from "./StateManagement/States";
+    
+    createGlobalState([
+        count.initialize(AReducer),
+    ])
+    
+    function App() {
+        return (
+            <Diffuse>
+            <div className="App">
+                <Text />
+            </div>
+            </Diffuse>
+        );
+    }
+
+    export default App;
+```
+
+### <b>Hooks (functional components)</b>
+#### <b>useFuse</b>
+The useFuse hook you can use to select a reducer from global state. For example to get _item_ from the _AReducer_ you would use:
+
+`const item = useFuse(context => context.AReducer.item)` 
+
+This will return the item in AReducer and rerender the component using it whenever changed. 
+
+#### <b>useDispatch</b>
+The useDispatch hook allows you to dispatch actions for a specific reducer. For example if you wanted to dispatch actions for _AReducer_, it would look like this: 
+
+`const dispatch = useDispatch('AReducer') `
+
+This will return me a dispatch function you can use to dispatch actions to the AReducer. For example lets say you wanted to run an INCREMENT action you defined, then it would look something like this 
+
+`dispatch({type: 'INCREMENT'})`
+
+
+<b>*NOTE: These 2 new hooks deprecate `wire({fuseName: ..., Child: ...})`, however `wire` still has support because they are still necessary on class components.*</b>
+
+### <b>Wire (class components)</b>
 Lastly, we have wire. Wire is used to wire a component to a global state. Below we will wire a Text compononent to a global state AReducer
 
 ```
