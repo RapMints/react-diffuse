@@ -257,6 +257,38 @@ function useDispatch(reducerName) {
   })(reducerName);
 }
 
+function useActions(reducerName) {
+  if (reducerName === void 0) {
+    reducerName = null;
+  }
+
+  if (reducerName === null) {
+    console.warn("Reducer name is null please specify a name");
+    return {};
+  }
+
+  var dispatch = useContextSelector(DiffuseContext, function (context) {
+    return context.dispatch;
+  })(reducerName);
+
+  if (dispatch === undefined) {
+    console.warn("Reducer of the name " + reducerName + " does not exist");
+    return {};
+  }
+
+  var actionsDict = [].concat(SetupDiffuse.globalStateMachine.actions[reducerName], SetupDiffuse.globalStateMachine.asyncActions[reducerName]);
+  var actions = {};
+  actionsDict.map(function (actionName) {
+    actions[actionName] = function (payload) {
+      dispatch({
+        type: actionName,
+        payload: payload
+      });
+    };
+  });
+  return actions;
+}
+
 var connectWire = function connectWire(fuseName, Child) {
   return function (props) {
     var _fuse;
@@ -484,6 +516,7 @@ var Diffuse = function Diffuse(_ref3) {
 exports.createGlobalState = createGlobalState;
 exports.createReducer = createReducer;
 exports.default = Diffuse;
+exports.useActions = useActions;
 exports.useDispatch = useDispatch;
 exports.useFuse = useFuse;
 exports.wire = wire;

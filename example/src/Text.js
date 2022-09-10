@@ -1,6 +1,6 @@
 /* eslint-disable react/react-in-jsx-scope */
 import React, { useEffect, useState } from "react";
-import { useDispatch, useFuse, wire } from "react-diffuse";
+import { useActions, useDispatch, useFuse, wire } from "react-diffuse";
 import { AReducer } from "./StateManagement/States";
 
 function randomColor() {
@@ -31,12 +31,13 @@ const Text2 = (props) => {
 const Text = (props) => {
   const item = useFuse(context => context[AReducer].item)
   const setValue = useDispatch('AReducer')
+  const actions = useActions(AReducer)
 
   return (
     <div
       style={{ backgroundColor: `${randomColor()}` }}
       onClick={() =>
-        setValue({type: 'INCREMENT'})
+        actions.INCREMENT()
       }
     >
       Text: {item} Times clicked! Color changes on click

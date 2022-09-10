@@ -34,6 +34,37 @@ function useDispatch(reducerName = null) {
 }
 
 /**
+ * Use actions hook
+ * @param {string} reducerName Name of reducer to get actions for. Defaults to null, if null willl return empty actions list
+ * @returns {object} List of actions to be ran as functions 
+ */
+function useActions(reducerName = null) {
+    if (reducerName === null) {
+        console.warn("Reducer name is null please specify a name")
+        return {}
+    } 
+
+    const dispatch = useContextSelector(DiffuseContext, (context) => context.dispatch)(reducerName)
+
+    if (dispatch === undefined) {
+        console.warn(`Reducer of the name ${reducerName} does not exist`)
+        return {}
+    }
+    
+    const actionsDict = [...SetupDiffuse.globalStateMachine.actions[reducerName], ...SetupDiffuse.globalStateMachine.asyncActions[reducerName]]
+
+    const actions = {}
+
+    actionsDict.map(actionName => {
+        actions[actionName] = (payload) => {
+            dispatch({type: actionName, payload})
+        }
+    })
+
+    return actions
+}
+
+/**
  * Connects Child to a specified fuse
  * @param {string} fuseName Fuse to reference
  * @param {Component} Child Component to reference
@@ -339,6 +370,6 @@ const Diffuse = ({ reducers, children }) => {
     return <DiffuseContext.Provider value={{ state, dispatch }}>{children}</DiffuseContext.Provider>
 }
 
-export { wire, createReducer, createGlobalState, useFuse, useDispatch}
+export { wire, createReducer, createGlobalState, useFuse, useDispatch, useActions}
 
 export default Diffuse

@@ -162,10 +162,20 @@ The useDispatch hook allows you to dispatch actions for a specific reducer. For 
 
 This will return me a dispatch function you can use to dispatch actions to the AReducer. For example lets say you wanted to run an INCREMENT action you defined, then it would look something like this 
 
-`dispatch({type: 'INCREMENT'})`
+`dispatch({type: 'INCREMENT', payload: {}})`
 
+### <b>useActions</b>
+This useActions hook allows you to use actions directly instead of dispatch. First you get the actions for AReducer like so:
 
-<b>*NOTE: These 2 new hooks deprecate `wire({fuseName: ..., Child: ...})`, however `wire` still has support because they are still necessary on class components.*</b>
+`const actions = useActions('AReducer')` 
+
+Then you can run actions to be dispatched. We will mimic the useDispatch example where we ran a increment action. 
+
+`actions.INCREMENT(payload)` 
+
+which can replace this: `dispatch({type: 'INCREMENT', payload: {}})`
+
+<b>*NOTE: These 3 hooks deprecate `wire({fuseName: ..., Child: ...})`, however `wire` still has support because they are still necessary on class components.*</b>
 
 ### <b>Wire (class components)</b>
 Lastly, we have wire. Wire is used to wire a component to a global state. Below we will wire a Text compononent to a global state AReducer
