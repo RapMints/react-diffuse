@@ -30,7 +30,7 @@ const reducer = createReducer({
           console.log(payload)
           // Replace the url with your own on beeceptor
           let ApiRes = await axios
-            .get("https://diffusenew.free.beeceptor.com")
+            .get("https://diffuse.free.beeceptor.com")
             .then(
               (value) =>
                 new Promise((resolve) => {

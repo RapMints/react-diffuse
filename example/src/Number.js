@@ -1,5 +1,5 @@
 import React from 'react'
-import { wire } from "react-diffuse";
+import { useDispatch, useFuse, wire } from "react-diffuse";
 import { AReducer, BReducer } from "./StateManagement/States";
 function randomColor() {
   const letters = "0123456789ABCDEF";
@@ -9,21 +9,21 @@ function randomColor() {
 }
 
 const Number = (props) => {
-  let {BReducer} = props
+  const setValue = useDispatch('BReducer')
+  const listenForThis = useFuse(context => context[AReducer].item)
+  const item = useFuse(context => context[BReducer].item)
+
   return (
     <div
       style={{ backgroundColor: `${randomColor()}` }}
-      onClick={() =>
-        BReducer.actions.INCREMENT({test: "PAYLOAD"})
+      onClick={async () =>
+        setValue({type: 'INCREMENT'})
       }
     >
-      Number: {props.BReducer.store.item} Times clicked! Color changes on click
+      Number: {item} Times clicked! Color changes on click
       from Number or Text
     </div>
   );
 };
 
-export default wire({
-  fuseName: [BReducer, AReducer],
-  Child: Number
-});
+export default Number

@@ -10,25 +10,21 @@ function randomColor() {
 }
 
 const CountAsync = (props) => {
-  let {AsyncReducer} = props
   return (
     <div style={{ backgroundColor: `${randomColor()}` }} onClick={() => {
-        AsyncReducer.actions.GET_COUNT({
-          test: "SomeText"
-        })
+      props.AsyncReducer.dispatch({type: 'GET_COUNT', payload: {
+        test: "SomeText"
+      }})
       }
       }
     >
       NumberAsync:{" "}
-      {props.AsyncReducer.store.diffuse.loading
+      {props.AsyncReducer.store.diffuse.loading === true
         ? "loading"
         : props.AsyncReducer.store.item}{" "}
-      Times clicked! Color changes on click from Number or Text
+      Times clicked! Color changes on click from NumberAsync or Text
     </div>
   );
 };
 
-export default wire({
-  fuseName: [AsyncReducer],
-  Child: CountAsync
-});
+export default wire({fuseName: [AsyncReducer, 'AReducer'], Child: CountAsync})
