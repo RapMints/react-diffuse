@@ -1,51 +1,39 @@
 import React, { useCallback, useRef, useState } from 'react'
-import logger from '../example/src/StateManagement/middlewares/logger'
 
 function useForceUpdate() {
     const [force, forceUpdate] = useState(null)
+    force
     return forceUpdate
 }
 
-export default function useReducer(reducer, initState) {
+export function useReducer({reducer = null, asyncReducer = {}, initialState = {}, middleware = {}, actions = [], asyncActions = []}) {
+    if (reducer === null) {
+        console.warn('No reducer, use Reducer returned no state or dispatch')
+        return []
+    }
+
     const forceUpdate = useForceUpdate()
-    const state = useRef(initState)
+    const state = useRef(initialState)
     const getState = useCallback(() => {
         return state
     }, [state])
 
-    const setValue = useCallback(
-        (newValue) => {
-            const nextState = reducer(state.current, newValue)
+    const onLoading = (reducerName) => () => {
+        return setValue(reducerName)({ type: 'LOADING' })
+    }
 
-            state.current = nextState
+    const onSuccess = (reducerName) => (payload) => {
+        return setValue(reducerName)({ type: 'SUCCESS', payload })
+    }
 
-            forceUpdate({ ...nextState })
-            return nextState
-        },
-        [getState]
-    )
+    const onFail = (reducerName) => (payload) => {
+        return setValue(reducerName)({ type: 'FAIL', payload })
+    }
 
-    return [state.current, setValue]
-}
-
-/**
- * Merge old state with new state
- * @param {object} oldState Old state
- * @param {object} newState New state
- * @return Merged new state
- */
-const merge = (oldState, newState) => {
-    const reducerName = Object.keys(newState)[0]
-    oldState[reducerName] = newState[reducerName]
-    return oldState
-}
-
-export function useReducerEnhanced(reducer, initState, asyncReducer, middleware, actions, asyncActions) {
-    const forceUpdate = useForceUpdate()
-    const state = useRef(initState)
-    const getState = useCallback(() => {
-        return state
-    }, [state])
+    const onProgress = (reducerName) => (payload) => {
+        return setValue(reducerName)({ type: 'PROGRESS', payload })
+        // forceUpdate({ ...state.current, [reducerName]: nextState })
+    }
 
     const setValue = useCallback(
         (reducerName) => async (action) => {
@@ -74,7 +62,7 @@ export function useReducerEnhanced(reducer, initState, asyncReducer, middleware,
             } 
             // If action is asyncronous
             else if (asyncActions[reducerName].includes(action.type)) {
-                nextState = await asyncReducer[reducerName](state.current[reducerName], action)
+                nextState = await asyncReducer[reducerName](newAction, onSuccess(reducerName), onFail(reducerName), onProgress(reducerName), onLoading(reducerName))
                 newAction.store = nextState
             } 
             // If action doesn't exist

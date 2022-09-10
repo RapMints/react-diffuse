@@ -5,9 +5,9 @@
  * @author Kyle Watkins, Paul Scala
  * @example https://codesandbox.io/s/wispy-leaf-iyp9k6
  ************************************************/
-import React, { useContext, useMemo } from 'react'
+import React, { useMemo } from 'react'
 import createContext from './createContext'
-import { useReducerEnhanced } from './useReducer'
+import { useReducer } from './useReducer'
 import useContextSelector from './useContextSelector'
 
 // Create diffuse context
@@ -18,168 +18,64 @@ const DiffuseContext = createContext()
  * @param {function} selector Select from context
  */
 function useFuse(selector) {
-    return useContextSelector(DiffuseContext, (context) => selector(context.value))
-}
-
-function useDispatch(reducerName = null) {
-    if (reducerName === null) {
-        return useContextSelector(DiffuseContext, (context) => context.setValue)
-    }
-    return useContextSelector(DiffuseContext, (context) => context.setValue)(reducerName)
+    return useContextSelector(DiffuseContext, (context) => selector(context.state))
 }
 
 /**
- * Wires component to a specified fuse
+ * Use dispatch hook
+ * @param {string} reducerName Name of reducer to get dispatch for. Defaults to null, if null use generic dispatcher
+ * @returns {function} Dispatch function
+ */
+function useDispatch(reducerName = null) {
+    if (reducerName === null) {
+        return useContextSelector(DiffuseContext, (context) => context.dispatch)
+    }
+    return useContextSelector(DiffuseContext, (context) => context.dispatch)(reducerName)
+}
+
+/**
+ * Connects Child to a specified fuse
+ * @param {string} fuseName Fuse to reference
+ * @param {Component} Child Component to reference
+ * @returns Wired component
+ */
+const connectWire = (fuseName, Child) => (props) => {
+    // Get from fuse
+    const context = useFuse(selector => selector[fuseName]) 
+    
+    // Get dispatch for fuse
+    const dispatch = useDispatch(fuseName)
+
+    // Get fuse
+    const fuse = {
+        [fuseName]: {
+            store: context,
+            dispatch: dispatch
+        }
+    }
+
+    // Set up memoization
+    return useMemo(() => <Child {...fuse} {...props} />, [props, context])
+}
+
+/**
+ * Wires component to a specified fuses
  * @param {object} properties
  * @param {string} properties.fuseName Fuse to reference
  * @param {Component} properties.component Component to reference
  * @returns Wired component
  */
-const wire =
-    ({ fuseName = [], Child }) =>
-    (props) => {
-        // Use diffusion context
-        const context = useFuse((store) => store)
-        const dispatch = useDispatch()
-        const fuses = {}
-        const memoConstraint = []
+const wire = ({ fuseName = [], Child }) => {
+    // Set child
+    let newChild = Child
+    
+    // Connect all wires to fuses by name
+    fuseName.forEach((name)=> {
+        newChild = connectWire(name, newChild)
+    })
 
-        for (let i = 0; i < fuseName.length; i++) {
-            fuses[fuseName[i]] = {
-                store: context[fuseName[i]],
-                dispatch: dispatch(fuseName[i])
-            }
-            memoConstraint.push(context[fuseName[i]])
-        }
-
-        // Set up memoization
-        return useMemo(() => <Child {...fuses} {...props} />, [props, ...memoConstraint])
-    }
-
-/**
- * Reduce
- * @param {object} reducer Reducer
- * @param {object} initialState Initial state
- * @param {object} actions Actions
- */
-const Reduce = ({ reducer, initialState, middleware, asyncReducer = null, actions, asyncActions }) => {
-    // Create initial dispatch
-    const [state, dispatch] = React.useReducer((state, action) => action.store, initialState)
-
-    // Create enhanced dispatch
-    const enhancedDispatch = (newAction) => {
-        const res = reducer(newAction.store, newAction)
-        if (newAction.store !== res) {
-            newAction.store = res
-        }
-
-        dispatch(newAction)
-        return res
-    }
-
-    // Create enhanced async dispatch
-    const enhancedAsyncDispatch = async (newAction) => {
-        return (await asyncReducer(newAction, onSuccess, onFail, onProgress, onLoading)).store
-    }
-
-    // Initialize Default Loading Function
-    const onLoading = () => {
-        return dispatchWithMiddleWare({ type: 'LOADING' })
-    }
-
-    // Initialize Default Success Function
-    const onSuccess = (payload) => {
-        return dispatchWithMiddleWare({ type: 'SUCCESS', payload })
-    }
-
-    // Initialize Default Fail Function
-    const onFail = (payload) => {
-        return dispatchWithMiddleWare({ type: 'FAIL', payload })
-    }
-
-    // Initialize Default Progress functions
-    const onProgress = (payload) => {
-        return dispatchWithMiddleWare({ type: 'PROGRESS', payload })
-    }
-
-    // Dispatch with middleware
-    const dispatchWithMiddleWare = async (action) => {
-        // Set new action from action passed through dispatch
-        let newAction = action
-
-        // If store is not defined in action set it
-        if (newAction.store === undefined) {
-            newAction.store = state
-        }
-
-        // If before ware is available run it
-        if (middleware && middleware.beforeWare) {
-            middleware.beforeWare.forEach((beforeWare) => {
-                beforeWare(newAction)
-            })
-        }
-
-        // Async actions are available and the current action is async
-        if (asyncReducer !== null && Object.keys(asyncActions).includes(newAction.type)) {
-            // Get new store from dispatch
-            const newStore = await enhancedAsyncDispatch(newAction)
-
-            // Set new action with new store
-            newAction = { ...newAction, store: { ...newStore } }
-        } else {
-            // Get new store from dispatch
-            const newStore = { ...enhancedDispatch(newAction) }
-
-            // Set new action with new store
-            newAction = { ...newAction, store: { ...newStore } }
-        }
-
-        // If afterWare is available run it
-        if (middleware && middleware.afterWare) {
-            middleware.afterWare.forEach((afterWare) => {
-                afterWare(newAction)
-            })
-        }
-
-        // Return new action
-        return newAction
-    }
-
-    let actionsDispatch = () => {
-        let actionKeys = Object.keys(actions)
-        let asyncActionKeys = Object.keys(asyncActions)
-        let actionDispatch = {}
-        actionKeys.map((a) => {
-            actionDispatch[a] = (payload) => dispatchWithMiddleWare({ type: a, payload: payload })
-        })
-
-        asyncActionKeys.map((a) => {
-            actionDispatch[a] = (payload) => dispatchWithMiddleWare({ type: a, payload: payload })
-        })
-
-        return actionDispatch
-    }
-    // Return state as store and dispatch as dispatch middleware
-    const value = {
-        /**
-         * Current state of reducer
-         * @type object
-         */
-        store: state,
-        /**
-         * @deprecated Use actions instead
-         */
-        dispatch: dispatchWithMiddleWare,
-        /**
-         * Dispatch actions for reducer
-         * @type object
-         */
-        actions: actionsDispatch()
-    }
-
-    return value
+    return newChild
 }
-
 
 /**
  * Creates a reducer
@@ -356,12 +252,20 @@ const createReducer = ({ initialState = {}, actions = [], middleware = { beforeW
     return reducer
 }
 
+/**
+ * Diffuse setup class
+ */
 class setupDiffuseClass {
     constructor() {
-        this.store = {}
+        this.globalStateMachine = {}
     }
 
-    CombineReducers(reducers) {
+    /**
+     * Create global state
+     * @param {object[]} reducers Initialized reducers 
+     * @returns Store
+     */
+    createGlobalState(reducers) {
         const initialState = {}
         const reducer = {}
         const asyncReducer = {}
@@ -377,7 +281,7 @@ class setupDiffuseClass {
             asyncActions[singleReducer.name] = Object.keys(singleReducer.asyncActions)
         })
 
-        const store = {
+        const globalStateMachine = {
             initialState: initialState,
             reducer: reducer,
             asyncReducer: asyncReducer,
@@ -386,32 +290,55 @@ class setupDiffuseClass {
             asyncActions: asyncActions
         }
 
-        this.store = store
+        this.globalStateMachine = globalStateMachine
 
-        return store
+        return globalStateMachine
     }
 }
 
+// Setup singleton class
 const SetupDiffuse = new setupDiffuseClass()
+
+/**
+ * Create global state from reducers
+ * @param {object[]} reducers Initialized reducers 
+ * @returns Store
+ */
+const createGlobalState = (reducers) => {
+    if (SetupDiffuse === undefined) {
+        SetupDiffuse = new setupDiffuseClass()
+    }
+
+    return SetupDiffuse.createGlobalState(reducers)
+}
 
 /**
  * Diffuse Provider
  * @param {object} properties Properties for Diffusion
+ * @param {object[]} properties.reducers Array of initialized reducers
  * @param {Component} properties.children Main App
  */
 const Diffuse = ({ reducers, children }) => {
-  let store = SetupDiffuse.store
+    // Get globalStateMachine from singleton class
+    let globalStateMachine = SetupDiffuse.globalStateMachine
 
-  if (reducers !== undefined) {
-      store = SetupDiffuse.CombineReducers(reducers)
-  }
-  const { initialState, reducer, asyncReducer, middleware, actions, asyncActions } = store
-  const [value, setValue] = useReducerEnhanced(reducer, initialState, asyncReducer, middleware, actions, asyncActions)
+    // If reducers not undefined
+    if (reducers !== undefined) {
+        // Create store if reducers are passed through props
+        globalStateMachine = createGlobalState(reducers)
+    }
 
-  // Return diffusion provider
-  return <DiffuseContext.Provider value={{ value, setValue }}>{children}</DiffuseContext.Provider>
+    if (Object.keys(globalStateMachine).length === 0) {
+        console.warn('No reducers specified')
+    }
+    
+    // Use reducer
+    const [state, dispatch] = useReducer(globalStateMachine)
+
+    // Return diffusion provider
+    return <DiffuseContext.Provider value={{ state, dispatch }}>{children}</DiffuseContext.Provider>
 }
 
-export { wire, createReducer, useFuse, useDispatch, SetupDiffuse }
+export { wire, createReducer, createGlobalState, useFuse, useDispatch}
 
 export default Diffuse

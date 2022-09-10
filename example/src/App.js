@@ -1,5 +1,5 @@
 import React from 'react'
-import Diffuse, { SetupDiffuse } from 'react-diffuse'
+import Diffuse, { createGlobalState } from 'react-diffuse'
 import count from './StateManagement/count'
 import asyncCount from './StateManagement/asyncCount'
 import Text from './Text'
@@ -7,21 +7,15 @@ import Number from './Number'
 import CountAsync from './CountAsync'
 import './styles.css'
 
-const reducers = [
+createGlobalState([
   count.initialize('AReducer'),
   count.initialize('BReducer'),
   asyncCount.initialize('AsyncReducer')
-]
-
-// SetupDiffuse.CombineReducers(reducers)
+])
 
 const App = (props) => {
-  let Reducer = count.initialize('AReducer')
-  console.log(Reducer)
-  
-
   return (
-    <Diffuse reducers={reducers}>
+    <Diffuse>
       <div className="App">
         <h1>DIFFUSE</h1>
         <h2>Global state management solution</h2>

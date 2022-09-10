@@ -20,6 +20,10 @@ function _extends() {
   return _extends.apply(this, arguments);
 }
 
+function _readOnlyError(name) {
+  throw new TypeError("\"" + name + "\" is read-only");
+}
+
 function createProvider(ProviderOriginal) {
   return function (_ref) {
     var value = _ref.value,
@@ -62,34 +66,79 @@ function createContext(defaultValue) {
   return context;
 }
 
-var logger = (function (name) {
-  return function (action) {
-    console.log(name, action.type, action.store);
-  };
-});
-
 function useForceUpdate() {
   var _useState = React.useState(null),
       forceUpdate = _useState[1];
-
   return forceUpdate;
 }
 
-function useReducerEnhanced(reducer, initState, asyncReducer, middleware, actions, asyncActions) {
+function useReducer(_ref) {
+  var _ref$reducer = _ref.reducer,
+      reducer = _ref$reducer === void 0 ? null : _ref$reducer,
+      _ref$asyncReducer = _ref.asyncReducer,
+      asyncReducer = _ref$asyncReducer === void 0 ? {} : _ref$asyncReducer,
+      _ref$initialState = _ref.initialState,
+      initialState = _ref$initialState === void 0 ? {} : _ref$initialState,
+      _ref$middleware = _ref.middleware,
+      middleware = _ref$middleware === void 0 ? {} : _ref$middleware,
+      _ref$actions = _ref.actions,
+      actions = _ref$actions === void 0 ? [] : _ref$actions,
+      _ref$asyncActions = _ref.asyncActions,
+      asyncActions = _ref$asyncActions === void 0 ? [] : _ref$asyncActions;
+
+  if (reducer === null) {
+    console.warn('No reducer, use Reducer returned no state or dispatch');
+    return [];
+  }
+
   var forceUpdate = useForceUpdate();
-  var state = React.useRef(initState);
+  var state = React.useRef(initialState);
   var getState = React.useCallback(function () {
     return state;
   }, [state]);
+
+  var onLoading = function onLoading(reducerName) {
+    return function () {
+      return setValue(reducerName)({
+        type: 'LOADING'
+      });
+    };
+  };
+
+  var onSuccess = function onSuccess(reducerName) {
+    return function (payload) {
+      return setValue(reducerName)({
+        type: 'SUCCESS',
+        payload: payload
+      });
+    };
+  };
+
+  var onFail = function onFail(reducerName) {
+    return function (payload) {
+      return setValue(reducerName)({
+        type: 'FAIL',
+        payload: payload
+      });
+    };
+  };
+
+  var onProgress = function onProgress(reducerName) {
+    return function (payload) {
+      return setValue(reducerName)({
+        type: 'PROGRESS',
+        payload: payload
+      });
+    };
+  };
+
   var setValue = React.useCallback(function (reducerName) {
     return function (action) {
       try {
         var _middleware$reducerNa2;
 
-        var _temp3 = function _temp3(_result2) {
-          var _middleware$reducerNa, _extends2;
-
-          if (_exit2) return _result2;
+        var _temp4 = function _temp4() {
+          var _middleware$reducerNa;
 
           if ((middleware === null || middleware === void 0 ? void 0 : (_middleware$reducerNa = middleware[reducerName]) === null || _middleware$reducerNa === void 0 ? void 0 : _middleware$reducerNa.afterWare) !== undefined && middleware[reducerName].afterWare.length !== 0) {
             middleware === null || middleware === void 0 ? void 0 : middleware[reducerName].afterWare.forEach(function (afterWare) {
@@ -98,11 +147,17 @@ function useReducerEnhanced(reducer, initState, asyncReducer, middleware, action
           }
 
           state.current[reducerName] = nextState;
-          forceUpdate(_extends({}, state.current, (_extends2 = {}, _extends2[reducerName] = nextState, _extends2)));
+
+          if (noAction === false) {
+            var _extends2;
+
+            forceUpdate(_extends({}, state.current, (_extends2 = {}, _extends2[reducerName] = nextState, _extends2)));
+          }
+
           return nextState;
         };
 
-        var _exit2 = false;
+        var noAction = false;
         var nextState = state.current[reducerName];
         var newAction = action;
 
@@ -116,25 +171,28 @@ function useReducerEnhanced(reducer, initState, asyncReducer, middleware, action
           });
         }
 
-        var _temp4 = function () {
+        var _temp5 = function () {
           if (actions[reducerName].includes(action.type)) {
             nextState = reducer[reducerName](state.current[reducerName], action);
             newAction.store = nextState;
-          } else return function () {
-            if (asyncActions[reducerName].includes(action.type)) {
-              return Promise.resolve(asyncReducer[reducerName](state.current[reducerName], action)).then(function (_asyncReducer$reducer) {
-                nextState = _asyncReducer$reducer;
-                newAction.store = nextState;
-              });
-            } else {
-              logger.warn('No state change, no update');
-              _exit2 = true;
-              return nextState;
-            }
-          }();
+          } else {
+            var _temp6 = function () {
+              if (asyncActions[reducerName].includes(action.type)) {
+                return Promise.resolve(asyncReducer[reducerName](newAction, onSuccess(reducerName), onFail(reducerName), onProgress(reducerName), onLoading(reducerName))).then(function (_asyncReducer$reducer) {
+                  nextState = _asyncReducer$reducer;
+                  newAction.store = nextState;
+                });
+              } else {
+                noAction = true;
+                logger.warn('No state change, no update');
+              }
+            }();
+
+            if (_temp6 && _temp6.then) return _temp6.then(function () {});
+          }
         }();
 
-        return Promise.resolve(_temp4 && _temp4.then ? _temp4.then(_temp3) : _temp3(_temp4));
+        return Promise.resolve(_temp5 && _temp5.then ? _temp5.then(_temp4) : _temp4(_temp5));
       } catch (e) {
         return Promise.reject(e);
       }
@@ -179,7 +237,7 @@ var DiffuseContext = createContext();
 
 function useFuse(selector) {
   return useContextSelector(DiffuseContext, function (context) {
-    return selector(context.value);
+    return selector(context.state);
   });
 }
 
@@ -190,51 +248,54 @@ function useDispatch(reducerName) {
 
   if (reducerName === null) {
     return useContextSelector(DiffuseContext, function (context) {
-      return context.setValue;
+      return context.dispatch;
     });
   }
 
   return useContextSelector(DiffuseContext, function (context) {
-    return context.setValue;
+    return context.dispatch;
   })(reducerName);
 }
+
+var connectWire = function connectWire(fuseName, Child) {
+  return function (props) {
+    var _fuse;
+
+    var context = useFuse(function (selector) {
+      return selector[fuseName];
+    });
+    var dispatch = useDispatch(fuseName);
+    var fuse = (_fuse = {}, _fuse[fuseName] = {
+      store: context,
+      dispatch: dispatch
+    }, _fuse);
+    return React.useMemo(function () {
+      return /*#__PURE__*/React__default.createElement(Child, _extends({}, fuse, props));
+    }, [props, context]);
+  };
+};
 
 var wire = function wire(_ref) {
   var _ref$fuseName = _ref.fuseName,
       fuseName = _ref$fuseName === void 0 ? [] : _ref$fuseName,
       Child = _ref.Child;
-  return function (props) {
-    var context = useFuse(function (store) {
-      return store;
-    });
-    var dispatch = useDispatch();
-    var fuses = {};
-    var memoConstraint = [];
-
-    for (var i = 0; i < fuseName.length; i++) {
-      fuses[fuseName[i]] = {
-        store: context[fuseName[i]],
-        dispatch: dispatch(fuseName[i])
-      };
-      memoConstraint.push(context[fuseName[i]]);
-    }
-
-    return React.useMemo(function () {
-      return /*#__PURE__*/React__default.createElement(Child, _extends({}, fuses, props));
-    }, [props].concat(memoConstraint));
-  };
+  var newChild = Child;
+  fuseName.forEach(function (name) {
+    newChild = connectWire(name, newChild);
+  });
+  return newChild;
 };
 
-var createReducer = function createReducer(_ref3) {
-  var _ref3$initialState = _ref3.initialState,
-      initialState = _ref3$initialState === void 0 ? {} : _ref3$initialState,
-      _ref3$actions = _ref3.actions,
-      actions = _ref3$actions === void 0 ? [] : _ref3$actions,
-      _ref3$middleware = _ref3.middleware,
-      middleware = _ref3$middleware === void 0 ? {
+var createReducer = function createReducer(_ref2) {
+  var _ref2$initialState = _ref2.initialState,
+      initialState = _ref2$initialState === void 0 ? {} : _ref2$initialState,
+      _ref2$actions = _ref2.actions,
+      actions = _ref2$actions === void 0 ? [] : _ref2$actions,
+      _ref2$middleware = _ref2.middleware,
+      middleware = _ref2$middleware === void 0 ? {
     beforeWare: [],
     afterWare: []
-  } : _ref3$middleware;
+  } : _ref2$middleware;
   var _reducer = {
     initialState: _extends({
       diffuse: {
@@ -350,12 +411,12 @@ var createReducer = function createReducer(_ref3) {
 
 var setupDiffuseClass = /*#__PURE__*/function () {
   function setupDiffuseClass() {
-    this.store = {};
+    this.globalStateMachine = {};
   }
 
   var _proto = setupDiffuseClass.prototype;
 
-  _proto.CombineReducers = function CombineReducers(reducers) {
+  _proto.createGlobalState = function createGlobalState(reducers) {
     var initialState = {};
     var reducer = {};
     var asyncReducer = {};
@@ -370,7 +431,7 @@ var setupDiffuseClass = /*#__PURE__*/function () {
       actions[singleReducer.name] = Object.keys(singleReducer.actions);
       asyncActions[singleReducer.name] = Object.keys(singleReducer.asyncActions);
     });
-    var store = {
+    var globalStateMachine = {
       initialState: initialState,
       reducer: reducer,
       asyncReducer: asyncReducer,
@@ -378,8 +439,8 @@ var setupDiffuseClass = /*#__PURE__*/function () {
       actions: actions,
       asyncActions: asyncActions
     };
-    this.store = store;
-    return store;
+    this.globalStateMachine = globalStateMachine;
+    return globalStateMachine;
   };
 
   return setupDiffuseClass;
@@ -387,36 +448,40 @@ var setupDiffuseClass = /*#__PURE__*/function () {
 
 var SetupDiffuse = new setupDiffuseClass();
 
-var Diffuse = function Diffuse(_ref4) {
-  var reducers = _ref4.reducers,
-      children = _ref4.children;
-  var store = SetupDiffuse.store;
-
-  if (reducers !== undefined) {
-    store = SetupDiffuse.CombineReducers(reducers);
+var createGlobalState = function createGlobalState(reducers) {
+  if (SetupDiffuse === undefined) {
+    _readOnlyError("SetupDiffuse");
   }
 
-  var _store = store,
-      initialState = _store.initialState,
-      reducer = _store.reducer,
-      asyncReducer = _store.asyncReducer,
-      middleware = _store.middleware,
-      actions = _store.actions,
-      asyncActions = _store.asyncActions;
+  return SetupDiffuse.createGlobalState(reducers);
+};
 
-  var _useReducerEnhanced = useReducerEnhanced(reducer, initialState, asyncReducer, middleware, actions, asyncActions),
-      value = _useReducerEnhanced[0],
-      setValue = _useReducerEnhanced[1];
+var Diffuse = function Diffuse(_ref3) {
+  var reducers = _ref3.reducers,
+      children = _ref3.children;
+  var globalStateMachine = SetupDiffuse.globalStateMachine;
+
+  if (reducers !== undefined) {
+    globalStateMachine = createGlobalState(reducers);
+  }
+
+  if (Object.keys(globalStateMachine).length === 0) {
+    console.warn('No reducers specified');
+  }
+
+  var _useReducer = useReducer(globalStateMachine),
+      state = _useReducer[0],
+      dispatch = _useReducer[1];
 
   return /*#__PURE__*/React__default.createElement(DiffuseContext.Provider, {
     value: {
-      value: value,
-      setValue: setValue
+      state: state,
+      dispatch: dispatch
     }
   }, children);
 };
 
-exports.SetupDiffuse = SetupDiffuse;
+exports.createGlobalState = createGlobalState;
 exports.createReducer = createReducer;
 exports.default = Diffuse;
 exports.useDispatch = useDispatch;
