@@ -151,9 +151,9 @@ Alternative way:
 #### <b>useFuse</b>
 The useFuse hook you can use to select a reducer from global state. For example to get _item_ from the _AReducer_ you would use:
 
-`const item = useFuse(context => context.AReducer.item)` 
+`const item = useFuse('AReducer')` 
 
-This will return the item in AReducer and rerender the component using it whenever changed. 
+This will return the AReducer and rerender the component using it whenever changed. 
 
 #### <b>useDispatch</b>
 The useDispatch hook allows you to dispatch actions for a specific reducer. For example if you wanted to dispatch actions for _AReducer_, it would look like this: 

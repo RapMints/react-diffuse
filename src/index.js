@@ -8,7 +8,7 @@
 import React, { useMemo } from 'react'
 import createContext from './createContext'
 import { useReducer } from './useReducer'
-import useContextSelector from './useContextSelector'
+import useFuseSelector, { useContextSelector } from './useContextSelector'
 
 // Create diffuse context
 const DiffuseContext = createContext()
@@ -17,8 +17,8 @@ const DiffuseContext = createContext()
  * Diffuse ContextSelector
  * @param {function} selector Select from context
  */
-function useFuse(selector) {
-    return useContextSelector(DiffuseContext, (context) => selector(context.state))
+function useFuse(fuse) {
+    return useFuseSelector(DiffuseContext, fuse)
 }
 
 /**
@@ -72,16 +72,19 @@ function useActions(reducerName = null) {
  */
 const connectWire = (fuseName, Child) => (props) => {
     // Get from fuse
-    const context = useFuse(selector => selector[fuseName]) 
+    const context = useFuse(fuseName) 
     
     // Get dispatch for fuse
     const dispatch = useDispatch(fuseName)
+
+    const actions = useActions(fuseName)
 
     // Get fuse
     const fuse = {
         [fuseName]: {
             store: context,
-            dispatch: dispatch
+            dispatch: dispatch,
+            actions: actions
         }
     }
 
@@ -364,10 +367,10 @@ const Diffuse = ({ reducers, children }) => {
     }
     
     // Use reducer
-    const [state, dispatch] = useReducer(globalStateMachine)
+    const [state, dispatch, reducerUpdated] = useReducer(globalStateMachine)
 
     // Return diffusion provider
-    return <DiffuseContext.Provider value={{ state, dispatch }}>{children}</DiffuseContext.Provider>
+    return <DiffuseContext.Provider value={{ state, dispatch, reducerUpdated }}>{children}</DiffuseContext.Provider>
 }
 
 export { wire, createReducer, createGlobalState, useFuse, useDispatch, useActions}

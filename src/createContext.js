@@ -18,11 +18,14 @@ function createProvider(ProviderOriginal) {
       },
       listeners: new Set()
     })
-
+  
     useEffect(() => {
       valueRef.current = value
       listenersRef.current.forEach((listener) => {
-        listener(value)
+        // Update listener where fuse name matches the reducer update
+        if (listener !== undefined && listener.fuse === value?.reducerUpdated) {
+          listener.shouldUpdate(value)
+        }
       })
     }, [value])
 

@@ -23,6 +23,7 @@ const App = (props) => {
         <Number />
         <Text />
         <CountAsync/>
+        <CountAsync/>
       </div>
     </Diffuse>
   )

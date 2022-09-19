@@ -10,8 +10,9 @@ function randomColor() {
 
 const Number = (props) => {
   const setValue = useDispatch('BReducer')
-  const listenForThis = useFuse(context => context[AReducer].item)
-  const item = useFuse(context => context[BReducer].item)
+  const listenForThis = useFuse('AReducer')
+  const fuse = useFuse('BReducer')
+  const {item} = fuse
 
   return (
     <div

@@ -14,6 +14,7 @@ export function useReducer({reducer = null, asyncReducer = {}, initialState = {}
 
     const forceUpdate = useForceUpdate()
     const state = useRef(initialState)
+    const reducerUpdated = useRef()
     const getState = useCallback(() => {
         return state
     }, [state])
@@ -83,11 +84,12 @@ export function useReducer({reducer = null, asyncReducer = {}, initialState = {}
             if (noAction === false) {
                 forceUpdate({ ...state.current, [reducerName]: nextState })
             }
-
+            
+            reducerUpdated.current = reducerName
             return nextState
         },
         [getState]
     )
 
-    return [state.current, setValue]
+    return [state.current, setValue, reducerUpdated.current]
 }

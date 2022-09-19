@@ -42,7 +42,7 @@ const reducer = createReducer({
 
           return onSuccess({ item: state.item + 1 });
         } catch (e) {
-          onFail({ error: e.message });
+          return onFail({ error: e.message });
         }
       }
     }

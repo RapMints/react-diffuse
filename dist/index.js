@@ -29,6 +29,7 @@ function createProvider(ProviderOriginal) {
     var value = _ref.value,
         children = _ref.children;
     var valueRef = React.useRef(value);
+    var prevValueRef = React.useRef();
     var listenersRef = React.useRef(new Set());
     var contextValue = React.useRef({
       value: valueRef,
@@ -43,7 +44,9 @@ function createProvider(ProviderOriginal) {
     React.useEffect(function () {
       valueRef.current = value;
       listenersRef.current.forEach(function (listener) {
-        listener(value);
+        if (listener !== undefined && listener.fuse === (value === null || value === void 0 ? void 0 : value.reducerUpdated)) {
+          listener.shouldUpdate(value);
+        }
       });
     }, [value]);
     return /*#__PURE__*/React__default.createElement(ProviderOriginal, {
@@ -93,6 +96,7 @@ function useReducer(_ref) {
 
   var forceUpdate = useForceUpdate();
   var state = React.useRef(initialState);
+  var reducerUpdated = React.useRef();
   var getState = React.useCallback(function () {
     return state;
   }, [state]);
@@ -154,6 +158,7 @@ function useReducer(_ref) {
             forceUpdate(_extends({}, state.current, (_extends2 = {}, _extends2[reducerName] = nextState, _extends2)));
           }
 
+          reducerUpdated.current = reducerName;
           return nextState;
         };
 
@@ -198,13 +203,17 @@ function useReducer(_ref) {
       }
     };
   }, [getState]);
-  return [state.current, setValue];
+  return [state.current, setValue, reducerUpdated.current];
 }
 
-function useContextSelector(context, selector) {
+function useFuseSelector(context, fuse) {
   var _useContext = React.useContext(context),
       value = _useContext.value,
       registerListener = _useContext.registerListener;
+
+  var selector = function selector(context) {
+    return context.state[fuse];
+  };
 
   var _useState = React.useState(function () {
     return selector(value.current);
@@ -227,7 +236,43 @@ function useContextSelector(context, selector) {
       }
     };
 
-    var unregisterListener = registerListener(updateValueIfNeeded);
+    var unregisterListener = registerListener({
+      fuse: fuse,
+      shouldUpdate: updateValueIfNeeded
+    });
+    return unregisterListener;
+  }, [registerListener, value, selectedValue]);
+  return selectedValue;
+}
+function useContextSelector(context, selector) {
+  var _useContext2 = React.useContext(context),
+      value = _useContext2.value,
+      registerListener = _useContext2.registerListener;
+
+  var _useState2 = React.useState(function () {
+    return selector(value.current);
+  }),
+      selectedValue = _useState2[0],
+      setSelectedValue = _useState2[1];
+
+  var selectorRef = React.useRef(selector);
+  React.useEffect(function () {
+    selectorRef.current = selector;
+  });
+  React.useEffect(function () {
+    var updateValueIfNeeded = function updateValueIfNeeded(newValue) {
+      var newSelectedValue = selectorRef.current(newValue);
+
+      if (selectedValue !== newSelectedValue) {
+        setSelectedValue(function () {
+          return newSelectedValue;
+        });
+      }
+    };
+
+    var unregisterListener = registerListener({
+      shouldUpdate: updateValueIfNeeded
+    });
     return unregisterListener;
   }, [registerListener, value, selectedValue]);
   return selectedValue;
@@ -235,10 +280,8 @@ function useContextSelector(context, selector) {
 
 var DiffuseContext = createContext();
 
-function useFuse(selector) {
-  return useContextSelector(DiffuseContext, function (context) {
-    return selector(context.state);
-  });
+function useFuse(fuse) {
+  return useFuseSelector(DiffuseContext, fuse);
 }
 
 function useDispatch(reducerName) {
@@ -293,13 +336,13 @@ var connectWire = function connectWire(fuseName, Child) {
   return function (props) {
     var _fuse;
 
-    var context = useFuse(function (selector) {
-      return selector[fuseName];
-    });
+    var context = useFuse(fuseName);
     var dispatch = useDispatch(fuseName);
+    var actions = useActions(fuseName);
     var fuse = (_fuse = {}, _fuse[fuseName] = {
       store: context,
-      dispatch: dispatch
+      dispatch: dispatch,
+      actions: actions
     }, _fuse);
     return React.useMemo(function () {
       return /*#__PURE__*/React__default.createElement(Child, _extends({}, fuse, props));
@@ -503,12 +546,14 @@ var Diffuse = function Diffuse(_ref3) {
 
   var _useReducer = useReducer(globalStateMachine),
       state = _useReducer[0],
-      dispatch = _useReducer[1];
+      dispatch = _useReducer[1],
+      reducerUpdated = _useReducer[2];
 
   return /*#__PURE__*/React__default.createElement(DiffuseContext.Provider, {
     value: {
       state: state,
-      dispatch: dispatch
+      dispatch: dispatch,
+      reducerUpdated: reducerUpdated
     }
   }, children);
 };

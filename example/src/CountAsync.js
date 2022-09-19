@@ -11,7 +11,7 @@ function randomColor() {
 
 const CountAsync = (props) => {
   return (
-    <div style={{ backgroundColor: `${randomColor()}` }} onClick={() => {
+    <div disabled={props.AsyncReducer?.store?.diffuse?.loading === true} style={{ backgroundColor: `${randomColor()}` }} onClick={() => {
       props.AsyncReducer.dispatch({type: 'GET_COUNT', payload: {
         test: "SomeText"
       }})
@@ -19,7 +19,7 @@ const CountAsync = (props) => {
       }
     >
       NumberAsync:{" "}
-      {props.AsyncReducer.store.diffuse.loading === true
+      {props.AsyncReducer?.store?.diffuse?.loading === true
         ? "loading"
         : props.AsyncReducer.store.item}{" "}
       Times clicked! Color changes on click from NumberAsync or Text
