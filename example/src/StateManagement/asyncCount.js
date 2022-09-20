@@ -4,6 +4,7 @@ import axios from "axios";
 
 const reducer = createReducer({
   initialState: {
+    percent: 100,
     item: 0
   },
   actions: {
@@ -28,6 +29,7 @@ const reducer = createReducer({
       job: async ({state, payload}, onSuccess, onFail, onProgress) => {
         try {
           console.log(payload)
+          onProgress({percent: 0})
           // Replace the url with your own on beeceptor
           let ApiRes = await axios
             .get("https://diffuse.free.beeceptor.com")
@@ -39,8 +41,16 @@ const reducer = createReducer({
                   }, 1000);
                 })
             );
+            onProgress({percent: 50})
+            let sleep = new Promise((resolve) => {
+              setTimeout(() => {
+                  resolve()
+              }, 1000)
+            })
+            
+            await sleep
 
-          return onSuccess({ item: state.item + 1 });
+          return onSuccess({ item: state.item + 1 , percent: 100});
         } catch (e) {
           return onFail({ error: e.message });
         }
@@ -48,8 +58,12 @@ const reducer = createReducer({
     }
   },
   middleware: {
-    afterWare: [logger("after")],
-    beforeWare: [logger("before")]
+    afterWare: [
+      logger("after")
+    ],
+    beforeWare: [
+      logger("before")
+    ]
   }
 });
 

@@ -6,11 +6,13 @@ import Text from './Text'
 import Number from './Number'
 import CountAsync from './CountAsync'
 import './styles.css'
+import CountAsync2 from './CountAsync2'
 
 createGlobalState([
   count.initialize('AReducer'),
   count.initialize('BReducer'),
-  asyncCount.initialize('AsyncReducer')
+  asyncCount.initialize('AsyncReducer'),
+  asyncCount.initialize('AsyncReducer2')
 ])
 
 const App = (props) => {
@@ -23,7 +25,7 @@ const App = (props) => {
         <Number />
         <Text />
         <CountAsync/>
-        <CountAsync/>
+        <CountAsync2/>
       </div>
     </Diffuse>
   )
