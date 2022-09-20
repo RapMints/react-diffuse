@@ -26,7 +26,6 @@ function createProvider(ProviderOriginal) {
     var value = _ref.value,
         children = _ref.children;
     var valueRef = useRef(value);
-    var prevValueRef = useRef();
     var listenersRef = useRef(new Set());
     var contextValue = useRef({
       value: valueRef,

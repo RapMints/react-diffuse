@@ -29,7 +29,6 @@ function createProvider(ProviderOriginal) {
     var value = _ref.value,
         children = _ref.children;
     var valueRef = React.useRef(value);
-    var prevValueRef = React.useRef();
     var listenersRef = React.useRef(new Set());
     var contextValue = React.useRef({
       value: valueRef,
