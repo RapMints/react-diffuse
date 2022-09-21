@@ -6,10 +6,18 @@ import React, {
 
 export const ORIGINAL_PROVIDER = Symbol()
 
+const CONTEXT_VALUE = Symbol();
+
 export interface Value {
-  value: Object
+  value: GlobalStateContext
   registerListener: Function
   listeners: Set<Listener>
+}
+
+export interface GlobalStateContext {
+  state?: Object
+  dispatch?: Function
+  reducerUpdated?: string | undefined
 }
 
 export interface Listener {
@@ -22,8 +30,21 @@ export interface Context<Value> {
   displayName?: string;
 }
 
-function createProvider(ProviderOriginal) {
-  return ({ value, children }) => {
+export interface ProviderProps {
+  value: GlobalStateContext
+  children: React.ReactNode
+}
+
+export type Version = number;
+
+type ContextValue<Value> = {
+    /* "v"alue     */ value: React.MutableRefObject<Value>;
+    /* "l"isteners */ listener?: Set<Listener>;
+    /* register    */ register: () => () => void
+}
+
+function createProvider<Value>(ProviderOriginal) {
+  return ({ value, children }: { value: GlobalStateContext; children: React.ReactNode }) => {
     const valueRef = useRef(value)
     const listenersRef = useRef(new Set())
     const contextValue = useRef({
@@ -39,7 +60,7 @@ function createProvider(ProviderOriginal) {
       valueRef.current = value
       listenersRef.current.forEach((listener: Listener) => {
         // Update listener where fuse name matches the reducer update
-        if (listener !== undefined && listener.fuse === value?.reducerUpdated) {
+        if (listener !== undefined && listener.fuse === value.reducerUpdated) {
           listener.shouldUpdate(value)
         }
       })
@@ -53,19 +74,17 @@ function createProvider(ProviderOriginal) {
   }
 }
 
-export default function createContext(defaultValue) {
-  const context = createContextOriginal({
+export default function createContext<Value>(defaultValue?: Value) {
+  const context = createContextOriginal<ContextValue<Value|undefined>>({
     value: {
       current: defaultValue
     },
-    register: () => {
-      return () => {}
-    }
+    register: () => () => {}
   })
 
   delete (context as any).Consumer;
 
-  (context as any).Provider = createProvider(context.Provider);
+  (context as unknown as Context<Value>).Provider = createProvider(context.Provider);
 
-  return context
+  return context as unknown as Context<Value>
 }

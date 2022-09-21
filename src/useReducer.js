@@ -6,8 +6,8 @@ function useForceUpdate() {
     return forceUpdate
 }
 
-export function useReducer({reducer = null, asyncReducer = {}, initialState = {}, middleware = {}, actions = [], asyncActions = []}) {
-    if (reducer === null) {
+export function useReducer({reducer = undefined, asyncReducer = {}, initialState = {}, middleware = {}, actions = {}, asyncActions = {}}) {
+    if (reducer === undefined) {
         console.warn('No reducer, use Reducer returned no state or dispatch')
         return []
     }

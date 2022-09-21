@@ -1,4 +1,6 @@
+import { GlobalStateContext } from 'createContext'
 import React, { useCallback, useRef, useState } from 'react'
+import { GlobalStateMachineType } from 'SetupDiffuse'
 
 function useForceUpdate() {
     const [force, forceUpdate] = useState(null)
@@ -6,10 +8,10 @@ function useForceUpdate() {
     return forceUpdate
 }
 
-export function useReducer({reducer = null, asyncReducer = {}, initialState = {}, middleware = {}, actions = [], asyncActions = []}) {
-    if (reducer === null) {
+export function useReducer({reducer = {}, asyncReducer = {}, initialState = {}, middleware = {}, actions = [], asyncActions = []}: GlobalStateMachineType): GlobalStateContext {
+    if (reducer === undefined) {
         console.warn('No reducer, use Reducer returned no state or dispatch')
-        return []
+        return {}
     }
 
     const forceUpdate = useForceUpdate()
@@ -69,7 +71,7 @@ export function useReducer({reducer = null, asyncReducer = {}, initialState = {}
             // If action doesn't exist
             else {
                 noAction = true
-                logger.warn('No state change, no update')
+                console.warn('No state change, no update')
             }
 
             if (middleware?.[reducerName]?.afterWare !== undefined && middleware[reducerName].afterWare.length !== 0) {
@@ -91,5 +93,5 @@ export function useReducer({reducer = null, asyncReducer = {}, initialState = {}
         [getState]
     )
 
-    return [state.current, setValue, reducerUpdated.current]
+    return {state: state.current, dispatch: setValue, reducerUpdated: reducerUpdated.current}
 }
