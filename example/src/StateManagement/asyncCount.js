@@ -58,12 +58,8 @@ const reducer = createReducer({
     }
   },
   middleware: {
-    afterWare: [
-      logger("after")
-    ],
-    beforeWare: [
-      logger("before")
-    ]
+    afterWare: [logger("after")],
+    beforeWare: [logger("before")]
   }
 });
 

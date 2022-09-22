@@ -1,9 +1,9 @@
-import { GlobalStateContext } from 'createContext'
+import { GlobalStateContext } from './createContext'
 import React, { useCallback, useRef, useState } from 'react'
-import { GlobalStateMachineType } from 'SetupDiffuse'
+import { GlobalStateMachineType } from './SetupDiffuse'
 
 function useForceUpdate() {
-    const [force, forceUpdate] = useState(null)
+    const [force, forceUpdate] = useState({})
     force
     return forceUpdate
 }

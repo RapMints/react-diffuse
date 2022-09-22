@@ -1,6 +1,6 @@
 import { useContext, useEffect, useRef, useState } from 'react'
 
-export default function useFuseSelector(context, fuse) {
+export default function useFuseSelector(context, fuse): Object {
   const { value, registerListener} = useContext(context)
   const selector = (context) => context.state[fuse]
   // We use a state to store the selectedValue

@@ -1,17 +1,7 @@
-export interface GlobalStateMachineType {
-    initialState: Object
-    reducer: Object
-    asyncReducer: Object
-    middleware: Object
-    actions: Object
-    asyncActions: Object
-}
 /**
  * Diffuse setup class
  */
- class setupDiffuseClass {
-    globalStateMachine: GlobalStateMachineType
-
+class setupDiffuseClass {
     constructor() {
         this.globalStateMachine = {
             initialState: {},

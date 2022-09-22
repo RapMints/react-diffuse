@@ -9,7 +9,7 @@ import React, { useMemo } from 'react'
 import createContext from './createContext'
 import { useReducer } from './useReducer'
 import useFuseSelector, { useContextSelector } from './useContextSelector'
-import SetupDiffuse from 'SetupDiffuse'
+import SetupDiffuse from './SetupDiffuse'
 
 // Create diffuse context
 const DiffuseContext = createContext()
@@ -54,7 +54,7 @@ function useActions(reducerName = null) {
     
     const actionsDict = [...SetupDiffuse.globalStateMachine.actions[reducerName], ...SetupDiffuse.globalStateMachine.asyncActions[reducerName]]
 
-    const actions  = {}
+    const actions = {}
 
     actionsDict.map(actionName => {
         actions[actionName] = (payload) => {
@@ -317,9 +317,10 @@ const Diffuse = ({ reducers, children }) => {
     }
     
     // Use reducer
-    const value = useReducer(globalStateMachine)
+    const [state, dispatch, reducerUpdated] = useReducer(globalStateMachine)
+
     // Return diffusion provider
-    return <DiffuseContext.Provider value={value}>{children}</DiffuseContext.Provider>
+    return <DiffuseContext.Provider value={{ state, dispatch, reducerUpdated }}>{children}</DiffuseContext.Provider>
 }
 
 export { wire, createReducer, createGlobalState, useFuse, useDispatch, useActions}

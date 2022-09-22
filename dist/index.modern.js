@@ -17,10 +17,6 @@ function _extends() {
   return _extends.apply(this, arguments);
 }
 
-function _readOnlyError(name) {
-  throw new TypeError("\"" + name + "\" is read-only");
-}
-
 function createProvider(ProviderOriginal) {
   return function (_ref) {
     var value = _ref.value,
@@ -40,12 +36,12 @@ function createProvider(ProviderOriginal) {
     useEffect(function () {
       valueRef.current = value;
       listenersRef.current.forEach(function (listener) {
-        if (listener !== undefined && listener.fuse === (value === null || value === void 0 ? void 0 : value.reducerUpdated)) {
+        if (listener !== undefined && listener.fuse === value.reducerUpdated) {
           listener.shouldUpdate(value);
         }
       });
     }, [value]);
-    return /*#__PURE__*/React.createElement(ProviderOriginal, {
+    return React.createElement(ProviderOriginal, {
       value: contextValue.current
     }, children);
   };
@@ -66,14 +62,14 @@ function createContext(defaultValue) {
 }
 
 function useForceUpdate() {
-  var _useState = useState(null),
+  var _useState = useState({}),
       forceUpdate = _useState[1];
   return forceUpdate;
 }
 
 function useReducer(_ref) {
   var _ref$reducer = _ref.reducer,
-      reducer = _ref$reducer === void 0 ? null : _ref$reducer,
+      reducer = _ref$reducer === void 0 ? {} : _ref$reducer,
       _ref$asyncReducer = _ref.asyncReducer,
       asyncReducer = _ref$asyncReducer === void 0 ? {} : _ref$asyncReducer,
       _ref$initialState = _ref.initialState,
@@ -85,9 +81,9 @@ function useReducer(_ref) {
       _ref$asyncActions = _ref.asyncActions,
       asyncActions = _ref$asyncActions === void 0 ? [] : _ref$asyncActions;
 
-  if (reducer === null) {
+  if (reducer === undefined) {
     console.warn('No reducer, use Reducer returned no state or dispatch');
-    return [];
+    return {};
   }
 
   var forceUpdate = useForceUpdate();
@@ -185,7 +181,7 @@ function useReducer(_ref) {
                 });
               } else {
                 noAction = true;
-                logger.warn('No state change, no update');
+                console.warn('No state change, no update');
               }
             }();
 
@@ -199,7 +195,11 @@ function useReducer(_ref) {
       }
     };
   }, [getState]);
-  return [state.current, setValue, reducerUpdated.current];
+  return {
+    state: state.current,
+    dispatch: setValue,
+    reducerUpdated: reducerUpdated.current
+  };
 }
 
 function useFuseSelector(context, fuse) {
@@ -274,18 +274,60 @@ function useContextSelector(context, selector) {
   return selectedValue;
 }
 
-var DiffuseContext = createContext();
-
-function useFuse(fuse) {
-  return useFuseSelector(DiffuseContext, fuse);
-}
-
-function useDispatch(reducerName) {
-  if (reducerName === void 0) {
-    reducerName = null;
+var setupDiffuseClass = /*#__PURE__*/function () {
+  function setupDiffuseClass() {
+    this.globalStateMachine = {
+      initialState: {},
+      reducer: {},
+      asyncReducer: {},
+      actions: {},
+      asyncActions: {},
+      middleware: {}
+    };
   }
 
-  if (reducerName === null) {
+  var _proto = setupDiffuseClass.prototype;
+
+  _proto.createGlobalState = function createGlobalState(reducers) {
+    var initialState = {};
+    var reducer = {};
+    var asyncReducer = {};
+    var middleware = {};
+    var actions = {};
+    var asyncActions = {};
+    reducers.map(function (singleReducer) {
+      initialState[singleReducer.name] = singleReducer.initialState;
+      reducer[singleReducer.name] = singleReducer.reducer;
+      asyncReducer[singleReducer.name] = singleReducer.asyncReducer;
+      middleware[singleReducer.name] = singleReducer.middleware;
+      actions[singleReducer.name] = Object.keys(singleReducer.actions);
+      asyncActions[singleReducer.name] = Object.keys(singleReducer.asyncActions);
+    });
+    var globalStateMachine = {
+      initialState: initialState,
+      reducer: reducer,
+      asyncReducer: asyncReducer,
+      middleware: middleware,
+      actions: actions,
+      asyncActions: asyncActions
+    };
+    this.globalStateMachine = globalStateMachine;
+    return globalStateMachine;
+  };
+
+  return setupDiffuseClass;
+}();
+
+var SetupDiffuse = new setupDiffuseClass();
+
+var DiffuseContext = createContext();
+
+var useFuse = function useFuse(fuse) {
+  return useFuseSelector(DiffuseContext, fuse);
+};
+
+var useDispatch = function useDispatch(reducerName) {
+  if (reducerName === undefined) {
     return useContextSelector(DiffuseContext, function (context) {
       return context.dispatch;
     });
@@ -294,14 +336,12 @@ function useDispatch(reducerName) {
   return useContextSelector(DiffuseContext, function (context) {
     return context.dispatch;
   })(reducerName);
-}
+};
 
-function useActions(reducerName) {
-  if (reducerName === void 0) {
-    reducerName = null;
-  }
+var useActions = function useActions(reducerName) {
+  var _SetupDiffuse$globalS, _SetupDiffuse$globalS2;
 
-  if (reducerName === null) {
+  if (reducerName === undefined) {
     console.warn("Reducer name is null please specify a name");
     return {};
   }
@@ -315,7 +355,7 @@ function useActions(reducerName) {
     return {};
   }
 
-  var actionsDict = [].concat(SetupDiffuse.globalStateMachine.actions[reducerName], SetupDiffuse.globalStateMachine.asyncActions[reducerName]);
+  var actionsDict = [].concat((_SetupDiffuse$globalS = SetupDiffuse.globalStateMachine.actions) === null || _SetupDiffuse$globalS === void 0 ? void 0 : _SetupDiffuse$globalS[reducerName], (_SetupDiffuse$globalS2 = SetupDiffuse.globalStateMachine.asyncActions) === null || _SetupDiffuse$globalS2 === void 0 ? void 0 : _SetupDiffuse$globalS2[reducerName]);
   var actions = {};
   actionsDict.map(function (actionName) {
     actions[actionName] = function (payload) {
@@ -326,7 +366,7 @@ function useActions(reducerName) {
     };
   });
   return actions;
-}
+};
 
 var connectWire = function connectWire(fuseName, Child) {
   return function (props) {
@@ -341,7 +381,7 @@ var connectWire = function connectWire(fuseName, Child) {
       actions: actions
     }, _fuse);
     return useMemo(function () {
-      return /*#__PURE__*/React.createElement(Child, _extends({}, fuse, props));
+      return React.createElement(Child, Object.assign({}, fuse, props));
     }, [props, context]);
   };
 };
@@ -480,50 +520,7 @@ var createReducer = function createReducer(_ref2) {
   return _reducer;
 };
 
-var setupDiffuseClass = /*#__PURE__*/function () {
-  function setupDiffuseClass() {
-    this.globalStateMachine = {};
-  }
-
-  var _proto = setupDiffuseClass.prototype;
-
-  _proto.createGlobalState = function createGlobalState(reducers) {
-    var initialState = {};
-    var reducer = {};
-    var asyncReducer = {};
-    var middleware = {};
-    var actions = {};
-    var asyncActions = {};
-    reducers.map(function (singleReducer) {
-      initialState[singleReducer.name] = singleReducer.initialState;
-      reducer[singleReducer.name] = singleReducer.reducer;
-      asyncReducer[singleReducer.name] = singleReducer.asyncReducer;
-      middleware[singleReducer.name] = singleReducer.middleware;
-      actions[singleReducer.name] = Object.keys(singleReducer.actions);
-      asyncActions[singleReducer.name] = Object.keys(singleReducer.asyncActions);
-    });
-    var globalStateMachine = {
-      initialState: initialState,
-      reducer: reducer,
-      asyncReducer: asyncReducer,
-      middleware: middleware,
-      actions: actions,
-      asyncActions: asyncActions
-    };
-    this.globalStateMachine = globalStateMachine;
-    return globalStateMachine;
-  };
-
-  return setupDiffuseClass;
-}();
-
-var SetupDiffuse = new setupDiffuseClass();
-
 var createGlobalState = function createGlobalState(reducers) {
-  if (SetupDiffuse === undefined) {
-    _readOnlyError("SetupDiffuse");
-  }
-
   return SetupDiffuse.createGlobalState(reducers);
 };
 
@@ -540,17 +537,9 @@ var Diffuse = function Diffuse(_ref3) {
     console.warn('No reducers specified');
   }
 
-  var _useReducer = useReducer(globalStateMachine),
-      state = _useReducer[0],
-      dispatch = _useReducer[1],
-      reducerUpdated = _useReducer[2];
-
-  return /*#__PURE__*/React.createElement(DiffuseContext.Provider, {
-    value: {
-      state: state,
-      dispatch: dispatch,
-      reducerUpdated: reducerUpdated
-    }
+  var value = useReducer(globalStateMachine);
+  return React.createElement(DiffuseContext.Provider, {
+    value: value
   }, children);
 };
 

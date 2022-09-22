@@ -5,10 +5,25 @@
  * @author Kyle Watkins, Paul Scala
  * @example https://codesandbox.io/s/wispy-leaf-iyp9k6
  ************************************************/
-import React, { useMemo } from 'react'
+
+import React, { ReactNode, useMemo } from 'react'
 import createContext from './createContext'
 import { useReducer } from './useReducer'
 import useFuseSelector, { useContextSelector } from './useContextSelector'
+import SetupDiffuse, { GlobalStateMachineType } from './SetupDiffuse'
+
+export interface InitializedReducer {
+    name: string,
+    initialState: unknown,
+    middleware?: {
+        beforeWare?: Function[]
+        afterWare?: Function[]
+    },
+    reducer: Function,
+    asyncReducer: Function,
+    actions: Function[],
+    asyncActions: Promise<unknown>[]    
+}
 
 // Create diffuse context
 const DiffuseContext = createContext()
@@ -17,8 +32,12 @@ const DiffuseContext = createContext()
  * Diffuse ContextSelector
  * @param {function} selector Select from context
  */
-function useFuse(fuse) {
+const useFuse: UseFuseType = (fuse) => {
     return useFuseSelector(DiffuseContext, fuse)
+}
+
+export interface UseFuseType {
+    (fuse: string) : Object
 }
 
 /**
@@ -26,11 +45,15 @@ function useFuse(fuse) {
  * @param {string} reducerName Name of reducer to get dispatch for. Defaults to null, if null use generic dispatcher
  * @returns {function} Dispatch function
  */
-function useDispatch(reducerName = null) {
-    if (reducerName === null) {
+const useDispatch: UseDispatchType = (reducerName?: string) => {
+    if (reducerName === undefined) {
         return useContextSelector(DiffuseContext, (context) => context.dispatch)
     }
     return useContextSelector(DiffuseContext, (context) => context.dispatch)(reducerName)
+}
+
+export interface UseDispatchType {
+    (reducerName?: string) : Function
 }
 
 /**
@@ -38,8 +61,8 @@ function useDispatch(reducerName = null) {
  * @param {string} reducerName Name of reducer to get actions for. Defaults to null, if null willl return empty actions list
  * @returns {object} List of actions to be ran as functions 
  */
-function useActions(reducerName = null) {
-    if (reducerName === null) {
+const useActions: UseActionType= (reducerName: string) => {
+    if (reducerName === undefined) {
         console.warn("Reducer name is null please specify a name")
         return {}
     } 
@@ -51,9 +74,9 @@ function useActions(reducerName = null) {
         return {}
     }
     
-    const actionsDict = [...SetupDiffuse.globalStateMachine.actions[reducerName], ...SetupDiffuse.globalStateMachine.asyncActions[reducerName]]
+    const actionsDict = [...SetupDiffuse.globalStateMachine.actions?.[reducerName], ...SetupDiffuse.globalStateMachine.asyncActions?.[reducerName]]
 
-    const actions = {}
+    const actions: any  = {}
 
     actionsDict.map(actionName => {
         actions[actionName] = (payload) => {
@@ -63,6 +86,10 @@ function useActions(reducerName = null) {
 
     return actions
 }
+
+export interface UseActionType {
+    (reducerName?: string) : Array<{(payload: unknown)}>
+} 
 
 /**
  * Connects Child to a specified fuse
@@ -266,7 +293,7 @@ const createReducer = ({ initialState = {}, actions = [], middleware = { beforeW
          */
         getActions: () => {
             // Init actions array
-            const actions = []
+            const actions:any = []
 
             // For each action push to array
             for (const key in reducer.actionsDict) {
@@ -287,63 +314,16 @@ const createReducer = ({ initialState = {}, actions = [], middleware = { beforeW
 }
 
 /**
- * Diffuse setup class
- */
-class setupDiffuseClass {
-    constructor() {
-        this.globalStateMachine = {}
-    }
-
-    /**
-     * Create global state
-     * @param {object[]} reducers Initialized reducers 
-     * @returns Store
-     */
-    createGlobalState(reducers) {
-        const initialState = {}
-        const reducer = {}
-        const asyncReducer = {}
-        const middleware = {}
-        const actions = {}
-        const asyncActions = {}
-        reducers.map((singleReducer) => {
-            initialState[singleReducer.name] = singleReducer.initialState
-            reducer[singleReducer.name] = singleReducer.reducer
-            asyncReducer[singleReducer.name] = singleReducer.asyncReducer
-            middleware[singleReducer.name] = singleReducer.middleware
-            actions[singleReducer.name] = Object.keys(singleReducer.actions)
-            asyncActions[singleReducer.name] = Object.keys(singleReducer.asyncActions)
-        })
-
-        const globalStateMachine = {
-            initialState: initialState,
-            reducer: reducer,
-            asyncReducer: asyncReducer,
-            middleware: middleware,
-            actions: actions,
-            asyncActions: asyncActions
-        }
-
-        this.globalStateMachine = globalStateMachine
-
-        return globalStateMachine
-    }
-}
-
-// Setup singleton class
-const SetupDiffuse = new setupDiffuseClass()
-
-/**
  * Create global state from reducers
  * @param {object[]} reducers Initialized reducers 
  * @returns Store
  */
-const createGlobalState = (reducers) => {
-    if (SetupDiffuse === undefined) {
-        SetupDiffuse = new setupDiffuseClass()
-    }
-
+const createGlobalState: GlobalStateStore = (reducers: InitializedReducer[]) => {
     return SetupDiffuse.createGlobalState(reducers)
+}
+
+export interface GlobalStateStore {
+    (reducer: InitializedReducer[]) :  GlobalStateMachineType
 }
 
 /**
@@ -352,7 +332,7 @@ const createGlobalState = (reducers) => {
  * @param {object[]} properties.reducers Array of initialized reducers
  * @param {Component} properties.children Main App
  */
-const Diffuse = ({ reducers, children }) => {
+const Diffuse : DiffuseContext = ({ reducers, children }) => {
     // Get globalStateMachine from singleton class
     let globalStateMachine = SetupDiffuse.globalStateMachine
 
@@ -367,10 +347,18 @@ const Diffuse = ({ reducers, children }) => {
     }
     
     // Use reducer
-    const [state, dispatch, reducerUpdated] = useReducer(globalStateMachine)
-
+    const value = useReducer(globalStateMachine)
     // Return diffusion provider
-    return <DiffuseContext.Provider value={{ state, dispatch, reducerUpdated }}>{children}</DiffuseContext.Provider>
+    return <DiffuseContext.Provider value={value}>{children}</DiffuseContext.Provider>
+}
+
+export interface DiffuseValues {
+    reducers?: InitializedReducer[]
+    children?: ReactNode
+}
+
+export interface DiffuseContext {
+    ({reducers, children}: DiffuseValues) : JSX.Element
 }
 
 export { wire, createReducer, createGlobalState, useFuse, useDispatch, useActions}
