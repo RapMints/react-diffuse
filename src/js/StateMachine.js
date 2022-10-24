@@ -1,4 +1,7 @@
+/*************** CONFIG ***************/
 const useDiffuseAsync = true
+const useDiffuseInitializeState = true
+/**************************************/
 
 class StateMachine {
     constructor() {
@@ -18,10 +21,12 @@ class StateMachine {
         return {
             createStore: (storeName) => {
                 const initState = {
-                    ...(useDiffuseAsync === true && {diffuse: {
-                        loading: false,
-                        error: false
-                    },}),
+                    ...(useDiffuseAsync === true && {
+                        diffuse: {
+                            loading: false,
+                            error: false
+                        },
+                    }),
                     ...initialState
                 }
 
@@ -39,7 +44,7 @@ class StateMachine {
 
                 // Set store actions
                 let newActions = {
-                    ...(useDiffuseAsync === true && {INITIALIZE_STORE: (state, payload = {}) => {
+                    ...(useDiffuseInitializeState === true && {INITIALIZE_STATE: (state, payload = {}) => {
                         return {
                             diffuse: {
                                 loading: false,
@@ -48,38 +53,40 @@ class StateMachine {
                             ...initialState,
                             ...payload
                         }
-                    },
-                    LOADING: ({state}) => {
-                        return {
-                            diffuse: {
-                                loading: true,
-                                error: false
+                    }}),
+                    ...(useDiffuseAsync === true && {  
+                        LOADING: ({state}) => {
+                            return {
+                                diffuse: {
+                                    loading: true,
+                                    error: false
+                                }
                             }
-                        }
-                    },
-                    SUCCESS: ({state, payload}) => {
-                        return {
-                            diffuse: {
-                                loading: false,
-                                error: false
-                            },
-                            ...payload
-                        }
-                    },
-                    PROGRESS: ({state, payload}) => {
-                        return {
-                            ...payload
-                        }
-                    },
-                    FAIL: ({state, payload}) => {
-                        return {
-                            diffuse: {
-                                loading: false,
-                                error: true
-                            },
-                            ...payload
-                        }
-                    },}),
+                        },
+                        SUCCESS: ({state, payload}) => {
+                            return {
+                                diffuse: {
+                                    loading: false,
+                                    error: false
+                                },
+                                ...payload
+                            }
+                        },
+                        PROGRESS: ({state, payload}) => {
+                            return {
+                                ...payload
+                            }
+                        },
+                        FAIL: ({state, payload}) => {
+                            return {
+                                diffuse: {
+                                    loading: false,
+                                    error: true
+                                },
+                                ...payload
+                            }
+                        },
+                    }),
                     ...actions
                 }
 
