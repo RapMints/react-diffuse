@@ -1,7 +1,7 @@
 # <b>Diffuse</b>
 Light weight global state managment solution
 
-EXAMPLE: https://codesandbox.io/s/wispy-leaf-iyp9k6
+EXAMPLE: https://codesandbox.io/s/quizzical-ully-2f3bte
 
 <b>Table of Contents</b>
 1. Installation
