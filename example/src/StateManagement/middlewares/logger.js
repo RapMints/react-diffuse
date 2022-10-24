@@ -1,3 +1,3 @@
-export default (name) => (action) => {
-  console.log(name, action.type, action.store);
+export default (name) => (storeName) => (state) => (action) => {
+  console.log(`${name.toUpperCase()}: Store: ${storeName}, Item: ${state.item}, Action: ${action.type}`);
 };

@@ -1,6 +1,6 @@
 import React from 'react'
 import { wire } from "react-diffuse";
-import { AsyncReducer } from "./StateManagement/States";
+import { AReducer, AsyncReducer2 } from "./StateManagement/States";
 
 function randomColor() {
   const letters = "0123456789ABCDEF";
@@ -10,7 +10,6 @@ function randomColor() {
 }
 
 const CountAsync2 = (props) => {
-  console.log('CountAsync2', props.AsyncReducer2?.store.percent)
   return (
     <div disabled={props.AsyncReducer2?.store?.diffuse?.loading === true} style={{ backgroundColor: `${randomColor()}` }} onClick={() => {
       props.AsyncReducer2.dispatch({type: 'GET_COUNT', payload: {
@@ -28,4 +27,4 @@ const CountAsync2 = (props) => {
   );
 };
 
-export default wire({fuseName: ['AsyncReducer2', 'AReducer'], Child: CountAsync2})
+export default wire([AsyncReducer2, AReducer])(CountAsync2)

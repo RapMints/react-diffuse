@@ -29,8 +29,8 @@ const Text2 = (props) => {
 };
 
 const Text = (props) => {
-  const {item} = useFuse('AReducer')
-  const setValue = useDispatch('AReducer')
+  const {item} = useFuse(AReducer)
+  const setValue = useDispatch(AReducer)
   const actions = useActions(AReducer)
 
   return (

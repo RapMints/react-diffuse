@@ -1,6 +1,6 @@
 import React from 'react'
-import { wire } from "react-diffuse";
-import { AsyncReducer } from "./StateManagement/States";
+import { wire, useActions, useFuse } from "react-diffuse";
+import { AReducer, AsyncReducer } from "./StateManagement/States";
 
 function randomColor() {
   const letters = "0123456789ABCDEF";
@@ -10,22 +10,21 @@ function randomColor() {
 }
 
 const CountAsync = (props) => {
-  console.log('CountAsync', props.AsyncReducer?.store.percent)
+  const actions = useActions(AsyncReducer)
+  const fuse = useFuse(AsyncReducer)
   return (
-    <div disabled={props.AsyncReducer?.store?.diffuse?.loading === true} style={{ backgroundColor: `${randomColor()}` }} onClick={() => {
-      props.AsyncReducer.dispatch({type: 'GET_COUNT', payload: {
-        test: "SomeText"
-      }})
+    <div disabled={fuse.diffuse?.loading === true} style={{ backgroundColor: `${randomColor()}` }} onClick={() => {
+      actions.GET_COUNT()
       }
       }
     >
       NumberAsync:{" "}
-      {props.AsyncReducer?.store?.diffuse?.loading === true
+      {fuse.diffuse?.loading === true
         ? "loading"
-        : props.AsyncReducer.store.item}{" "}
+        : fuse.item}{" "}
       Times clicked! Color changes on click from NumberAsync or Text
     </div>
   );
 };
 
-export default wire({fuseName: [AsyncReducer, 'AReducer'], Child: CountAsync})
+export default CountAsync

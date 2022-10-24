@@ -1,4 +1,4 @@
-import Diffuse from './ts'
+import Diffuse from './js'
 
 describe('Diffuse', () => {
   it('is truthy', () => {
