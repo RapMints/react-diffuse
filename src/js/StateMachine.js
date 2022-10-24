@@ -1,3 +1,5 @@
+const useDiffuseAsync = true
+
 class StateMachine {
     constructor() {
         this.state = {}
@@ -15,28 +17,29 @@ class StateMachine {
         const that = this
         return {
             createStore: (storeName) => {
-                // Initialize store
-                this.state[storeName] = {
-                    diffuse: {
+                const initState = {
+                    ...(useDiffuseAsync === true && {diffuse: {
                         loading: false,
                         error: false
-                    },
+                    },}),
                     ...initialState
                 }
 
                 // Set store initial state
-                this.initialState[storeName] = {
-                    diffuse: {
-                        loading: false,
-                        error: false
-                    },
-                    ...initialState
+                that.initialState[storeName] = {
+                    ...initState
                 }
-                this.actions[storeName] = {}
+
+                // Initialize store
+                that.state[storeName] = {
+                    ...initState
+                }
+
+                that.actions[storeName] = {}
 
                 // Set store actions
                 let newActions = {
-                    INITIALIZE_STORE: (state, payload = {}) => {
+                    ...(useDiffuseAsync === true && {INITIALIZE_STORE: (state, payload = {}) => {
                         return {
                             diffuse: {
                                 loading: false,
@@ -76,23 +79,23 @@ class StateMachine {
                             },
                             ...payload
                         }
-                    },
+                    },}),
                     ...actions
                 }
 
-                this.history[storeName] = {
+                that.history[storeName] = {
                     undo: [],
                     redo: []
                 }
 
                 // Add store to dictionary
-                this.storeDict[storeName] = true
+                that.storeDict[storeName] = true
 
                 // Create listener for store
-                this.listener[storeName] = []
+                that.listener[storeName] = []
 
                 // Add middleware for store
-                this.middleWare[storeName] = {
+                that.middleWare[storeName] = {
                     beforeWare: [],
                     afterWare: []
                 }
@@ -214,7 +217,7 @@ class StateMachine {
                 }
 
                 // Add store object to stores
-                this.store[storeName] = store
+                that.store[storeName] = store
 
                 return {
                     name: storeName

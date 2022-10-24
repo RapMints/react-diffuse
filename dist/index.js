@@ -138,19 +138,16 @@ var StateMachine = /*#__PURE__*/function () {
       var that = _this;
       return {
         createStore: function createStore(storeName) {
-          _this.state[storeName] = _extends({
+          var initState = _extends({
             diffuse: {
               loading: false,
               error: false
             }
           }, initialState);
-          _this.initialState[storeName] = _extends({
-            diffuse: {
-              loading: false,
-              error: false
-            }
-          }, initialState);
-          _this.actions[storeName] = {};
+
+          that.initialState[storeName] = _extends({}, initState);
+          that.state[storeName] = _extends({}, initState);
+          that.actions[storeName] = {};
 
           var newActions = _extends({
             INITIALIZE_STORE: function INITIALIZE_STORE(state, payload) {
@@ -197,13 +194,13 @@ var StateMachine = /*#__PURE__*/function () {
             }
           }, actions);
 
-          _this.history[storeName] = {
+          that.history[storeName] = {
             undo: [],
             redo: []
           };
-          _this.storeDict[storeName] = true;
-          _this.listener[storeName] = [];
-          _this.middleWare[storeName] = {
+          that.storeDict[storeName] = true;
+          that.listener[storeName] = [];
+          that.middleWare[storeName] = {
             beforeWare: [],
             afterWare: []
           };
@@ -354,7 +351,7 @@ var StateMachine = /*#__PURE__*/function () {
             store.createSelector.apply(store, [selectorName].concat(selectors[selectorName]));
           }
 
-          _this.store[storeName] = store;
+          that.store[storeName] = store;
           return {
             name: storeName
           };
