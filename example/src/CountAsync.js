@@ -13,6 +13,7 @@ const CountAsync = (props) => {
   const actions = useActions(AsyncReducer)
   const fuse = useFuse(AsyncReducer)
   const selectors = useSelectors(AsyncReducer)
+  //console.log(selectors)
   const selection = useFuseSelector(AsyncReducer, selectors.MySelector)
   console.log(selection)
   return (

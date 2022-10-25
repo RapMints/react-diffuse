@@ -41,7 +41,7 @@ class StateMachine {
                 }
 
                 that.selectors[storeName] = {}
-                
+
                 that.actions[storeName] = {}
 
                 // Set store actions
@@ -162,18 +162,7 @@ class StateMachine {
                         return that.selectors[storeName]
                     },
                     createSelector: function createSelector(selectorName, ...args) {
-                        let lastSelector = args.pop()
-                        if (args.length === 0) {
-                            that.selectors[storeName][selectorName] = lastSelector
-                        } else {
-                            that.selectors[storeName][selectorName] = (state) => {
-                                const stateSelections = args.map((arg) => {
-                                    return arg(state)
-                                })
-
-                                return lastSelector(...stateSelections)
-                            }
-                        }
+                        that.selectors[storeName][selectorName] = args
                     },
                     getMiddleWare: () => {
                         return that.middleWare[storeName]

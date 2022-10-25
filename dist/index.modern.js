@@ -287,18 +287,7 @@ var StateMachine = /*#__PURE__*/function () {
                 args[_key - 1] = arguments[_key];
               }
 
-              var lastSelector = args.pop();
-
-              if (args.length === 0) {
-                that.selectors[storeName][selectorName] = lastSelector;
-              } else {
-                that.selectors[storeName][selectorName] = function (state) {
-                  var stateSelections = args.map(function (arg) {
-                    return arg(state);
-                  });
-                  return lastSelector.apply(void 0, stateSelections);
-                };
-              }
+              that.selectors[storeName][selectorName] = args;
             },
             getMiddleWare: function getMiddleWare() {
               return that.middleWare[storeName];
@@ -697,16 +686,52 @@ function useSelectors(store) {
   return StateMachine$1.store[store.name].getSelectors();
 }
 
+function mergeSelectors(selector, currentState) {
+  var selectors = [].concat(selector);
+  var lastSelector = selectors.pop();
+  var value;
+  var stateSelections;
+
+  if (selectors.length === 0) {
+    value = lastSelector(currentState);
+  } else {
+    stateSelections = selectors.map(function (arg) {
+      return arg(currentState);
+    });
+    value = lastSelector;
+  }
+
+  return _extends({
+    value: value
+  }, stateSelections && {
+    stateSelections: stateSelections
+  });
+}
+
 function useFuseSelector(store, selector) {
-  var _useState2 = useState(selector(StateMachine$1.store[store.name].getState())),
+  var selection = mergeSelectors(selector, StateMachine$1.store[store.name].getState());
+
+  var _useState2 = useState(selection),
       fuseSelection = _useState2[0],
       setFuseSelection = _useState2[1];
 
   useLayoutEffect(function () {
     var handleReducerChange = function handleReducerChange(newStore) {
-      var newFuseSelection = selector(newStore);
+      var newFuseSelection = mergeSelectors(selector, newStore);
+      var shouldUpdate = false;
 
-      if (fuseSelection !== newFuseSelection) {
+      if (newFuseSelection.value instanceof Function) {
+        for (var i = 0; i < newFuseSelection.stateSelections.length; i++) {
+          if (newFuseSelection.stateSelections[i] !== fuseSelection.stateSelections[i]) {
+            shouldUpdate = true;
+            break;
+          }
+        }
+      } else if (newFuseSelection.value !== fuseSelection.value) {
+        shouldUpdate = true;
+      }
+
+      if (shouldUpdate) {
         setFuseSelection(newFuseSelection);
       }
     };
@@ -716,7 +741,12 @@ function useFuseSelector(store, selector) {
       StateMachine$1.removeFuseListener(store.name, handleReducerChange);
     };
   }, []);
-  return fuseSelection;
+
+  if (fuseSelection.value instanceof Function) {
+    return fuseSelection.value.apply(fuseSelection, fuseSelection.stateSelections);
+  } else {
+    return fuseSelection.value;
+  }
 }
 
 var connectWire = function connectWire(store, Child) {

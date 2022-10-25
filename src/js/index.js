@@ -31,14 +31,50 @@ function useSelectors(store) {
     return StateMachine.store[store.name].getSelectors()
 }
 
+function mergeSelectors(selector, currentState) {
+    const selectors = [...selector]
+    let lastSelector = selectors.pop()
+    let value
+    let stateSelections
+    
+    if (selectors.length === 0) {
+        value = lastSelector(currentState)
+    }
+    else {
+        stateSelections = selectors.map((arg) => {
+            return arg(currentState)
+        })
+
+        value = lastSelector
+    }
+
+    return {
+        value,
+        ...(stateSelections && {stateSelections: stateSelections})
+    }
+}
+
 function useFuseSelector(store, selector) {
-    const [fuseSelection, setFuseSelection] = useState(selector(StateMachine.store[store.name].getState()))
+    let selection = mergeSelectors(selector, StateMachine.store[store.name].getState())
+    const [fuseSelection, setFuseSelection] = useState(selection)
 
     useLayoutEffect(() => {
         const handleReducerChange = (newStore) => {
-            const newFuseSelection = selector(newStore)
+            const newFuseSelection = mergeSelectors(selector, newStore)
+            let shouldUpdate = false
+            if (newFuseSelection.value instanceof Function) {
+                for (let i = 0; i < newFuseSelection.stateSelections.length; i++) {
+                    if (newFuseSelection.stateSelections[i] !== fuseSelection.stateSelections[i]) {
+                        shouldUpdate = true
+                        break
+                    }
+                }
+            }
+            else if (newFuseSelection.value !== fuseSelection.value) {
+                shouldUpdate = true      
+            }  
 
-            if (fuseSelection !== newFuseSelection) {
+            if (shouldUpdate) {
                 setFuseSelection(newFuseSelection)
             }
         }
@@ -50,7 +86,12 @@ function useFuseSelector(store, selector) {
         }
     }, [])
 
-    return fuseSelection
+    if (fuseSelection.value instanceof Function) {
+        return fuseSelection.value(...fuseSelection.stateSelections)
+    }
+    else {
+        return fuseSelection.value
+    }
 }
 
 /**
