@@ -47,6 +47,9 @@ const reducer = createReducer({
           }
         }
     },
+    selectors: {
+      MySelector: [(state) => `item is ${state.item}`, (string) => `STRING: ${string}`]
+    },
     middleWare: {
       afterWare: [
         logger("after")

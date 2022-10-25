@@ -40,6 +40,8 @@ class StateMachine {
                     ...initState
                 }
 
+                that.selectors[storeName] = {}
+                
                 that.actions[storeName] = {}
 
                 // Set store actions
@@ -155,6 +157,9 @@ class StateMachine {
                     },
                     getSelector: (selectorName) => {
                         return that.selectors[storeName][selectorName]
+                    },
+                    getSelectors: () => {
+                        return that.selectors[storeName]
                     },
                     createSelector: function createSelector(selectorName, ...args) {
                         let lastSelector = args.pop()

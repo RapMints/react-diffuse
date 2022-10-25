@@ -138,7 +138,7 @@ var StateMachine = /*#__PURE__*/function () {
       var that = _this;
       return {
         createStore: function createStore(storeName) {
-          var initState = _extends({
+          var initState = _extends({},  {
             diffuse: {
               loading: false,
               error: false
@@ -147,10 +147,11 @@ var StateMachine = /*#__PURE__*/function () {
 
           that.initialState[storeName] = _extends({}, initState);
           that.state[storeName] = _extends({}, initState);
+          that.selectors[storeName] = {};
           that.actions[storeName] = {};
 
-          var newActions = _extends({
-            INITIALIZE_STORE: function INITIALIZE_STORE(state, payload) {
+          var newActions = _extends({},  {
+            INITIALIZE_STATE: function INITIALIZE_STATE(state, payload) {
               if (payload === void 0) {
                 payload = {};
               }
@@ -161,7 +162,8 @@ var StateMachine = /*#__PURE__*/function () {
                   error: false
                 }
               }, initialState, payload);
-            },
+            }
+          },  {
             LOADING: function LOADING(_ref2) {
               return {
                 diffuse: {
@@ -279,6 +281,9 @@ var StateMachine = /*#__PURE__*/function () {
             },
             getSelector: function getSelector(selectorName) {
               return that.selectors[storeName][selectorName];
+            },
+            getSelectors: function getSelectors() {
+              return that.selectors[storeName];
             },
             createSelector: function createSelector(selectorName) {
               for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {

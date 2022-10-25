@@ -1,5 +1,5 @@
 import React from 'react'
-import { wire, useActions, useFuse } from "react-diffuse";
+import { wire, useActions, useFuse, useSelectors, useFuseSelector } from "react-diffuse";
 import { AReducer, AsyncReducer } from "./StateManagement/States";
 
 function randomColor() {
@@ -12,6 +12,9 @@ function randomColor() {
 const CountAsync = (props) => {
   const actions = useActions(AsyncReducer)
   const fuse = useFuse(AsyncReducer)
+  const selectors = useSelectors(AsyncReducer)
+  const selection = useFuseSelector(AsyncReducer, selectors.MySelector)
+  console.log(selection)
   return (
     <div disabled={fuse.diffuse?.loading === true} style={{ backgroundColor: `${randomColor()}` }} onClick={() => {
       actions.GET_COUNT()
