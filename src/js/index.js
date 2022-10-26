@@ -54,7 +54,7 @@ function mergeSelectors(selector, currentState) {
     }
 }
 
-function useFuseSelector(store, selector) {
+function useFuseSelection(store, selector) {
     let selection = mergeSelectors(selector, StateMachine.store[store.name].getState())
     const [fuseSelection, setFuseSelection] = useState(selection)
 
@@ -143,4 +143,4 @@ const wire = (stores = []) => (Child) => {
 
 const createReducer = StateMachine.createReducer
 
-export { wire, useFuse, useActions, useDispatch, useFuseSelector, useSelectors, createReducer }
+export { wire, useFuse, useActions, useDispatch, useFuseSelection, useSelectors, createReducer }

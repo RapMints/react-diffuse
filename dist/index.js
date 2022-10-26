@@ -137,7 +137,11 @@ var StateMachine = /*#__PURE__*/function () {
           middleWare = _ref$middleWare === void 0 ? {} : _ref$middleWare;
       var that = _this;
       return {
-        createStore: function createStore(storeName) {
+        createStore: function createStore(storeName, props) {
+          if (props === void 0) {
+            props = null;
+          }
+
           var initState = _extends({},  {
             diffuse: {
               loading: false,
@@ -149,22 +153,16 @@ var StateMachine = /*#__PURE__*/function () {
           that.state[storeName] = _extends({}, initState);
           that.selectors[storeName] = {};
           that.actions[storeName] = {};
+          that.props[storeName] = props;
 
           var newActions = _extends({},  {
-            INITIALIZE_STATE: function INITIALIZE_STATE(state, payload) {
-              if (payload === void 0) {
-                payload = {};
-              }
-
-              return _extends({
-                diffuse: {
-                  loading: false,
-                  error: false
-                }
-              }, initialState, payload);
+            INITIALIZE_STATE: function INITIALIZE_STATE(_ref2) {
+              var _ref2$payload = _ref2.payload,
+                  payload = _ref2$payload === void 0 ? {} : _ref2$payload;
+              return _extends({}, initState, payload);
             }
           },  {
-            LOADING: function LOADING(_ref2) {
+            LOADING: function LOADING(_ref3) {
               return {
                 diffuse: {
                   loading: true,
@@ -172,8 +170,8 @@ var StateMachine = /*#__PURE__*/function () {
                 }
               };
             },
-            SUCCESS: function SUCCESS(_ref3) {
-              var payload = _ref3.payload;
+            SUCCESS: function SUCCESS(_ref4) {
+              var payload = _ref4.payload;
               return _extends({
                 diffuse: {
                   loading: false,
@@ -181,12 +179,12 @@ var StateMachine = /*#__PURE__*/function () {
                 }
               }, payload);
             },
-            PROGRESS: function PROGRESS(_ref4) {
-              var payload = _ref4.payload;
+            PROGRESS: function PROGRESS(_ref5) {
+              var payload = _ref5.payload;
               return _extends({}, payload);
             },
-            FAIL: function FAIL(_ref5) {
-              var payload = _ref5.payload;
+            FAIL: function FAIL(_ref6) {
+              var payload = _ref6.payload;
               return _extends({
                 diffuse: {
                   loading: false,
@@ -222,9 +220,9 @@ var StateMachine = /*#__PURE__*/function () {
               return (_that$initialState = that.initialState) === null || _that$initialState === void 0 ? void 0 : _that$initialState[storeName];
             },
             dispatch: function dispatch(_temp) {
-              var _ref6 = _temp === void 0 ? {} : _temp,
-                  type = _ref6.type,
-                  payload = _ref6.payload;
+              var _ref7 = _temp === void 0 ? {} : _temp,
+                  type = _ref7.type,
+                  payload = _ref7.payload;
 
               if (that.actions[storeName][type] === undefined) {
                 console.warn("Action doesn't exist.");
@@ -263,11 +261,11 @@ var StateMachine = /*#__PURE__*/function () {
               _this === null || _this === void 0 ? true : (_this$actions = _this.actions) === null || _this$actions === void 0 ? true : delete _this$actions[storeName][actionName];
             },
             addMiddleWare: function addMiddleWare(_temp2) {
-              var _ref7 = _temp2 === void 0 ? {} : _temp2,
-                  _ref7$afterWare = _ref7.afterWare,
-                  afterWare = _ref7$afterWare === void 0 ? null : _ref7$afterWare,
-                  _ref7$beforeWare = _ref7.beforeWare,
-                  beforeWare = _ref7$beforeWare === void 0 ? null : _ref7$beforeWare;
+              var _ref8 = _temp2 === void 0 ? {} : _temp2,
+                  _ref8$afterWare = _ref8.afterWare,
+                  afterWare = _ref8$afterWare === void 0 ? null : _ref8$afterWare,
+                  _ref8$beforeWare = _ref8.beforeWare,
+                  beforeWare = _ref8$beforeWare === void 0 ? null : _ref8$beforeWare;
 
               if (afterWare !== null) {
                 var _that$middleWare;
@@ -354,11 +352,11 @@ var StateMachine = /*#__PURE__*/function () {
     };
 
     this.dispatch = function (storeName) {
-      return function (_ref8) {
-        var _ref8$type = _ref8.type,
-            type = _ref8$type === void 0 ? '' : _ref8$type,
-            _ref8$payload = _ref8.payload,
-            payload = _ref8$payload === void 0 ? null : _ref8$payload;
+      return function (_ref9) {
+        var _ref9$type = _ref9.type,
+            type = _ref9$type === void 0 ? '' : _ref9$type,
+            _ref9$payload = _ref9.payload,
+            payload = _ref9$payload === void 0 ? null : _ref9$payload;
 
         try {
           var _this$middleWare$stor, _this$middleWare, _this$middleWare$stor2, _this$middleWare$stor3, _this$middleWare2, _this$middleWare2$sto;
@@ -463,7 +461,8 @@ var StateMachine = /*#__PURE__*/function () {
     this.store = {};
     this.storeDict = [];
     this.selectors = {};
-    this.history = [];
+    this.history = {};
+    this.props = {};
   }
 
   var _proto = StateMachine.prototype;
@@ -545,11 +544,11 @@ var StateMachine = /*#__PURE__*/function () {
   _proto.getFromMiddleWare = function getFromMiddleWare(storeName) {
     var _this2 = this;
 
-    return Promise.resolve(function (middleWare, _ref9) {
-      var _ref9$type = _ref9.type,
-          type = _ref9$type === void 0 ? '' : _ref9$type,
-          _ref9$payload = _ref9.payload,
-          payload = _ref9$payload === void 0 ? null : _ref9$payload;
+    return Promise.resolve(function (middleWare, _ref10) {
+      var _ref10$type = _ref10.type,
+          type = _ref10$type === void 0 ? '' : _ref10$type,
+          _ref10$payload = _ref10.payload,
+          payload = _ref10$payload === void 0 ? null : _ref10$payload;
       var middleWareSelection = middleWare(storeName);
       var executeMiddleWare = middleWareSelection(_this2.getCurrentState(storeName));
       var isAsync = executeMiddleWare.constructor.name === 'AsyncFunction';
@@ -586,10 +585,12 @@ var StateMachine = /*#__PURE__*/function () {
 
       var _temp17 = function () {
         if (action instanceof Function) {
-          result = action({
+          result = action(_extends({
             state: _this4.getCurrentState(storeName),
             payload: payload
-          }, actions);
+          }, _this4.props[storeName] !== null && {
+            props: _this4.props[storeName]
+          }), actions);
 
           var _temp18 = function () {
             if (isPromise(result)) {
@@ -604,33 +605,6 @@ var StateMachine = /*#__PURE__*/function () {
       }();
 
       return Promise.resolve(_temp17 && _temp17.then ? _temp17.then(function () {
-        return result;
-      }) : result);
-    } catch (e) {
-      return Promise.reject(e);
-    }
-  };
-
-  _proto.runAsyncAction = function runAsyncAction(storeName, action, payload) {
-    try {
-      var _this6 = this;
-
-      var result;
-      var store = _this6.store[storeName];
-      var actions = store.getActions();
-
-      var _temp20 = function () {
-        if (action instanceof Function) {
-          return Promise.resolve(action({
-            state: _this6.getCurrentState(storeName),
-            payload: payload
-          }, actions)).then(function (_action) {
-            result = _action;
-          });
-        }
-      }();
-
-      return Promise.resolve(_temp20 && _temp20.then ? _temp20.then(function () {
         return result;
       }) : result);
     } catch (e) {
@@ -711,7 +685,7 @@ function mergeSelectors(selector, currentState) {
   });
 }
 
-function useFuseSelector(store, selector) {
+function useFuseSelection(store, selector) {
   var selection = mergeSelectors(selector, StateMachine$1.store[store.name].getState());
 
   var _useState2 = React.useState(selection),
@@ -790,7 +764,7 @@ exports.createReducer = createReducer;
 exports.useActions = useActions;
 exports.useDispatch = useDispatch;
 exports.useFuse = useFuse;
-exports.useFuseSelector = useFuseSelector;
+exports.useFuseSelection = useFuseSelection;
 exports.useSelectors = useSelectors;
 exports.wire = wire;
 //# sourceMappingURL=index.js.map

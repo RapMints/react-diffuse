@@ -13,13 +13,14 @@ class StateMachine {
         this.store = {}
         this.storeDict = []
         this.selectors = {}
-        this.history = []
+        this.history = {}
+        this.props = {}
     }
 
     createReducer = ({ initialState = {}, actions = {}, selectors = {}, middleWare = {} }) => {
         const that = this
         return {
-            createStore: (storeName) => {
+            createStore: (storeName, props = null) => {
                 const initState = {
                     ...(useDiffuseAsync === true && {
                         diffuse: {
@@ -44,15 +45,13 @@ class StateMachine {
 
                 that.actions[storeName] = {}
 
+                that.props[storeName] = props
+
                 // Set store actions
                 let newActions = {
-                    ...(useDiffuseInitializeState === true && {INITIALIZE_STATE: (state, payload = {}) => {
+                    ...(useDiffuseInitializeState === true && {INITIALIZE_STATE: ({state, payload = {}}) => {
                         return {
-                            diffuse: {
-                                loading: false,
-                                error: false
-                            },
-                            ...initialState,
+                            ...initState,
                             ...payload
                         }
                     }}),
@@ -332,32 +331,14 @@ class StateMachine {
             // Get result of action
             result = action({
                 state: this.getCurrentState(storeName),
-                payload: payload
+                payload: payload,
+                ...(this.props[storeName] !== null && {props: this.props[storeName]})
             }, actions)
 
+            // If is async
             if (isPromise(result)) {
                 result = await result
             }
-        }
-
-        return result
-    }
-
-    async runAsyncAction(storeName, action, payload) {
-        // Initialize results
-        let result
-        let store = this.store[storeName]
-        let actions = store.getActions()
-        // If action is a function
-        if (action instanceof Function) {
-            // Await result of action
-            result = await action(
-                {
-                    state: this.getCurrentState(storeName),
-                    payload: payload
-                },
-                actions
-            )
         }
 
         return result
