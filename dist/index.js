@@ -134,20 +134,35 @@ var StateMachine = /*#__PURE__*/function () {
           _ref$selectors = _ref.selectors,
           selectors = _ref$selectors === void 0 ? {} : _ref$selectors,
           _ref$middleWare = _ref.middleWare,
-          middleWare = _ref$middleWare === void 0 ? {} : _ref$middleWare;
+          middleWare = _ref$middleWare === void 0 ? {} : _ref$middleWare,
+          _ref$options = _ref.options,
+          options = _ref$options === void 0 ? {} : _ref$options;
       var that = _this;
+      var defaultOptions = {
+        useDiffuseAsync: true,
+        useDiffuseInitializeState: true,
+        useDiffuseWebsocket: true,
+        plugins: []
+      };
+
+      var config = _extends({}, defaultOptions, options);
+
       return {
         createStore: function createStore(storeName, props) {
           if (props === void 0) {
             props = null;
           }
 
-          var initState = _extends({},  {
-            diffuse: {
+          var diffuseState = {
+            diffuse: _extends({}, config.useDiffuseAsync === true && {
               loading: false,
               error: false
-            }
-          }, initialState);
+            }, config.useDiffuseWebsocket === true && {
+              connectionStatus: 'DISCONNECTED'
+            })
+          };
+
+          var initState = _extends({}, Object.keys(diffuseState.diffuse).length !== 0 && _extends({}, diffuseState), initialState);
 
           that.initialState[storeName] = _extends({}, initState);
           that.state[storeName] = _extends({}, initState);
@@ -155,28 +170,30 @@ var StateMachine = /*#__PURE__*/function () {
           that.actions[storeName] = {};
           that.props[storeName] = props;
 
-          var newActions = _extends({},  {
+          var newActions = _extends({}, config.useDiffuseInitializeState === true && {
             INITIALIZE_STATE: function INITIALIZE_STATE(_ref2) {
               var _ref2$payload = _ref2.payload,
                   payload = _ref2$payload === void 0 ? {} : _ref2$payload;
               return _extends({}, initState, payload);
             }
-          },  {
+          }, config.useDiffuseAsync === true && {
             LOADING: function LOADING(_ref3) {
+              var state = _ref3.state;
               return {
-                diffuse: {
+                diffuse: _extends({}, state.diffuse, {
                   loading: true,
                   error: false
-                }
+                })
               };
             },
             SUCCESS: function SUCCESS(_ref4) {
-              var payload = _ref4.payload;
+              var state = _ref4.state,
+                  payload = _ref4.payload;
               return _extends({
-                diffuse: {
+                diffuse: _extends({}, state.diffuse, {
                   loading: false,
                   error: false
-                }
+                })
               }, payload);
             },
             PROGRESS: function PROGRESS(_ref5) {
@@ -184,12 +201,49 @@ var StateMachine = /*#__PURE__*/function () {
               return _extends({}, payload);
             },
             FAIL: function FAIL(_ref6) {
-              var payload = _ref6.payload;
+              var state = _ref6.state,
+                  payload = _ref6.payload;
               return _extends({
-                diffuse: {
+                diffuse: _extends({}, state.diffuse, {
                   loading: false,
                   error: true
-                }
+                })
+              }, payload);
+            }
+          }, config.useDiffuseWebsocket === true && {
+            MESSAGE_RECIEVED: function MESSAGE_RECIEVED(_ref7) {
+              var payload = _ref7.payload;
+              return _extends({}, payload);
+            },
+            EMIT: function EMIT(_ref8) {
+              var payload = _ref8.payload;
+              return _extends({}, payload);
+            },
+            CONNECT: function CONNECT(_ref9) {
+              var state = _ref9.state,
+                  payload = _ref9.payload;
+              return _extends({
+                diffuse: _extends({}, state.diffuse, {
+                  connectionStatus: 'CONNECTED'
+                })
+              }, payload);
+            },
+            DISCONNECT: function DISCONNECT(_ref10) {
+              var state = _ref10.state,
+                  payload = _ref10.payload;
+              return _extends({
+                diffuse: _extends({}, state.diffuse, {
+                  connectionStatus: 'DISCONNECTED'
+                })
+              }, payload);
+            },
+            CONNECT_ERROR: function CONNECT_ERROR(_ref11) {
+              var state = _ref11.state,
+                  payload = _ref11.payload;
+              return _extends({
+                diffuse: _extends({}, state.diffuse, {
+                  connectionStatus: 'FAILED'
+                })
               }, payload);
             }
           }, actions);
@@ -220,9 +274,9 @@ var StateMachine = /*#__PURE__*/function () {
               return (_that$initialState = that.initialState) === null || _that$initialState === void 0 ? void 0 : _that$initialState[storeName];
             },
             dispatch: function dispatch(_temp) {
-              var _ref7 = _temp === void 0 ? {} : _temp,
-                  type = _ref7.type,
-                  payload = _ref7.payload;
+              var _ref12 = _temp === void 0 ? {} : _temp,
+                  type = _ref12.type,
+                  payload = _ref12.payload;
 
               if (that.actions[storeName][type] === undefined) {
                 console.warn("Action doesn't exist.");
@@ -261,11 +315,11 @@ var StateMachine = /*#__PURE__*/function () {
               _this === null || _this === void 0 ? true : (_this$actions = _this.actions) === null || _this$actions === void 0 ? true : delete _this$actions[storeName][actionName];
             },
             addMiddleWare: function addMiddleWare(_temp2) {
-              var _ref8 = _temp2 === void 0 ? {} : _temp2,
-                  _ref8$afterWare = _ref8.afterWare,
-                  afterWare = _ref8$afterWare === void 0 ? null : _ref8$afterWare,
-                  _ref8$beforeWare = _ref8.beforeWare,
-                  beforeWare = _ref8$beforeWare === void 0 ? null : _ref8$beforeWare;
+              var _ref13 = _temp2 === void 0 ? {} : _temp2,
+                  _ref13$afterWare = _ref13.afterWare,
+                  afterWare = _ref13$afterWare === void 0 ? null : _ref13$afterWare,
+                  _ref13$beforeWare = _ref13.beforeWare,
+                  beforeWare = _ref13$beforeWare === void 0 ? null : _ref13$beforeWare;
 
               if (afterWare !== null) {
                 var _that$middleWare;
@@ -352,11 +406,11 @@ var StateMachine = /*#__PURE__*/function () {
     };
 
     this.dispatch = function (storeName) {
-      return function (_ref9) {
-        var _ref9$type = _ref9.type,
-            type = _ref9$type === void 0 ? '' : _ref9$type,
-            _ref9$payload = _ref9.payload,
-            payload = _ref9$payload === void 0 ? null : _ref9$payload;
+      return function (_ref14) {
+        var _ref14$type = _ref14.type,
+            type = _ref14$type === void 0 ? '' : _ref14$type,
+            _ref14$payload = _ref14.payload,
+            payload = _ref14$payload === void 0 ? null : _ref14$payload;
 
         try {
           var _this$middleWare$stor, _this$middleWare, _this$middleWare$stor2, _this$middleWare$stor3, _this$middleWare2, _this$middleWare2$sto;
@@ -544,11 +598,11 @@ var StateMachine = /*#__PURE__*/function () {
   _proto.getFromMiddleWare = function getFromMiddleWare(storeName) {
     var _this2 = this;
 
-    return Promise.resolve(function (middleWare, _ref10) {
-      var _ref10$type = _ref10.type,
-          type = _ref10$type === void 0 ? '' : _ref10$type,
-          _ref10$payload = _ref10.payload,
-          payload = _ref10$payload === void 0 ? null : _ref10$payload;
+    return Promise.resolve(function (middleWare, _ref15) {
+      var _ref15$type = _ref15.type,
+          type = _ref15$type === void 0 ? '' : _ref15$type,
+          _ref15$payload = _ref15.payload,
+          payload = _ref15$payload === void 0 ? null : _ref15$payload;
       var middleWareSelection = middleWare(storeName);
       var executeMiddleWare = middleWareSelection(_this2.getCurrentState(storeName));
       var isAsync = executeMiddleWare.constructor.name === 'AsyncFunction';

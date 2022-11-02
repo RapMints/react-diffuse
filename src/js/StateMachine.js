@@ -1,8 +1,3 @@
-/*************** CONFIG ***************/
-const useDiffuseAsync = true
-const useDiffuseInitializeState = true
-/**************************************/
-
 class StateMachine {
     constructor() {
         this.state = {}
@@ -17,17 +12,37 @@ class StateMachine {
         this.props = {}
     }
 
-    createReducer = ({ initialState = {}, actions = {}, selectors = {}, middleWare = {} }) => {
+    createReducer = ({ initialState = {}, actions = {}, selectors = {}, middleWare = {}, options = {}}) => {
         const that = this
+
+        const defaultOptions = {
+            useDiffuseAsync: true,
+            useDiffuseInitializeState: true,
+            useDiffuseWebsocket: true,
+            plugins: []
+        }
+
+        const config = {
+            ...defaultOptions,
+            ...options
+        }
+
         return {
             createStore: (storeName, props = null) => {
-                const initState = {
-                    ...(useDiffuseAsync === true && {
-                        diffuse: {
+                const diffuseState = {
+                    diffuse: {
+                        ...(config.useDiffuseAsync === true && {
                             loading: false,
                             error: false
-                        },
-                    }),
+                        }),
+                        ...(config.useDiffuseWebsocket === true && {
+                            connectionStatus: 'DISCONNECTED'
+                        })
+                    }
+                }
+
+                const initState = {
+                    ...(Object.keys(diffuseState.diffuse).length !== 0 && {...diffuseState}),
                     ...initialState
                 }
 
@@ -49,16 +64,17 @@ class StateMachine {
 
                 // Set store actions
                 let newActions = {
-                    ...(useDiffuseInitializeState === true && {INITIALIZE_STATE: ({state, payload = {}}) => {
+                    ...(config.useDiffuseInitializeState === true && {INITIALIZE_STATE: ({state, payload = {}}) => {
                         return {
                             ...initState,
                             ...payload
                         }
                     }}),
-                    ...(useDiffuseAsync === true && {  
+                    ...(config.useDiffuseAsync === true && {  
                         LOADING: ({state}) => {
                             return {
                                 diffuse: {
+                                    ...state.diffuse,
                                     loading: true,
                                     error: false
                                 }
@@ -67,6 +83,7 @@ class StateMachine {
                         SUCCESS: ({state, payload}) => {
                             return {
                                 diffuse: {
+                                    ...state.diffuse,
                                     loading: false,
                                     error: false
                                 },
@@ -81,12 +98,52 @@ class StateMachine {
                         FAIL: ({state, payload}) => {
                             return {
                                 diffuse: {
+                                    ...state.diffuse,
                                     loading: false,
                                     error: true
                                 },
                                 ...payload
                             }
                         },
+                    }),
+                    ...(config.useDiffuseWebsocket === true && {
+                        MESSAGE_RECIEVED: ({state, payload}) => {
+                            return {
+                                ...payload
+                            }
+                        },
+                        EMIT: ({state, payload}) => {
+                            return {
+                                ...payload
+                            }
+                        },
+                        CONNECT: ({state, payload}) => {
+                            return {
+                                diffuse: {
+                                    ...state.diffuse,
+                                    connectionStatus: 'CONNECTED'
+                                },
+                                ...payload
+                            }
+                        },
+                        DISCONNECT: ({state, payload}) => {
+                            return {
+                                diffuse: {
+                                    ...state.diffuse,
+                                    connectionStatus: 'DISCONNECTED'
+                                },
+                                ...payload
+                            }
+                        },
+                        CONNECT_ERROR: ({state, payload}) => {
+                            return {
+                                diffuse: {
+                                    ...state.diffuse,
+                                    connectionStatus: 'FAILED'
+                                },
+                                ...payload
+                            }
+                        }
                     }),
                     ...actions
                 }

@@ -9,6 +9,7 @@ EXAMPLE: https://codesandbox.io/s/quizzical-ully-2f3bte
 3. Create Reducer
 4. Actions
     1. Chaining Async Actions
+    2. Chaining Websocket Actions
 5. CreateStore
 6. Hooks
     1. useFuse
@@ -108,7 +109,128 @@ The second object the action functions can recieve are actions which can be used
             }
         }
 ```
-In the example above example GET_COUNT is an async function and is chaining other actions such as LOADING, PROGRESS, and SUCCESS or FAIL. You may use any action you've created in chaining
+In the example above example GET_COUNT is an async function and is chaining other actions such as LOADING, PROGRESS, and SUCCESS or FAIL. You may use any action you've created in chaining.
+
+* LOADING will change the state to 
+```
+    state: {
+        diffuse: {
+            ...,
+            loading: true
+        }
+        // Some "payload", if any
+        ...
+    }
+```
+* PROGRESS will change the state to 
+```
+    state: {
+        ...
+        // Some "payload", if any
+        ...
+    }
+```
+* SUCCESS will change the state to 
+```
+    state: {
+        diffuse: {
+            ...,
+            loading: false
+            error: false
+        }
+        // Some "payload", if any
+        ...
+    }
+```
+
+* FAIL will change the state to 
+```
+    state: {
+        diffuse: {
+            ...,
+            loading: false,
+            error: true
+        }
+        // Some "payload", if any
+        ...
+    }
+```
+
+#### <b>Chaining Websocket Actions</b>
+Similary, you can chain websocket actions just like async actions. There are 5 predetermined actions you can use when handling websockets: CONNECT, CONNECT_ERROR, MESSAGE_RECEIVED, DISCONNECT, & EMIT. Note that you can replace these action names.
+Below is an example of a SUBSCRIBE, UNSUBSCRIBE, & EMIT action using socket io:
+```
+    SUBSCRIBE: ({state, payload}, {CONNECT, CONNECT_ERROR}) => {
+        socket.on('connection', data => {
+            CONNECT()
+        })
+
+        socket.on('msg', (data) => {
+            MESSAGE_RECIEVED({message: data})
+        })
+
+        socket.on("connect_error", (err) => {
+            console.log(`connect_error due to ${err.message}`);
+            CONNECT_ERROR()
+        })
+    },
+    UNSUBSCRIBE: ({state, payload}, {DISCONNECT}) => {
+        socket.disconnect()
+        DISCONNECT()
+    }
+    EMIT_USER: ({state, payload}) => {
+        socket.emit("send_user", payload.username)
+    }
+```
+* CONNECT will change the state to 
+```
+    state: {
+        diffuse: {
+            ...,
+            connectionStatus: "CONNECTED"
+        }
+        // Some "payload", if any
+        ...
+    }
+```
+* DISCONNECT will change the state to 
+```
+    state: {
+        diffuse: {
+            ...,
+            connectionStatus: "DISCONNECTED"
+        }
+        // Some "payload", if any
+        ...
+    }
+```
+* CONNECT_ERROR will change the state to 
+```
+    state: {
+        diffuse: {
+            ...,
+            connectionStatus: "FAILED"
+        }
+        // Some "payload", if any
+        ...
+    }
+```
+* MESSAGE_RECIEVED will change the state to 
+```
+    state: {
+        ...
+        // Some "payload", if any
+        ...
+    }
+```
+* EMIT will change the state to 
+```
+    state: {
+        ...
+        // Some "payload", if any
+        ...
+    }
+```
 
 ### createStore
 Once you've created your reducer you can use it to create stores like below:

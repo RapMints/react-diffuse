@@ -1,6 +1,11 @@
 import logger from './middlewares/logger'
 import axios from 'axios'
 import { createReducer } from 'react-diffuse'
+import socketClient  from "socket.io-client";
+
+const SERVER = "http://127.0.0.1:4002";
+
+const socket = socketClient(SERVER)
 
 const reducer = createReducer({
     initialState: {
@@ -17,6 +22,17 @@ const reducer = createReducer({
             return {
                 item: state.item - 1
             }
+        },
+        SUBSCRIBE: ({state, payload}, {CONNECT, CONNECT_ERROR}) => {
+          socket.on('connection', data => {
+            console.log('connected')
+            CONNECT()
+          })
+
+          socket.on("connect_error", (err) => {
+            console.log(`connect_error due to ${err.message}`);
+            CONNECT_ERROR()
+          })
         },
         GET_COUNT: async function({ state, payload }, {LOADING, PROGRESS, SUCCESS, FAIL}) {
           try {
