@@ -1,5 +1,5 @@
 import React from 'react'
-import { useDispatch, useFuse, wire } from "react-diffuse";
+import { useFuse, useActions} from "react-diffuse";
 import { AReducer, BReducer } from "./StateManagement/States";
 function randomColor() {
   const letters = "0123456789ABCDEF";
@@ -9,16 +9,15 @@ function randomColor() {
 }
 
 const Number = (props) => {
-  const setValue = useDispatch('BReducer')
-  const listenForThis = useFuse('AReducer')
-  const fuse = useFuse('BReducer')
+  const actions = useActions(BReducer)
+  const listenForThis = useFuse(AReducer)
+  const fuse = useFuse(BReducer)
   const {item} = fuse
-
   return (
     <div
       style={{ backgroundColor: `${randomColor()}` }}
       onClick={async () =>
-        setValue({type: 'INCREMENT'})
+        actions.INCREMENT()
       }
     >
       Number: {item} Times clicked! Color changes on click

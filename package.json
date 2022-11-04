@@ -1,14 +1,13 @@
 {
   "name": "react-diffuse",
-  "version": "1.3.0",
+  "version": "2.0.0",
   "description": "Light weight global state management solution",
   "author": "RapMints",
   "license": "MIT",
   "repository": "RapMints/react-diffuse",
   "main": "dist/index.js",
   "module": "dist/index.modern.js",
-  "source": "src/ts/index.js",
-  "types": "lib/types.d.ts",
+  "source": "src/js/index.js",
   "engines": {
     "node": ">=10"
   },

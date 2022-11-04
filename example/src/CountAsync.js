@@ -1,5 +1,5 @@
-import React from 'react'
-import { wire } from "react-diffuse";
+import React, {  useLayoutEffect } from 'react'
+import { useActions, useFuse, useSelectors, useFuseSelection } from "react-diffuse";
 import { AsyncReducer } from "./StateManagement/States";
 
 function randomColor() {
@@ -10,22 +10,30 @@ function randomColor() {
 }
 
 const CountAsync = (props) => {
-  console.log('CountAsync', props.AsyncReducer?.store.percent)
+  const actions = useActions(AsyncReducer)
+  
+  const fuse = useFuse(AsyncReducer)
+  const selectors = useSelectors(AsyncReducer)
+  const selection = useFuseSelection(AsyncReducer, selectors.MySelector)
+  
+  useLayoutEffect(() => {
+    actions.SUBSCRIBE()
+  }, [])
+  
   return (
-    <div disabled={props.AsyncReducer?.store?.diffuse?.loading === true} style={{ backgroundColor: `${randomColor()}` }} onClick={() => {
-      props.AsyncReducer.dispatch({type: 'GET_COUNT', payload: {
-        test: "SomeText"
-      }})
+    <div disabled={fuse.diffuse?.loading === true} style={{ backgroundColor: `${randomColor()}` }} onClick={() => {
+      actions.GET_COUNT()
       }
       }
     >
       NumberAsync:{" "}
-      {props.AsyncReducer?.store?.diffuse?.loading === true
+      {fuse.diffuse?.loading === true
         ? "loading"
-        : props.AsyncReducer.store.item}{" "}
-      Times clicked! Color changes on click from NumberAsync or Text
+        : fuse.item}{" "}
+      Times clicked! Color changes on click from NumberAsync or Text. WebSocketConnectionStatus {fuse.diffuse.connectionStatus}
+      <br></br>SELECTION: {selection}
     </div>
   );
 };
 
-export default wire({fuseName: [AsyncReducer, 'AReducer'], Child: CountAsync})
+export default CountAsync
