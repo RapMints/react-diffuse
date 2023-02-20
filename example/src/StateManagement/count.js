@@ -4,7 +4,8 @@ import logger from "./middlewares/logger";
 const reducer = createReducer({
   initialState: { item: 0 },
   actions: {
-    INCREMENT: ({state, payload}) => {
+    INCREMENT: ({state, payload}, {}, stateMachine) => {
+      console.log(stateMachine.BReducer.getState())
       return {
         item: state.item + 1
       };

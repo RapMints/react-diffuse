@@ -3,9 +3,9 @@ import axios from 'axios'
 import { createReducer } from 'react-diffuse'
 import socketClient  from "socket.io-client";
 
-const SERVER = "http://127.0.0.1:4002";
+// const SERVER = "http://127.0.0.1:4002";
 
-const socket = socketClient(SERVER)
+// const socket = socketClient(SERVER)
 
 const reducer = createReducer({
     initialState: {
@@ -23,7 +23,7 @@ const reducer = createReducer({
                 item: state.item - 1
             }
         },
-        SUBSCRIBE: ({state, payload}, {CONNECT, CONNECT_ERROR}) => {
+        /* SUBSCRIBE: ({state, payload}, {CONNECT, CONNECT_ERROR}) => {
           socket.on('connection', data => {
             console.log('connected')
             CONNECT()
@@ -33,7 +33,7 @@ const reducer = createReducer({
             console.log(`connect_error due to ${err.message}`);
             CONNECT_ERROR()
           })
-        },
+        }, */
         GET_COUNT: async function({ state, payload }, {LOADING, PROGRESS, SUCCESS, FAIL}) {
           try {
             LOADING();

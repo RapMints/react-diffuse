@@ -380,8 +380,9 @@ class StateMachine {
     async runAction(storeName, action, payload) {
         // Initialize results
         let result
-        let store = this.store[storeName]
-        let actions = store.getActions()
+        const stateMachine = this.store
+        const store = stateMachine[storeName]
+        const actions = store.getActions()
 
         // If action is a function
         if (action instanceof Function) {
@@ -390,7 +391,7 @@ class StateMachine {
                 state: this.getCurrentState(storeName),
                 payload: payload,
                 ...(this.props[storeName] !== null && {props: this.props[storeName]})
-            }, actions)
+            }, actions, stateMachine)
 
             // If is async
             if (isPromise(result)) {
