@@ -380,9 +380,22 @@ class StateMachine {
     async runAction(storeName, action, payload) {
         // Initialize results
         let result
-        const stateMachine = this.store
-        const store = stateMachine[storeName]
-        const actions = store.getActions()
+        
+        // Create stores object
+        const stores = Object.keys(this.store).reduce((previous, current) => {
+            previous[this.store[current].name] = {
+                state: this.store[current].getState(),
+                actions: this.store[current].getActions()
+            }
+
+            return previous
+        }, {})
+
+        // Get store
+        const store = stores[storeName]
+        
+        // Get store actions
+        const actions = store.actions
 
         // If action is a function
         if (action instanceof Function) {
@@ -391,7 +404,7 @@ class StateMachine {
                 state: this.getCurrentState(storeName),
                 payload: payload,
                 ...(this.props[storeName] !== null && {props: this.props[storeName]})
-            }, actions, stateMachine)
+            }, actions, stores)
 
             // If is async
             if (isPromise(result)) {

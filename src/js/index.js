@@ -32,15 +32,19 @@ function useSelectors(store) {
 }
 
 function mergeSelectors(selector, currentState) {
-    const selectors = [...selector]
-    let lastSelector = selectors.pop()
-    let value
-    let stateSelections
+    let stateSelections, value
     
-    if (selectors.length === 0) {
-        value = lastSelector(currentState)
+    if (selector.length === 0) {
+        throw 'DiffuseError: No selectors specified'
+    }
+
+    if (selector.length === 1) {
+        value = selector[0](currentState)
     }
     else {
+        const selectors = [...selector]
+        let lastSelector = selectors.pop()
+        
         stateSelections = selectors.map((arg) => {
             return arg(currentState)
         })

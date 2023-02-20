@@ -563,9 +563,15 @@ var StateMachine = /*#__PURE__*/function () {
     try {
       var _this3 = this;
       var result;
-      var stateMachine = _this3.store;
-      var store = stateMachine[storeName];
-      var actions = store.getActions();
+      var stores = Object.keys(_this3.store).reduce(function (previous, current) {
+        previous[_this3.store[current].name] = {
+          state: _this3.store[current].getState(),
+          actions: _this3.store[current].getActions()
+        };
+        return previous;
+      }, {});
+      var store = stores[storeName];
+      var actions = store.actions;
       var _temp14 = function () {
         if (action instanceof Function) {
           result = action(_extends({
@@ -573,7 +579,7 @@ var StateMachine = /*#__PURE__*/function () {
             payload: payload
           }, _this3.props[storeName] !== null && {
             props: _this3.props[storeName]
-          }), actions, stateMachine);
+          }), actions, stores);
           var _temp13 = function () {
             if (isPromise(result)) {
               return Promise.resolve(result).then(function (_result) {
@@ -633,13 +639,15 @@ function useSelectors(store) {
   return StateMachine$1.store[store.name].getSelectors();
 }
 function mergeSelectors(selector, currentState) {
-  var selectors = [].concat(selector);
-  var lastSelector = selectors.pop();
-  var value;
-  var stateSelections;
-  if (selectors.length === 0) {
-    value = lastSelector(currentState);
+  var stateSelections, value;
+  if (selector.length === 0) {
+    throw 'DiffuseError: No selectors specified';
+  }
+  if (selector.length === 1) {
+    value = selector[0](currentState);
   } else {
+    var selectors = [].concat(selector);
+    var lastSelector = selectors.pop();
     stateSelections = selectors.map(function (arg) {
       return arg(currentState);
     });
