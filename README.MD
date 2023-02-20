@@ -168,7 +168,7 @@ In the example above example GET_COUNT is an async function and is chaining othe
     }
 ```
 #### <b>Chaining Multiple Store Actions</b>
-Additionally, actions from one store can use actions from anther store. Similar to the above examples of a chaining actions, except you can use actions from other stores.
+Additionally, actions from one store can use actions from another store. Similar to the above examples of a chaining actions, except you can use actions from other stores.
 ```
     actions: { 
             INCREMENT: ({state}, actions, stores) => {
