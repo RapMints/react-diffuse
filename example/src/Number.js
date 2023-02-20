@@ -1,5 +1,5 @@
 import React from 'react'
-import { useFuse, useActions} from "react-diffuse";
+import { useFuse, useActions, useSelectors, useFuseSelection} from "react-diffuse";
 import { AReducer, BReducer } from "./StateManagement/States";
 function randomColor() {
   const letters = "0123456789ABCDEF";
@@ -12,6 +12,8 @@ const Number = (props) => {
   const actions = useActions(BReducer)
   const listenForThis = useFuse(AReducer)
   const fuse = useFuse(BReducer)
+  
+  
   const {item} = fuse
   return (
     <div
@@ -21,7 +23,7 @@ const Number = (props) => {
       }
     >
       Number: {item} Times clicked! Color changes on click
-      from Number or Text
+      from Number or Text (INCREMENTS In AReducer and BReducer)
     </div>
   );
 };

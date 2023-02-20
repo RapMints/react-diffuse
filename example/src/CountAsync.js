@@ -17,7 +17,7 @@ const CountAsync = (props) => {
   const selection = useFuseSelection(AsyncReducer, selectors.MySelector)
   
   useLayoutEffect(() => {
-    actions.SUBSCRIBE()
+    //actions.SUBSCRIBE()
   }, [])
   
   return (

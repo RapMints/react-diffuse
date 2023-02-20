@@ -1,6 +1,6 @@
 /* eslint-disable react/react-in-jsx-scope */
 import React, { useEffect, useState } from "react";
-import { useActions, useDispatch, useFuse, wire } from "react-diffuse";
+import { useActions, useDispatch, useFuse, useFuseSelection, useSelectors } from "react-diffuse";
 import { AReducer } from "./StateManagement/States";
 
 function randomColor() {
@@ -29,10 +29,10 @@ const Text2 = (props) => {
 };
 
 const Text = (props) => {
-  const {item} = useFuse(AReducer)
-  const setValue = useDispatch(AReducer)
   const actions = useActions(AReducer)
-
+  const selectors = useSelectors(AReducer)
+  const selection = useFuseSelection(AReducer, selectors.MySelector)
+  
   return (
     <div
       style={{ backgroundColor: `${randomColor()}` }}
@@ -40,7 +40,7 @@ const Text = (props) => {
         actions.INCREMENT()
       }
     >
-      Text: {item} Times clicked! Color changes on click
+      Text: {selection} Times clicked! Color changes on click
       from Text
       <Text2 />
     </div>

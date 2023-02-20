@@ -20,7 +20,8 @@ EXAMPLE: https://codesandbox.io/s/wispy-leaf-iyp9k6
 3. Create Reducer
 4. Actions
     1. Chaining Async Actions
-    2. Chaining Websocket Actions
+    2. Chaining Multiple Store Actions
+    3. Chaining Websocket Actions
 5. CreateStore
 6. Hooks
     1. useFuse
@@ -166,6 +167,20 @@ In the example above example GET_COUNT is an async function and is chaining othe
         ...
     }
 ```
+#### <b>Chaining Multiple Store Actions</b>
+Additionally, actions from one store can use actions from another store. Similar to the above examples of a chaining actions, except you can use actions from other stores.
+```
+    actions: { 
+            INCREMENT: ({state}, actions, stores) => {
+                // Run action for another store
+                stores.BReducer.actions.DECREMENT()
+
+                // Run action for another store
+                stores.CReducer.actions.DECREMENT()
+            },
+        }
+```
+NOTE: This design pattern will trigger a rerender on any component using BReducer or CReducer however, this is being called from AReducer
 
 #### <b>Chaining Websocket Actions</b>
 Similary, you can chain websocket actions just like async actions. There are 5 predetermined actions you can use when handling websockets: CONNECT, CONNECT_ERROR, MESSAGE_RECEIVED, DISCONNECT, & EMIT. Note that you can replace these action names.

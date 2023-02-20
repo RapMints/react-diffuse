@@ -18,7 +18,8 @@
     "socket.io-client": "^4.5.3"
   },
   "devDependencies": {
-    "@babel/plugin-syntax-object-rest-spread": "^7.8.3"
+    "@babel/plugin-syntax-object-rest-spread": "^7.8.3",
+    "postcss-flexbugs-fixes": "^5.0.2"
   },
   "eslintConfig": {
     "extends": "react-app"

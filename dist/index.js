@@ -7,14 +7,12 @@ function _extends() {
   _extends = Object.assign ? Object.assign.bind() : function (target) {
     for (var i = 1; i < arguments.length; i++) {
       var source = arguments[i];
-
       for (var key in source) {
         if (Object.prototype.hasOwnProperty.call(source, key)) {
           target[key] = source[key];
         }
       }
     }
-
     return target;
   };
   return _extends.apply(this, arguments);
@@ -125,18 +123,17 @@ const _asyncIteratorSymbol = /*#__PURE__*/ typeof Symbol !== "undefined" ? (Symb
 var StateMachine = /*#__PURE__*/function () {
   function StateMachine() {
     var _this = this;
-
     this.createReducer = function (_ref) {
       var _ref$initialState = _ref.initialState,
-          initialState = _ref$initialState === void 0 ? {} : _ref$initialState,
-          _ref$actions = _ref.actions,
-          actions = _ref$actions === void 0 ? {} : _ref$actions,
-          _ref$selectors = _ref.selectors,
-          selectors = _ref$selectors === void 0 ? {} : _ref$selectors,
-          _ref$middleWare = _ref.middleWare,
-          middleWare = _ref$middleWare === void 0 ? {} : _ref$middleWare,
-          _ref$options = _ref.options,
-          options = _ref$options === void 0 ? {} : _ref$options;
+        initialState = _ref$initialState === void 0 ? {} : _ref$initialState,
+        _ref$actions = _ref.actions,
+        actions = _ref$actions === void 0 ? {} : _ref$actions,
+        _ref$selectors = _ref.selectors,
+        selectors = _ref$selectors === void 0 ? {} : _ref$selectors,
+        _ref$middleWare = _ref.middleWare,
+        middleWare = _ref$middleWare === void 0 ? {} : _ref$middleWare,
+        _ref$options = _ref.options,
+        options = _ref$options === void 0 ? {} : _ref$options;
       var that = _this;
       var defaultOptions = {
         useDiffuseAsync: true,
@@ -144,15 +141,12 @@ var StateMachine = /*#__PURE__*/function () {
         useDiffuseWebsocket: true,
         plugins: []
       };
-
       var config = _extends({}, defaultOptions, options);
-
       return {
         createStore: function createStore(storeName, props) {
           if (props === void 0) {
             props = null;
           }
-
           var diffuseState = {
             diffuse: _extends({}, config.useDiffuseAsync === true && {
               loading: false,
@@ -161,19 +155,16 @@ var StateMachine = /*#__PURE__*/function () {
               connectionStatus: 'DISCONNECTED'
             })
           };
-
           var initState = _extends({}, Object.keys(diffuseState.diffuse).length !== 0 && _extends({}, diffuseState), initialState);
-
           that.initialState[storeName] = _extends({}, initState);
           that.state[storeName] = _extends({}, initState);
           that.selectors[storeName] = {};
           that.actions[storeName] = {};
           that.props[storeName] = props;
-
           var newActions = _extends({}, config.useDiffuseInitializeState === true && {
             INITIALIZE_STATE: function INITIALIZE_STATE(_ref2) {
               var _ref2$payload = _ref2.payload,
-                  payload = _ref2$payload === void 0 ? {} : _ref2$payload;
+                payload = _ref2$payload === void 0 ? {} : _ref2$payload;
               return _extends({}, initState, payload);
             }
           }, config.useDiffuseAsync === true && {
@@ -188,7 +179,7 @@ var StateMachine = /*#__PURE__*/function () {
             },
             SUCCESS: function SUCCESS(_ref4) {
               var state = _ref4.state,
-                  payload = _ref4.payload;
+                payload = _ref4.payload;
               return _extends({
                 diffuse: _extends({}, state.diffuse, {
                   loading: false,
@@ -202,7 +193,7 @@ var StateMachine = /*#__PURE__*/function () {
             },
             FAIL: function FAIL(_ref6) {
               var state = _ref6.state,
-                  payload = _ref6.payload;
+                payload = _ref6.payload;
               return _extends({
                 diffuse: _extends({}, state.diffuse, {
                   loading: false,
@@ -221,7 +212,7 @@ var StateMachine = /*#__PURE__*/function () {
             },
             CONNECT: function CONNECT(_ref9) {
               var state = _ref9.state,
-                  payload = _ref9.payload;
+                payload = _ref9.payload;
               return _extends({
                 diffuse: _extends({}, state.diffuse, {
                   connectionStatus: 'CONNECTED'
@@ -230,7 +221,7 @@ var StateMachine = /*#__PURE__*/function () {
             },
             DISCONNECT: function DISCONNECT(_ref10) {
               var state = _ref10.state,
-                  payload = _ref10.payload;
+                payload = _ref10.payload;
               return _extends({
                 diffuse: _extends({}, state.diffuse, {
                   connectionStatus: 'DISCONNECTED'
@@ -239,7 +230,7 @@ var StateMachine = /*#__PURE__*/function () {
             },
             CONNECT_ERROR: function CONNECT_ERROR(_ref11) {
               var state = _ref11.state,
-                  payload = _ref11.payload;
+                payload = _ref11.payload;
               return _extends({
                 diffuse: _extends({}, state.diffuse, {
                   connectionStatus: 'FAILED'
@@ -247,7 +238,6 @@ var StateMachine = /*#__PURE__*/function () {
               }, payload);
             }
           }, actions);
-
           that.history[storeName] = {
             undo: [],
             redo: []
@@ -265,24 +255,20 @@ var StateMachine = /*#__PURE__*/function () {
             },
             getState: function getState() {
               var _that$state;
-
               return (_that$state = that.state) === null || _that$state === void 0 ? void 0 : _that$state[storeName];
             },
             getInitialState: function getInitialState() {
               var _that$initialState;
-
               return (_that$initialState = that.initialState) === null || _that$initialState === void 0 ? void 0 : _that$initialState[storeName];
             },
             dispatch: function dispatch(_temp) {
               var _ref12 = _temp === void 0 ? {} : _temp,
-                  type = _ref12.type,
-                  payload = _ref12.payload;
-
+                type = _ref12.type,
+                payload = _ref12.payload;
               if (that.actions[storeName][type] === undefined) {
                 console.warn("Action doesn't exist.");
                 return;
               }
-
               that.dispatch(storeName)({
                 type: type,
                 payload: payload != null ? payload : undefined
@@ -298,7 +284,6 @@ var StateMachine = /*#__PURE__*/function () {
             },
             getActions: function getActions() {
               var _that$actions;
-
               return Object.keys((_that$actions = that.actions) === null || _that$actions === void 0 ? void 0 : _that$actions[storeName]).reduce(function (prev, actionName) {
                 prev[actionName] = store.getAction(actionName);
                 return prev;
@@ -311,23 +296,19 @@ var StateMachine = /*#__PURE__*/function () {
             },
             removeAction: function removeAction(actionName) {
               var _this$actions;
-
               _this === null || _this === void 0 ? true : (_this$actions = _this.actions) === null || _this$actions === void 0 ? true : delete _this$actions[storeName][actionName];
             },
             addMiddleWare: function addMiddleWare(_temp2) {
               var _ref13 = _temp2 === void 0 ? {} : _temp2,
-                  _ref13$afterWare = _ref13.afterWare,
-                  afterWare = _ref13$afterWare === void 0 ? null : _ref13$afterWare,
-                  _ref13$beforeWare = _ref13.beforeWare,
-                  beforeWare = _ref13$beforeWare === void 0 ? null : _ref13$beforeWare;
-
+                _ref13$afterWare = _ref13.afterWare,
+                afterWare = _ref13$afterWare === void 0 ? null : _ref13$afterWare,
+                _ref13$beforeWare = _ref13.beforeWare,
+                beforeWare = _ref13$beforeWare === void 0 ? null : _ref13$beforeWare;
               if (afterWare !== null) {
                 var _that$middleWare;
-
                 (_that$middleWare = that.middleWare) === null || _that$middleWare === void 0 ? void 0 : _that$middleWare[storeName].afterWare.push(afterWare);
               } else if (beforeWare !== null) {
                 var _that$middleWare2;
-
                 (_that$middleWare2 = that.middleWare) === null || _that$middleWare2 === void 0 ? void 0 : _that$middleWare2[storeName].beforeWare.push(beforeWare);
               }
             },
@@ -341,7 +322,6 @@ var StateMachine = /*#__PURE__*/function () {
               for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
                 args[_key - 1] = arguments[_key];
               }
-
               that.selectors[storeName][selectorName] = args;
             },
             getMiddleWare: function getMiddleWare() {
@@ -349,7 +329,6 @@ var StateMachine = /*#__PURE__*/function () {
             },
             undo: function undo() {
               var history = store.getHistory();
-
               if (history.undo.length > 0) {
                 var lastState = history.undo.pop();
                 var currentState = store.getState();
@@ -361,7 +340,6 @@ var StateMachine = /*#__PURE__*/function () {
             },
             redo: function redo() {
               var history = store.getHistory();
-
               if (history.redo.length > 0) {
                 var nextState = history.redo.pop();
                 var currentState = store.getState();
@@ -372,11 +350,9 @@ var StateMachine = /*#__PURE__*/function () {
               }
             }
           };
-
           for (var actionName in newActions) {
             store.addAction(actionName, newActions[actionName]);
           }
-
           if (middleWare !== null && middleWare !== void 0 && middleWare.beforeWare) {
             for (var index in middleWare.beforeWare) {
               store.addMiddleWare({
@@ -384,7 +360,6 @@ var StateMachine = /*#__PURE__*/function () {
               });
             }
           }
-
           if (middleWare !== null && middleWare !== void 0 && middleWare.afterWare) {
             for (var _index in middleWare.afterWare) {
               store.addMiddleWare({
@@ -392,11 +367,9 @@ var StateMachine = /*#__PURE__*/function () {
               });
             }
           }
-
           for (var selectorName in selectors) {
             store.createSelector.apply(store, [selectorName].concat(selectors[selectorName]));
           }
-
           that.store[storeName] = store;
           return {
             name: storeName
@@ -404,24 +377,19 @@ var StateMachine = /*#__PURE__*/function () {
         }
       };
     };
-
     this.dispatch = function (storeName) {
       return function (_ref14) {
         var _ref14$type = _ref14.type,
-            type = _ref14$type === void 0 ? '' : _ref14$type,
-            _ref14$payload = _ref14.payload,
-            payload = _ref14$payload === void 0 ? null : _ref14$payload;
-
+          type = _ref14$type === void 0 ? '' : _ref14$type,
+          _ref14$payload = _ref14.payload,
+          payload = _ref14$payload === void 0 ? null : _ref14$payload;
         try {
           var _this$middleWare$stor, _this$middleWare, _this$middleWare$stor2, _this$middleWare$stor3, _this$middleWare2, _this$middleWare2$sto;
-
           var action = _this.getAction(storeName, type)["function"];
-
           if (action === null) {
             console.error('Action or reducer doesnt exist');
             return Promise.resolve();
           }
-
           var beforeWare = (_this$middleWare$stor = (_this$middleWare = _this.middleWare) === null || _this$middleWare === void 0 ? void 0 : (_this$middleWare$stor2 = _this$middleWare[storeName]) === null || _this$middleWare$stor2 === void 0 ? void 0 : _this$middleWare$stor2.beforeWare) != null ? _this$middleWare$stor : [];
           var afterWare = (_this$middleWare$stor3 = (_this$middleWare2 = _this.middleWare) === null || _this$middleWare2 === void 0 ? void 0 : (_this$middleWare2$sto = _this$middleWare2[storeName]) === null || _this$middleWare2$sto === void 0 ? void 0 : _this$middleWare2$sto.afterWare) != null ? _this$middleWare$stor3 : [];
           return Promise.resolve(_this.getFromMiddleWare(storeName)).then(function (runMiddleWare) {
@@ -430,23 +398,19 @@ var StateMachine = /*#__PURE__*/function () {
                 function _temp10() {
                   return _this.state[storeName];
                 }
-
                 _this.dispatchReducerListeners(storeName, result);
-
                 var _temp9 = function () {
                   if (afterWare.length !== 0) {
-                    var _temp13 = _forTo(afterWare, function (i) {
+                    var _temp8 = _forTo(afterWare, function (i) {
                       function _temp7() {
                         _this.dispatchReducerListeners(storeName, result);
                       }
-
                       var middleWareIsAsync = isAsync(afterWare[i]);
                       var result;
                       var executeMiddleWare = runMiddleWare(afterWare[i], {
                         type: type,
                         payload: payload
                       });
-
                       var _temp6 = function () {
                         if (middleWareIsAsync) {
                           return Promise.resolve(executeMiddleWare()).then(function (_executeMiddleWare2) {
@@ -456,32 +420,26 @@ var StateMachine = /*#__PURE__*/function () {
                           result = executeMiddleWare();
                         }
                       }();
-
                       return _temp6 && _temp6.then ? _temp6.then(_temp7) : _temp7(_temp6);
                     });
-
-                    if (_temp13 && _temp13.then) return _temp13.then(function () {});
+                    if (_temp8 && _temp8.then) return _temp8.then(function () {});
                   }
                 }();
-
                 return _temp9 && _temp9.then ? _temp9.then(_temp10) : _temp10(_temp9);
               });
             }
-
             var _temp11 = function () {
               if (beforeWare.length !== 0) {
-                var _temp14 = _forTo(beforeWare, function (i) {
+                var _temp5 = _forTo(beforeWare, function (i) {
                   function _temp4() {
                     _this.dispatchReducerListeners(storeName, result);
                   }
-
                   var middleWareIsAsync = isAsync(beforeWare[i]);
                   var result;
                   var executeMiddleWare = runMiddleWare(beforeWare[i], {
                     type: type,
                     payload: payload
                   });
-
                   var _temp3 = function () {
                     if (middleWareIsAsync) {
                       return Promise.resolve(executeMiddleWare()).then(function (_executeMiddleWare) {
@@ -491,14 +449,11 @@ var StateMachine = /*#__PURE__*/function () {
                       result = executeMiddleWare();
                     }
                   }();
-
                   return _temp3 && _temp3.then ? _temp3.then(_temp4) : _temp4(_temp3);
                 });
-
-                if (_temp14 && _temp14.then) return _temp14.then(function () {});
+                if (_temp5 && _temp5.then) return _temp5.then(function () {});
               }
             }();
-
             return _temp11 && _temp11.then ? _temp11.then(_temp12) : _temp12(_temp11);
           });
         } catch (e) {
@@ -506,7 +461,6 @@ var StateMachine = /*#__PURE__*/function () {
         }
       };
     };
-
     this.state = {};
     this.actions = {};
     this.middleWare = {};
@@ -518,27 +472,21 @@ var StateMachine = /*#__PURE__*/function () {
     this.history = {};
     this.props = {};
   }
-
   var _proto = StateMachine.prototype;
-
   _proto.addFuseListener = function addFuseListener(storeName, func) {
     if (this.storeDict[storeName]) {
       if (this.listener[storeName] === undefined) {
         this.listener[storeName] = [];
       }
-
       this.listener[storeName].push(func);
     } else {
       console.warn("Reducer doesn't exist");
     }
   };
-
   _proto.removeFuseListener = function removeFuseListener(storeName, func) {
     if (this.storeDict.includes(storeName)) {
       var _this$listener;
-
       var reducerListener = (_this$listener = this.listener) === null || _this$listener === void 0 ? void 0 : _this$listener[storeName];
-
       if (reducerListener !== undefined) {
         var indexToRemove = reducerListener.indexOf(func);
         this.listener[storeName].splice(indexToRemove, indexToRemove + 1);
@@ -549,34 +497,26 @@ var StateMachine = /*#__PURE__*/function () {
       console.warn("Reducer doesn't exist");
     }
   };
-
   _proto.dispatchReducerListeners = function dispatchReducerListeners(storeName, result, dontSaveToHistory) {
     if (dontSaveToHistory === void 0) {
       dontSaveToHistory = false;
     }
-
     if (result !== undefined) {
       var _this$history$storeNa;
-
       if (dontSaveToHistory === false) {
         if (this.history[storeName].redo.length !== 0) {
           this.history[storeName].redo = [];
         }
       }
-
       var undoCount = (_this$history$storeNa = this.history[storeName]) === null || _this$history$storeNa === void 0 ? void 0 : _this$history$storeNa.undo.length;
       var currentState = this.getCurrentState(storeName);
-
       if (dontSaveToHistory === false) {
         var _this$history$storeNa2;
-
         if (undoCount !== 0 && ((_this$history$storeNa2 = this.history[storeName]) === null || _this$history$storeNa2 === void 0 ? void 0 : _this$history$storeNa2.undo[undoCount - 1]) !== currentState || undoCount === 0) {
           this.history[storeName].undo.push(this.getCurrentState(storeName));
         }
       }
-
       this.state[storeName] = _extends({}, this.getCurrentState(storeName), result);
-
       if (this.listener[storeName] !== undefined) {
         for (var _i = 0; _i < this.listener[storeName].length; _i++) {
           this.listener[storeName][_i](this.state[storeName]);
@@ -584,29 +524,23 @@ var StateMachine = /*#__PURE__*/function () {
       }
     }
   };
-
   _proto.getCurrentState = function getCurrentState(storeName) {
     return this.state[storeName];
   };
-
   _proto.getAction = function getAction(storeName, actionName) {
     var _this$actions$storeNa, _this$actions2, _this$actions2$storeN;
-
     return (_this$actions$storeNa = (_this$actions2 = this.actions) === null || _this$actions2 === void 0 ? void 0 : (_this$actions2$storeN = _this$actions2[storeName]) === null || _this$actions2$storeN === void 0 ? void 0 : _this$actions2$storeN[actionName]) != null ? _this$actions$storeNa : null;
   };
-
   _proto.getFromMiddleWare = function getFromMiddleWare(storeName) {
     var _this2 = this;
-
     return Promise.resolve(function (middleWare, _ref15) {
       var _ref15$type = _ref15.type,
-          type = _ref15$type === void 0 ? '' : _ref15$type,
-          _ref15$payload = _ref15.payload,
-          payload = _ref15$payload === void 0 ? null : _ref15$payload;
+        type = _ref15$type === void 0 ? '' : _ref15$type,
+        _ref15$payload = _ref15.payload,
+        payload = _ref15$payload === void 0 ? null : _ref15$payload;
       var middleWareSelection = middleWare(storeName);
       var executeMiddleWare = middleWareSelection(_this2.getCurrentState(storeName));
       var isAsync = executeMiddleWare.constructor.name === 'AsyncFunction';
-
       if (isAsync === true) {
         return function () {
           try {
@@ -628,55 +562,52 @@ var StateMachine = /*#__PURE__*/function () {
       }
     });
   };
-
   _proto.runAction = function runAction(storeName, action, payload) {
     try {
-      var _this4 = this;
-
+      var _this3 = this;
       var result;
-      var store = _this4.store[storeName];
-      var actions = store.getActions();
-
-      var _temp17 = function () {
+      var stores = Object.keys(_this3.store).reduce(function (previous, current) {
+        previous[_this3.store[current].name] = {
+          state: _this3.store[current].getState(),
+          actions: _this3.store[current].getActions()
+        };
+        return previous;
+      }, {});
+      var store = stores[storeName];
+      var actions = store.actions;
+      var _temp14 = function () {
         if (action instanceof Function) {
           result = action(_extends({
-            state: _this4.getCurrentState(storeName),
+            state: _this3.getCurrentState(storeName),
             payload: payload
-          }, _this4.props[storeName] !== null && {
-            props: _this4.props[storeName]
-          }), actions);
-
-          var _temp18 = function () {
+          }, _this3.props[storeName] !== null && {
+            props: _this3.props[storeName]
+          }), actions, stores);
+          var _temp13 = function () {
             if (isPromise(result)) {
               return Promise.resolve(result).then(function (_result) {
                 result = _result;
               });
             }
           }();
-
-          if (_temp18 && _temp18.then) return _temp18.then(function () {});
+          if (_temp13 && _temp13.then) return _temp13.then(function () {});
         }
       }();
-
-      return Promise.resolve(_temp17 && _temp17.then ? _temp17.then(function () {
+      return Promise.resolve(_temp14 && _temp14.then ? _temp14.then(function () {
         return result;
       }) : result);
     } catch (e) {
       return Promise.reject(e);
     }
   };
-
   return StateMachine;
 }();
-
 function isPromise(p) {
   if (typeof p === 'object' && typeof p.then === 'function') {
     return true;
   }
-
   return false;
 }
-
 function isAsync(func) {
   try {
     return func.constructor.name === 'AsyncFunction' || isPromise(func({}, {}));
@@ -684,27 +615,22 @@ function isAsync(func) {
     return false;
   }
 }
-
 var StateMachine$1 = new StateMachine();
 
 function useActions(store) {
   return StateMachine$1.store[store.name].getActions();
 }
-
 function useDispatch(store) {
   return StateMachine$1.store[store.name].dispatch;
 }
-
 function useFuse(store) {
   var _useState = React.useState(StateMachine$1.store[store.name].getState()),
-      fuse = _useState[0],
-      setFuse = _useState[1];
-
+    fuse = _useState[0],
+    setFuse = _useState[1];
   React.useLayoutEffect(function () {
     var handleReducerChange = function handleReducerChange(newStore) {
       setFuse(newStore);
     };
-
     StateMachine$1.addFuseListener(store.name, handleReducerChange);
     return function () {
       StateMachine$1.removeFuseListener(store.name, handleReducerChange);
@@ -712,45 +638,39 @@ function useFuse(store) {
   }, []);
   return fuse;
 }
-
 function useSelectors(store) {
   return StateMachine$1.store[store.name].getSelectors();
 }
-
 function mergeSelectors(selector, currentState) {
-  var selectors = [].concat(selector);
-  var lastSelector = selectors.pop();
-  var value;
-  var stateSelections;
-
-  if (selectors.length === 0) {
-    value = lastSelector(currentState);
+  var stateSelections, value;
+  if (selector.length === 0) {
+    throw 'DiffuseError: No selectors specified';
+  }
+  if (selector.length === 1) {
+    value = selector[0](currentState);
   } else {
+    var selectors = [].concat(selector);
+    var lastSelector = selectors.pop();
     stateSelections = selectors.map(function (arg) {
       return arg(currentState);
     });
     value = lastSelector;
   }
-
   return _extends({
     value: value
   }, stateSelections && {
     stateSelections: stateSelections
   });
 }
-
 function useFuseSelection(store, selector) {
   var selection = mergeSelectors(selector, StateMachine$1.store[store.name].getState());
-
   var _useState2 = React.useState(selection),
-      fuseSelection = _useState2[0],
-      setFuseSelection = _useState2[1];
-
+    fuseSelection = _useState2[0],
+    setFuseSelection = _useState2[1];
   React.useLayoutEffect(function () {
     var handleReducerChange = function handleReducerChange(newStore) {
       var newFuseSelection = mergeSelectors(selector, newStore);
       var shouldUpdate = false;
-
       if (newFuseSelection.value instanceof Function) {
         for (var i = 0; i < newFuseSelection.stateSelections.length; i++) {
           if (newFuseSelection.stateSelections[i] !== fuseSelection.stateSelections[i]) {
@@ -761,29 +681,24 @@ function useFuseSelection(store, selector) {
       } else if (newFuseSelection.value !== fuseSelection.value) {
         shouldUpdate = true;
       }
-
       if (shouldUpdate) {
         setFuseSelection(newFuseSelection);
       }
     };
-
     StateMachine$1.addFuseListener(store.name, handleReducerChange);
     return function () {
       StateMachine$1.removeFuseListener(store.name, handleReducerChange);
     };
   }, []);
-
   if (fuseSelection.value instanceof Function) {
     return fuseSelection.value.apply(fuseSelection, fuseSelection.stateSelections);
   } else {
     return fuseSelection.value;
   }
 }
-
 var connectWire = function connectWire(store, Child) {
   return function (props) {
     var _fuse;
-
     var context = useFuse(store);
     var dispatch = useDispatch(store);
     var actions = useActions(store);
@@ -797,12 +712,10 @@ var connectWire = function connectWire(store, Child) {
     }, [props, context]);
   };
 };
-
 var wire = function wire(stores) {
   if (stores === void 0) {
     stores = [];
   }
-
   return function (Child) {
     var newChild = Child;
     stores.forEach(function (store) {
@@ -811,7 +724,6 @@ var wire = function wire(stores) {
     return newChild;
   };
 };
-
 var createReducer = StateMachine$1.createReducer;
 
 exports.createReducer = createReducer;

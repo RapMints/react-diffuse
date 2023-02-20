@@ -2,7 +2,6 @@ import React from 'react'
 import Text from './Text'
 import Number from './Number'
 import CountAsync from './CountAsync'
-import './styles.css'
 import CountAsync2 from './CountAsync2'
 
 const App = (props) => {
@@ -15,7 +14,6 @@ const App = (props) => {
         <h4>Color change = Rerender</h4>
         <Number />
         <Text />
-        <CountAsync/>
         <CountAsync2/>
       </div>
     </>
