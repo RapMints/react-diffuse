@@ -166,6 +166,17 @@ In the example above example GET_COUNT is an async function and is chaining othe
         ...
     }
 ```
+#### <b>Chaining Multiple Store Actions</b>
+Additionally, you can chain actions from other stores. Similar to the above examples of a chaining actions, except you can use actions from other stores.
+```
+    actions: { 
+            INCREMENT: ({state}, actions, stores) => {
+                // Run action for another store
+                stores.BReducer.actions.DECREMENT()
+            },
+        }
+```
+NOTE: This pattern will trigger a rerender on any component using BReducer however this is being called from AReducer
 
 #### <b>Chaining Websocket Actions</b>
 Similary, you can chain websocket actions just like async actions. There are 5 predetermined actions you can use when handling websockets: CONNECT, CONNECT_ERROR, MESSAGE_RECEIVED, DISCONNECT, & EMIT. Note that you can replace these action names.
