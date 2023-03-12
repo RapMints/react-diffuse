@@ -382,7 +382,6 @@ Each action can take in a payload and callback like so:
 <b>*NOTE: These 3 hooks deprecate `wire({fuseName: ..., Child: ...})`, however `wire` still has support because they are still necessary on class components.*</b>
 
 ### <b>Using FuseBox</b>
-*** NOTE: All hooks take in a store as there first argument. This means you must import your store whenever using a hook. In this example we import from our file we created above in the create store example. See the CodeSandbox example ***
 #### <b>useState</b>
 The "useState" hook is used to get the state of a fusebox. For example to get _item_ from the _AFuseBox_ state you would use:
 
