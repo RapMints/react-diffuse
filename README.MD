@@ -83,7 +83,37 @@ As you can see there are 4 parts to this reducer.
 
 ### <b>Intellisense Capabilities</b>
 Now with jsdoc added all reducers have the capability of autocomplete. Whether it is state, actions, or selectors as you are coding options for auto complete are provided. With this in mind, we will be deprecating all hooks used to get state, actions, and selectors and introduce a new way of implementing Diffuse.
-
+NOTE: Requires tsconfig.json to work. Example:
+```
+  {
+  "compilerOptions": {
+    "jsx": "react",
+    "target": "ESNext",
+    "module": "ESNext",
+    "lib": [
+      "DOM",
+      "ESNext"
+    ],
+    "allowJs": true,
+    "checkJs": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "declarationMap": true,
+    "declarationDir": "./dist",
+    "noEmit": false,
+    "strict": false,
+    "suppressImplicitAnyIndexErrors": true,
+    "noImplicitThis": false,
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": false,
+  },
+  "include": [
+    "src"
+  ]
+}
+```
 ### <b>Actions</b>
 Actions can be run from dispatching or by running the action explicitly. Async functions and regular functions are handled the same and can both take in an object containing state, payload, and props. 
 
