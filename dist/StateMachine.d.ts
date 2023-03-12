@@ -38,14 +38,11 @@ declare class StateMachine {
         middleWare?: MiddleWareT | undefined;
         selectors?: SelectorsT | undefined;
     }) => {
+        createFuseBox: <NameT extends string>(fuseBoxName: NameT, props?: object | null) => import("./types.t").FuseBoxType<NameT, ActionT, SelectorsT, InitialStateT>;
         /**
-         * @template {import('./types.t').FuseBoxNameType} NameT
-         * Store name
-         * @param {NameT} storeName Store name
-         * @param {object|null} props Store props
-         * @returns
+         * @deprecated Use createFuseBox
          */
-        createStore: <NameT extends string>(storeName: NameT, props?: object | null) => import("./types.t").FuseBoxType<NameT, ActionT, SelectorsT, InitialStateT>;
+        createStore: <NameT extends string>(fuseBoxName: NameT, props?: object | null) => import("./types.t").FuseBoxType<NameT, ActionT, SelectorsT, InitialStateT>;
     };
     mergeSelectors(selector: any, currentState: any): {
         stateSelections?: any[] | undefined;

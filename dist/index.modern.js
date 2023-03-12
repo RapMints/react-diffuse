@@ -133,277 +133,280 @@ var StateMachine = /*#__PURE__*/function () {
         plugins: []
       };
       var config = _extends({}, defaultOptions);
-      return {
-        createStore: function createStore(storeName, props) {
-          if (props === void 0) {
-            props = null;
-          }
-          var diffuseState = {
-            diffuse: _extends({}, config.useDiffuseAsync === true && {
-              loading: false,
-              error: false
-            }, config.useDiffuseWebsocket === true && {
-              connectionStatus: 'DISCONNECTED'
-            })
-          };
-          var initState = _extends({}, Object.keys(diffuseState.diffuse).length !== 0 && _extends({}, diffuseState), initialState);
-          that.initialState[storeName] = _extends({}, initState);
-          that.state[storeName] = _extends({}, initState);
-          that.selectors[storeName] = {};
-          that.selections[storeName] = {};
-          that.actions[storeName] = {};
-          that.props[storeName] = props;
-          var newActions = _extends({}, config.useDiffuseInitializeState === true && {
-            INITIALIZE_STATE: function INITIALIZE_STATE(_ref2) {
-              var _ref2$payload = _ref2.payload,
-                payload = _ref2$payload === void 0 ? {} : _ref2$payload;
-              return _extends({}, initState, payload);
-            }
-          }, config.useDiffuseAsync === true && {
-            LOADING: function LOADING(_ref3) {
-              var state = _ref3.state,
-                payload = _ref3.payload;
-              return _extends({
-                diffuse: _extends({}, state.diffuse, {
-                  loading: true,
-                  error: false
-                })
-              }, payload);
-            },
-            SUCCESS: function SUCCESS(_ref4) {
-              var state = _ref4.state,
-                payload = _ref4.payload;
-              return _extends({
-                diffuse: _extends({}, state.diffuse, {
-                  loading: false,
-                  error: false
-                })
-              }, payload);
-            },
-            PROGRESS: function PROGRESS(_ref5) {
-              var payload = _ref5.payload;
-              return _extends({}, payload);
-            },
-            FAIL: function FAIL(_ref6) {
-              var state = _ref6.state,
-                payload = _ref6.payload;
-              return _extends({
-                diffuse: _extends({}, state.diffuse, {
-                  loading: false,
-                  error: true
-                })
-              }, payload);
-            }
+      var create = function create(fuseBoxName, props) {
+        if (props === void 0) {
+          props = null;
+        }
+        var diffuseState = {
+          diffuse: _extends({}, config.useDiffuseAsync === true && {
+            loading: false,
+            error: false
           }, config.useDiffuseWebsocket === true && {
-            MESSAGE_RECIEVED: function MESSAGE_RECIEVED(_ref7) {
-              var payload = _ref7.payload;
-              return _extends({}, payload);
-            },
-            EMIT: function EMIT(_ref8) {
-              var payload = _ref8.payload;
-              return _extends({}, payload);
-            },
-            CONNECT: function CONNECT(_ref9) {
-              var state = _ref9.state,
-                payload = _ref9.payload;
-              return _extends({
-                diffuse: _extends({}, state.diffuse, {
-                  connectionStatus: 'CONNECTED'
-                })
-              }, payload);
-            },
-            DISCONNECT: function DISCONNECT(_ref10) {
-              var state = _ref10.state,
-                payload = _ref10.payload;
-              return _extends({
-                diffuse: _extends({}, state.diffuse, {
-                  connectionStatus: 'DISCONNECTED'
-                })
-              }, payload);
-            },
-            CONNECT_ERROR: function CONNECT_ERROR(_ref11) {
-              var state = _ref11.state,
-                payload = _ref11.payload;
-              return _extends({
-                diffuse: _extends({}, state.diffuse, {
-                  connectionStatus: 'FAILED'
-                })
-              }, payload);
+            connectionStatus: 'DISCONNECTED'
+          })
+        };
+        var initState = _extends({}, Object.keys(diffuseState.diffuse).length !== 0 && _extends({}, diffuseState), initialState);
+        that.initialState[fuseBoxName] = _extends({}, initState);
+        that.state[fuseBoxName] = _extends({}, initState);
+        that.selectors[fuseBoxName] = {};
+        that.selections[fuseBoxName] = {};
+        that.actions[fuseBoxName] = {};
+        that.props[fuseBoxName] = props;
+        var newActions = _extends({}, config.useDiffuseInitializeState === true && {
+          INITIALIZE_STATE: function INITIALIZE_STATE(_ref2) {
+            var _ref2$payload = _ref2.payload,
+              payload = _ref2$payload === void 0 ? {} : _ref2$payload;
+            return _extends({}, initState, payload);
+          }
+        }, config.useDiffuseAsync === true && {
+          LOADING: function LOADING(_ref3) {
+            var state = _ref3.state,
+              payload = _ref3.payload;
+            return _extends({
+              diffuse: _extends({}, state.diffuse, {
+                loading: true,
+                error: false
+              })
+            }, payload);
+          },
+          SUCCESS: function SUCCESS(_ref4) {
+            var state = _ref4.state,
+              payload = _ref4.payload;
+            return _extends({
+              diffuse: _extends({}, state.diffuse, {
+                loading: false,
+                error: false
+              })
+            }, payload);
+          },
+          PROGRESS: function PROGRESS(_ref5) {
+            var payload = _ref5.payload;
+            return _extends({}, payload);
+          },
+          FAIL: function FAIL(_ref6) {
+            var state = _ref6.state,
+              payload = _ref6.payload;
+            return _extends({
+              diffuse: _extends({}, state.diffuse, {
+                loading: false,
+                error: true
+              })
+            }, payload);
+          }
+        }, config.useDiffuseWebsocket === true && {
+          MESSAGE_RECIEVED: function MESSAGE_RECIEVED(_ref7) {
+            var payload = _ref7.payload;
+            return _extends({}, payload);
+          },
+          EMIT: function EMIT(_ref8) {
+            var payload = _ref8.payload;
+            return _extends({}, payload);
+          },
+          CONNECT: function CONNECT(_ref9) {
+            var state = _ref9.state,
+              payload = _ref9.payload;
+            return _extends({
+              diffuse: _extends({}, state.diffuse, {
+                connectionStatus: 'CONNECTED'
+              })
+            }, payload);
+          },
+          DISCONNECT: function DISCONNECT(_ref10) {
+            var state = _ref10.state,
+              payload = _ref10.payload;
+            return _extends({
+              diffuse: _extends({}, state.diffuse, {
+                connectionStatus: 'DISCONNECTED'
+              })
+            }, payload);
+          },
+          CONNECT_ERROR: function CONNECT_ERROR(_ref11) {
+            var state = _ref11.state,
+              payload = _ref11.payload;
+            return _extends({
+              diffuse: _extends({}, state.diffuse, {
+                connectionStatus: 'FAILED'
+              })
+            }, payload);
+          }
+        }, actions);
+        that.history[fuseBoxName] = {
+          undo: [],
+          redo: []
+        };
+        that.storeDict[fuseBoxName] = true;
+        that.listener[fuseBoxName] = [];
+        that.middleWare[fuseBoxName] = {
+          beforeWare: [],
+          afterWare: []
+        };
+        var store = {
+          name: fuseBoxName,
+          getHistory: function getHistory() {
+            return that.history[fuseBoxName];
+          },
+          getState: function getState() {
+            var _that$state;
+            return (_that$state = that.state) === null || _that$state === void 0 ? void 0 : _that$state[fuseBoxName];
+          },
+          getInitialState: function getInitialState() {
+            var _that$initialState;
+            return (_that$initialState = that.initialState) === null || _that$initialState === void 0 ? void 0 : _that$initialState[fuseBoxName];
+          },
+          dispatch: function dispatch(_temp) {
+            var _ref12 = _temp === void 0 ? {} : _temp,
+              type = _ref12.type,
+              payload = _ref12.payload,
+              callback = _ref12.callback;
+            if (that.actions[fuseBoxName][type] === undefined) {
+              console.warn("Action doesn't exist.");
+              return;
             }
-          }, actions);
-          that.history[storeName] = {
-            undo: [],
-            redo: []
-          };
-          that.storeDict[storeName] = true;
-          that.listener[storeName] = [];
-          that.middleWare[storeName] = {
-            beforeWare: [],
-            afterWare: []
-          };
-          var store = {
-            name: storeName,
-            getHistory: function getHistory() {
-              return that.history[storeName];
-            },
-            getState: function getState() {
-              var _that$state;
-              return (_that$state = that.state) === null || _that$state === void 0 ? void 0 : _that$state[storeName];
-            },
-            getInitialState: function getInitialState() {
-              var _that$initialState;
-              return (_that$initialState = that.initialState) === null || _that$initialState === void 0 ? void 0 : _that$initialState[storeName];
-            },
-            dispatch: function dispatch(_temp) {
-              var _ref12 = _temp === void 0 ? {} : _temp,
-                type = _ref12.type,
-                payload = _ref12.payload,
-                callback = _ref12.callback;
-              if (that.actions[storeName][type] === undefined) {
-                console.warn("Action doesn't exist.");
-                return;
-              }
-              that.dispatch(storeName)({
-                type: type,
-                payload: payload != null ? payload : undefined,
+            that.dispatch(fuseBoxName)({
+              type: type,
+              payload: payload != null ? payload : undefined,
+              callback: callback
+            });
+          },
+          getAction: function getAction(actionName) {
+            var action = function action(payload, callback) {
+              return store.dispatch({
+                type: actionName,
+                payload: payload,
                 callback: callback
               });
-            },
-            getAction: function getAction(actionName) {
-              var action = function action(payload, callback) {
-                return store.dispatch({
-                  type: actionName,
-                  payload: payload,
-                  callback: callback
-                });
-              };
-              return action;
-            },
-            getActions: function getActions() {
-              var _that$actions;
-              var actions = {};
-              var reduceFunction = function reduceFunction(prev, actionName) {
-                prev[actionName] = store.getAction(actionName);
-                return prev;
-              };
-              actions = Object.keys((_that$actions = that.actions) === null || _that$actions === void 0 ? void 0 : _that$actions[storeName]).reduce(reduceFunction, actions);
-              return actions;
-            },
-            addAction: function addAction(actionName, action) {
-              that.actions[storeName][actionName] = {
-                "function": action
-              };
-            },
-            removeAction: function removeAction(actionName) {
-              var _that$actions2;
-              that === null || that === void 0 ? true : (_that$actions2 = that.actions) === null || _that$actions2 === void 0 ? true : delete _that$actions2[storeName][actionName];
-            },
-            addMiddleWare: function addMiddleWare(_temp2) {
-              var _ref13 = _temp2 === void 0 ? {} : _temp2,
-                _ref13$afterWare = _ref13.afterWare,
-                afterWare = _ref13$afterWare === void 0 ? null : _ref13$afterWare,
-                _ref13$beforeWare = _ref13.beforeWare,
-                beforeWare = _ref13$beforeWare === void 0 ? null : _ref13$beforeWare;
-              if (afterWare !== null) {
-                var _that$middleWare;
-                (_that$middleWare = that.middleWare) === null || _that$middleWare === void 0 ? void 0 : _that$middleWare[storeName].afterWare.push(afterWare);
-              } else if (beforeWare !== null) {
-                var _that$middleWare2;
-                (_that$middleWare2 = that.middleWare) === null || _that$middleWare2 === void 0 ? void 0 : _that$middleWare2[storeName].beforeWare.push(beforeWare);
-              }
-            },
-            getSelector: function getSelector(selectorName) {
-              return that.selectors[storeName][selectorName];
-            },
-            getSelection: function getSelection(selectorName) {
-              return that.selections[storeName][selectorName];
-            },
-            getSelections: function getSelections() {
-              return that.selections[storeName];
-            },
-            getSelectors: function getSelectors() {
-              return that.selectors[storeName];
-            },
-            createSelector: function createSelector(selectorName) {
-              for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-                args[_key - 1] = arguments[_key];
-              }
-              that.selectors[storeName][selectorName] = args;
-              that.selections[storeName][selectorName] = function () {
-                return that.useSelectionHook(store, args);
-              };
-            },
-            getMiddleWare: function getMiddleWare() {
-              return that.middleWare[storeName];
-            },
-            undo: function undo() {
-              var history = store.getHistory();
-              if (history.undo.length > 0) {
-                var lastState = history.undo.pop();
-                var currentState = store.getState();
-                history.redo.push(currentState);
-                that.dispatchReducerListeners(storeName, lastState, true);
-              } else {
-                console.log('Nothing to undo');
-              }
-            },
-            redo: function redo() {
-              var history = store.getHistory();
-              if (history.redo.length > 0) {
-                var nextState = history.redo.pop();
-                var currentState = store.getState();
-                history.undo.push(currentState);
-                that.dispatchReducerListeners(storeName, nextState, true);
-              } else {
-                console.log('Nothing to redo');
-              }
+            };
+            return action;
+          },
+          getActions: function getActions() {
+            var _that$actions;
+            var actions = {};
+            var reduceFunction = function reduceFunction(prev, actionName) {
+              prev[actionName] = store.getAction(actionName);
+              return prev;
+            };
+            actions = Object.keys((_that$actions = that.actions) === null || _that$actions === void 0 ? void 0 : _that$actions[fuseBoxName]).reduce(reduceFunction, actions);
+            return actions;
+          },
+          addAction: function addAction(actionName, action) {
+            that.actions[fuseBoxName][actionName] = {
+              "function": action
+            };
+          },
+          removeAction: function removeAction(actionName) {
+            var _that$actions2;
+            that === null || that === void 0 ? true : (_that$actions2 = that.actions) === null || _that$actions2 === void 0 ? true : delete _that$actions2[fuseBoxName][actionName];
+          },
+          addMiddleWare: function addMiddleWare(_temp2) {
+            var _ref13 = _temp2 === void 0 ? {} : _temp2,
+              _ref13$afterWare = _ref13.afterWare,
+              afterWare = _ref13$afterWare === void 0 ? null : _ref13$afterWare,
+              _ref13$beforeWare = _ref13.beforeWare,
+              beforeWare = _ref13$beforeWare === void 0 ? null : _ref13$beforeWare;
+            if (afterWare !== null) {
+              var _that$middleWare;
+              (_that$middleWare = that.middleWare) === null || _that$middleWare === void 0 ? void 0 : _that$middleWare[fuseBoxName].afterWare.push(afterWare);
+            } else if (beforeWare !== null) {
+              var _that$middleWare2;
+              (_that$middleWare2 = that.middleWare) === null || _that$middleWare2 === void 0 ? void 0 : _that$middleWare2[fuseBoxName].beforeWare.push(beforeWare);
             }
-          };
-          for (var actionName in newActions) {
-            store.addAction(actionName, newActions[actionName]);
-          }
-          if (middleWare !== null && middleWare !== void 0 && middleWare.beforeWare) {
-            for (var index in middleWare.beforeWare) {
-              store.addMiddleWare({
-                beforeWare: middleWare.beforeWare[index]
-              });
+          },
+          getSelector: function getSelector(selectorName) {
+            return that.selectors[fuseBoxName][selectorName];
+          },
+          getSelection: function getSelection(selectorName) {
+            return that.selections[fuseBoxName][selectorName];
+          },
+          getSelections: function getSelections() {
+            return that.selections[fuseBoxName];
+          },
+          getSelectors: function getSelectors() {
+            return that.selectors[fuseBoxName];
+          },
+          createSelector: function createSelector(selectorName) {
+            for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+              args[_key - 1] = arguments[_key];
+            }
+            that.selectors[fuseBoxName][selectorName] = args;
+            that.selections[fuseBoxName][selectorName] = function () {
+              return that.useSelectionHook(store, args);
+            };
+          },
+          getMiddleWare: function getMiddleWare() {
+            return that.middleWare[fuseBoxName];
+          },
+          undo: function undo() {
+            var history = store.getHistory();
+            if (history.undo.length > 0) {
+              var lastState = history.undo.pop();
+              var currentState = store.getState();
+              history.redo.push(currentState);
+              that.dispatchReducerListeners(fuseBoxName, lastState, true);
+            } else {
+              console.log('Nothing to undo');
+            }
+          },
+          redo: function redo() {
+            var history = store.getHistory();
+            if (history.redo.length > 0) {
+              var nextState = history.redo.pop();
+              var currentState = store.getState();
+              history.undo.push(currentState);
+              that.dispatchReducerListeners(fuseBoxName, nextState, true);
+            } else {
+              console.log('Nothing to redo');
             }
           }
-          if (middleWare !== null && middleWare !== void 0 && middleWare.afterWare) {
-            for (var _index in middleWare.afterWare) {
-              store.addMiddleWare({
-                afterWare: middleWare.afterWare[_index]
-              });
-            }
-          }
-          for (var selectorName in selectors) {
-            store.createSelector.apply(store, [selectorName].concat(selectors[selectorName]));
-          }
-          that.store[storeName] = store;
-          var fuseBox = {
-            name: storeName,
-            actions: store.getActions(),
-            useState: function useState$1() {
-              var _useState2 = useState(store.getState()),
-                fuse = _useState2[0],
-                setFuse = _useState2[1];
-              useLayoutEffect(function () {
-                var handleReducerChange = function handleReducerChange(newStore) {
-                  setFuse(newStore);
-                };
-                _this.addFuseListener(store.name, handleReducerChange);
-                return function () {
-                  _this.removeFuseListener(store.name, handleReducerChange);
-                };
-              }, []);
-              var state = fuse;
-              return state;
-            },
-            selectors: store.getSelections()
-          };
-          return fuseBox;
+        };
+        for (var actionName in newActions) {
+          store.addAction(actionName, newActions[actionName]);
         }
+        if (middleWare !== null && middleWare !== void 0 && middleWare.beforeWare) {
+          for (var index in middleWare.beforeWare) {
+            store.addMiddleWare({
+              beforeWare: middleWare.beforeWare[index]
+            });
+          }
+        }
+        if (middleWare !== null && middleWare !== void 0 && middleWare.afterWare) {
+          for (var _index in middleWare.afterWare) {
+            store.addMiddleWare({
+              afterWare: middleWare.afterWare[_index]
+            });
+          }
+        }
+        for (var selectorName in selectors) {
+          store.createSelector.apply(store, [selectorName].concat(selectors[selectorName]));
+        }
+        that.store[fuseBoxName] = store;
+        var fuseBox = {
+          name: fuseBoxName,
+          actions: store.getActions(),
+          useState: function useState$1() {
+            var _useState2 = useState(store.getState()),
+              fuse = _useState2[0],
+              setFuse = _useState2[1];
+            useLayoutEffect(function () {
+              var handleReducerChange = function handleReducerChange(newStore) {
+                setFuse(newStore);
+              };
+              _this.addFuseListener(store.name, handleReducerChange);
+              return function () {
+                _this.removeFuseListener(store.name, handleReducerChange);
+              };
+            }, []);
+            var state = fuse;
+            return state;
+          },
+          selectors: store.getSelections()
+        };
+        return fuseBox;
       };
+      var reducer = {
+        createFuseBox: create,
+        createStore: create
+      };
+      return reducer;
     };
     this.useSelectionHook = function (store, selector) {
       var selection = _this.mergeSelectors(selector, store.getState());
