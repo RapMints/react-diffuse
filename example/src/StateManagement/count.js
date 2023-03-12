@@ -1,10 +1,11 @@
 import {createReducer} from "react-diffuse";
 import logger from "./middlewares/logger";
+import { AsyncReducer2 } from "./States";
 
 const reducer = createReducer({
   initialState: { item: 0 },
   actions: {
-    INCREMENT: ({state, payload}, {}) => {
+    INCREMENT: ({state, payload}) => {
       return {
         item: state.item + 1
       };

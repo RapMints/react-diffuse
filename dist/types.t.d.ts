@@ -1,12 +1,13 @@
 /**
  * @typedef {object} ActionPropsType Diffuse action props
- * @property {StateType} state
- * @property {object} payload
- * @property {object} props
+ * @property {StateType} state Current fuse state
+ * @property {object} payload Action payload
+ * @property {object} props Fuse box props
+ * @property {(err?: any) => void} callback Callback function to run
  */
 /**
  * Initial actions type
- * @typedef {(actionProps: ActionPropsType) => object} InitialActionType
+ * @typedef {(actionProps: ActionPropsType, actions: Record<'LOADING'|'FAIL'|'SUCCESS'|'PROGRESS'|'MESSAGE_RECIEVED'|'CONNECT'|'DISCONNECT'|'CONNECT_ERROR'|'EMIT', ActionType> & Record<keyof ActionsType, ActionType>) => object|Promise<ActionPropsType>} InitialActionType
  */
 /**
  * @typedef {object} DiffuseStateProps Diffuse reducer state
@@ -19,6 +20,10 @@
  */
 /**
  * @typedef {{diffuse: DiffuseStateProps}} DiffuseStateType Diffuse state
+ */
+/**
+ * Fuse box name type
+ * @typedef {string} FuseBoxNameType
  */
 /**
  * Reducer Actions Type
@@ -34,7 +39,7 @@
  */
 /**
  * Fuse box action type
- * @typedef {(payload?: object) => void} ActionType Action
+ * @typedef {(payload?: object, callback?: (err?: any) => void) => void} ActionType Action
  * @param {object} payload payload
  * @returns {void}
  */
@@ -50,29 +55,42 @@
  * @typedef {() => any} useSelectionsType
  */
 /**
+ * @template {FuseBoxNameType} NameT
  * @template {ActionsType} ActionT
  * @template {SelectorsType} SelectorT
  * @template {InitialStateType} StateT
  * @typedef {Object} FuseBoxType
- * @property {keyof SelectorT} name Fuse box name
- * @property {Function} useActions
- * @property {Record<keyof ActionT, ActionType>} actions
- * @property {function():StateT&DiffuseStateType} useState
- * @property {Record<keyof SelectorT, useSelectionsType>} selectors
+ * @property {NameT} name Fuse box name
+ * @property {Record<keyof ActionT, ActionType>} actions Fuse box actions
+ * @property {function():StateT&DiffuseStateType} useState Use fuse box state hook
+ * @property {Record<keyof SelectorT, useSelectionsType>} selectors Fuse box selectors
  */
 export const Types: {};
 /**
  * Diffuse action props
  */
 export type ActionPropsType = {
+    /**
+     * Current fuse state
+     */
     state: StateType;
+    /**
+     * Action payload
+     */
     payload: object;
+    /**
+     * Fuse box props
+     */
     props: object;
+    /**
+     * Callback function to run
+     */
+    callback: (err?: any) => void;
 };
 /**
  * Initial actions type
  */
-export type InitialActionType = (actionProps: ActionPropsType) => object;
+export type InitialActionType = (actionProps: ActionPropsType, actions: Record<'LOADING' | 'FAIL' | 'SUCCESS' | 'PROGRESS' | 'MESSAGE_RECIEVED' | 'CONNECT' | 'DISCONNECT' | 'CONNECT_ERROR' | 'EMIT', ActionType> & Record<keyof ActionsType, ActionType>) => object | Promise<ActionPropsType>;
 /**
  * Diffuse reducer state
  */
@@ -102,6 +120,10 @@ export type DiffuseStateType = {
     diffuse: DiffuseStateProps;
 };
 /**
+ * Fuse box name type
+ */
+export type FuseBoxNameType = string;
+/**
  * Reducer Actions Type
  */
 export type ActionsType = Record<string, InitialActionType>;
@@ -118,7 +140,7 @@ export type InitialStateType = Record<string | "diffuse", any>;
 /**
  * Action
  */
-export type ActionType = (payload?: object) => void;
+export type ActionType = (payload?: object, callback?: ((err?: any) => void) | undefined) => void;
 /**
  * Action
  */
@@ -128,14 +150,22 @@ export type FuseStateType = object;
  */
 export type SelectorType = (arg0: any) => any[];
 export type useSelectionsType = () => any;
-export type FuseBoxType<ActionT extends ActionsType, SelectorT extends SelectorsType, StateT extends InitialStateType> = {
+export type FuseBoxType<NameT extends string, ActionT extends ActionsType, SelectorT extends SelectorsType, StateT extends InitialStateType> = {
     /**
      * Fuse box name
      */
-    name: keyof SelectorT;
-    useActions: Function;
+    name: NameT;
+    /**
+     * Fuse box actions
+     */
     actions: Record<keyof ActionT, ActionType>;
+    /**
+     * Use fuse box state hook
+     */
     useState: () => StateT & DiffuseStateType;
+    /**
+     * Fuse box selectors
+     */
     selectors: Record<keyof SelectorT, useSelectionsType>;
 };
 //# sourceMappingURL=types.t.d.ts.map

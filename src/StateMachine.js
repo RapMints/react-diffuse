@@ -64,11 +64,10 @@ class StateMachine {
      * @param {object} reducerProps Reducer properties
      * @param {InitialStateT} reducerProps.initialState Reducer initial state
      * @param {ActionT} reducerProps.actions Reducer actions
-     * @param {object=} reducerProps.middleWare Reducer middleWare
+     * @param {import('./types.t').MiddleWareType=} reducerProps.middleWare Reducer middleWare
      * @param {SelectorsT=} reducerProps.selectors Reducer selectors
-     * @param {object=} reducerProps.options 
      */
-    createReducer = ({ initialState, actions, selectors, middleWare = {}, options = {}}) => {
+    createReducer = ({ initialState, actions, selectors, middleWare}) => {
         const that = this
 
         const defaultOptions = {
@@ -80,13 +79,13 @@ class StateMachine {
 
         const config = {
             ...defaultOptions,
-            ...options
         }
 
         return {
             /**
+             * @template {import('./types.t').FuseBoxNameType} NameT
              * Store name
-             * @param {StoreNameType} storeName Store name
+             * @param {NameT} storeName Store name
              * @param {object|null} props Store props 
              * @returns 
              */
@@ -109,19 +108,25 @@ class StateMachine {
                 }
 
                 // Set store initial state
+                // @ts-ignore
                 that.initialState[storeName] = {
                     ...initState
                 }
 
                 // Initialize store
+                // @ts-ignore
                 that.state[storeName] = {
                     ...initState
                 }
 
+                // @ts-ignore
                 that.selectors[storeName] = {}
+                // @ts-ignore
                 that.selections[storeName] = {}
+                // @ts-ignore
                 that.actions[storeName] = {}
 
+                // @ts-ignore
                 that.props[storeName] = props
 
                 // Set store actions
@@ -141,13 +146,14 @@ class StateMachine {
                          * @param {import('./types.t').ActionPropsType} params
                          * @returns {object}
                          */  
-                        LOADING: ({state}) => {
+                        LOADING: ({state, payload}) => {
                             return {
                                 diffuse: {
                                     ...state.diffuse,
                                     loading: true,
                                     error: false
-                                }
+                                },
+                                ...payload
                             }
                         },
                         /**
@@ -258,18 +264,22 @@ class StateMachine {
                     ...actions
                 }
 
+                // @ts-ignore
                 that.history[storeName] = {
                     undo: [],
                     redo: []
                 }
 
                 // Add store to dictionary
+                // @ts-ignore
                 that.storeDict[storeName] = true
 
                 // Create listener for store
+                // @ts-ignore
                 that.listener[storeName] = []
 
                 // Add middleware for store
+                // @ts-ignore
                 that.middleWare[storeName] = {
                     beforeWare: [],
                     afterWare: []
@@ -279,6 +289,7 @@ class StateMachine {
                 const store = {
                     name: storeName,
                     getHistory: () => {
+                        // @ts-ignore
                         return that.history[storeName]
                     },
                     /**
@@ -286,6 +297,7 @@ class StateMachine {
                      * @returns {import('./types.t').FuseStateType}
                      */
                     getState: () => {
+                        // @ts-ignore
                         return that.state?.[storeName]
                     },
                     /**
@@ -293,10 +305,12 @@ class StateMachine {
                      * @returns {import('./types.t').FuseStateType}
                      */
                     getInitialState: () => {
+                        // @ts-ignore
                         return that.initialState?.[storeName]
                     },
                     // @ts-ignore
                     dispatch: ({ type, payload, callback } = {}) => {
+                        // @ts-ignore
                         if (that.actions[storeName][type] === undefined) {
                             console.warn("Action doesn't exist.")
                             return
@@ -348,23 +362,28 @@ class StateMachine {
                         /**
                          * @type {Record<keyof ActionT, import('./types.t').ActionType>}
                          */
+                        // @ts-ignore
                         actions = Object.keys(that.actions?.[storeName]).reduce(reduceFunction, actions)
 
                         return actions
                     },
                     // @ts-ignore
                     addAction: (actionName, action) => {
+                        // @ts-ignore
                         that.actions[storeName][actionName] = {function: action}
                     },
                     // @ts-ignore
                     removeAction: (actionName) => {
-                        delete this?.actions?.[storeName][actionName]
+                        // @ts-ignore
+                        delete that?.actions?.[storeName][actionName]
                     },
                     addMiddleWare: ({afterWare = null, beforeWare = null} = {}) => {
                         if (afterWare !== null) {
+                            // @ts-ignore
                             that.middleWare?.[storeName].afterWare.push(afterWare)
                         }
                         else if (beforeWare !== null) {
+                            // @ts-ignore
                             that.middleWare?.[storeName].beforeWare.push(beforeWare)
                         }
                     },
@@ -374,6 +393,7 @@ class StateMachine {
                      * @returns {Function[]}
                      */
                     getSelector: (selectorName) => {
+                        // @ts-ignore
                         return that.selectors[storeName][selectorName]
                     },
                     /**
@@ -382,6 +402,7 @@ class StateMachine {
                      * @returns {Function[]}
                      */
                     getSelection: (selectorName) => {
+                        // @ts-ignore
                         return that.selections[storeName][selectorName]
                     },
                     /**
@@ -389,6 +410,7 @@ class StateMachine {
                      * @returns {Record<keyof SelectorsT, import('./types.t').useSelectionsType>}
                      */
                     getSelections: () => {
+                        // @ts-ignore
                         return that.selections[storeName]
                     },
                     /**
@@ -396,14 +418,18 @@ class StateMachine {
                      * @returns {Record<keyof SelectorsT, import('./types.t').useSelectionsType>}
                      */
                     getSelectors: () => {
+                        // @ts-ignore
                         return that.selectors[storeName]
                     },
                     // @ts-ignore
                     createSelector: function createSelector(selectorName, ...args) {
+                        // @ts-ignore
                         that.selectors[storeName][selectorName] = args
+                        // @ts-ignore
                         that.selections[storeName][selectorName] = () => that.useSelectionHook(store, args)
                     },
                     getMiddleWare: () => {
+                        // @ts-ignore
                         return that.middleWare[storeName]
                     },
                     undo: () => {
@@ -463,17 +489,17 @@ class StateMachine {
                 }
 
                 // Add store object to stores
+                // @ts-ignore
                 that.store[storeName] = store
                 
                 /**
-                 * @type {import('./types.t').FuseBoxType<ActionT, SelectorsT, InitialStateT>}
+                 * @type {import('./types.t').FuseBoxType<NameT, ActionT, SelectorsT, InitialStateT>}
                  */
                 let fuseBox = {
                     name: storeName,
-                    useActions: store.getActions,
                     actions: store.getActions(),
                     useState: () => {
-                        const [fuse, setFuse] = useState(this.store[storeName].getState())
+                        const [fuse, setFuse] = useState(store.getState())
                     
                         useLayoutEffect(() => {
                             /**
@@ -490,14 +516,18 @@ class StateMachine {
                                 this.removeFuseListener(store.name, handleReducerChange)
                             }
                         }, [])
-                    
-                        return fuse
+                        
+                        /**
+                         * @type {InitialStateT & import('./types.t').DiffuseStateType}
+                         */
+                        // @ts-ignore
+                        const state = fuse
+                        return state
                     },
                     selectors: store.getSelections(),
                 }
-                return fuseBox
-                    
                 
+                return fuseBox
             }
         }
     }

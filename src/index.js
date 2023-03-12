@@ -5,10 +5,11 @@ import { Types } from './types.t'
 /**
  * Get reducer actions
  * @deprecated (Will be removed on version 3) Use [StoreName].actions
+ * @template {import('./types.t').FuseBoxNameType} N
  * @template {import('./types.t').ActionsType} A
  * @template {import('./types.t').SelectorsType} S
  * @template {import('./types.t').InitialStateType} I
- * @param {import('./types.t').FuseBoxType<A,S,I>} fuseBox
+ * @param {import('./types.t').FuseBoxType<N,A,S,I>} fuseBox
  * @returns {Record<keyof A, import('./types.t').ActionType>}
  */
 function useActions(fuseBox) {
@@ -18,23 +19,26 @@ function useActions(fuseBox) {
 /**
  * Get dispatch function for store
  * @deprecated (Will be removed on version 3) Use [StoreName].useState()
+ * @template {import('./types.t').FuseBoxNameType} N
  * @template {import('./types.t').ActionsType} A
  * @template {import('./types.t').SelectorsType} S
  * @template {import('./types.t').InitialStateType} I
- * @param {import('./types.t').FuseBoxType<A,S,I>} fuseBox
+ * @param {import('./types.t').FuseBoxType<N,A,S,I>} fuseBox
  * @returns {Function}
  */
 function useDispatch(fuseBox) {
+    // @ts-ignore
     return StateMachine.store[fuseBox.name].dispatch
 }
 
 /**
  * Get fuse
  * @deprecated (Will be removed on version 3) Use [StoreName].useState()
+ * @template {import('./types.t').FuseBoxNameType} N
  * @template {import('./types.t').ActionsType} A
  * @template {import('./types.t').SelectorsType} S
  * @template {import('./types.t').InitialStateType} I
- * @param {import('./types.t').FuseBoxType<A,S,I>} fuseBox
+ * @param {import('./types.t').FuseBoxType<N,A,S,I>} fuseBox
  * @returns {Record<keyof I, any>}
  */
 function useFuse(fuseBox) {
@@ -44,23 +48,26 @@ function useFuse(fuseBox) {
 /**
  * Get fusebox selectors
  * @deprecated (Will be removed on version 3) Use [StoreName].selectors
+ * @template {import('./types.t').FuseBoxNameType} N
  * @template {import('./types.t').ActionsType} A
  * @template {import('./types.t').SelectorsType} S
  * @template {import('./types.t').InitialStateType} I
- * @param {import('./types.t').FuseBoxType<A,S,I>} fuseBox
+ * @param {import('./types.t').FuseBoxType<N,A,S,I>} fuseBox
  * @returns {Record<keyof S, any>}
  */
 function useSelectors(fuseBox) {
+    // @ts-ignore
     return StateMachine.store[fuseBox.name].getSelectors()
 }
 
 /**
  * Get fuse selection
  * @deprecated (Will be removed on version 3) Use [StoreName].selectors()
+ * @template {import('./types.t').FuseBoxNameType} N
  * @template {import('./types.t').ActionsType} A
  * @template {import('./types.t').SelectorsType} S
  * @template {import('./types.t').InitialStateType} I
- * @param {import('./types.t').FuseBoxType<A,S,I>} fuseBox
+ * @param {import('./types.t').FuseBoxType<N,A,S,I>} fuseBox
  * @param {S} selector
  * @returns {Record<keyof S, any>}
  */
@@ -70,12 +77,13 @@ function useFuseSelection(fuseBox, selector) {
 
 /**
  * Connect wire
+ * @template {import('./types.t').FuseBoxNameType} N
  * @template {import('./types.t').ActionsType} A
  * @template {import('./types.t').SelectorsType} S
  * @template {import('./types.t').InitialStateType} I
- * @param {import('./types.t').FuseBoxType<A,S,I>} fuseBox
+ * @param {import('./types.t').FuseBoxType<N,A,S,I>} fuseBox
  * @param {React.Component} Child
- * @returns {React.FunctionComponent}
+ * @returns {React.FunctionComponent<Record<N, import('./types.t').FuseBoxType<N,A,S,I>&any>>}
  */
 const connectWire = (fuseBox, Child) => (props) => {
     // Get from fuse
@@ -102,11 +110,12 @@ const connectWire = (fuseBox, Child) => (props) => {
 
 /**
  * Wire class components to fusebox
+ * @template {import('./types.t').FuseBoxNameType} N
  * @template {import('./types.t').ActionsType} A
  * @template {import('./types.t').SelectorsType} S
  * @template {import('./types.t').InitialStateType} I
- * @param {import('./types.t').FuseBoxType<A,S,I>[]} fuseBoxes
- * @returns {(Child: React.Component) => React.FunctionComponent|React.Component}
+ * @param {import('./types.t').FuseBoxType<N,A,S,I>[]} fuseBoxes
+ * @returns {(Child: React.Component) => React.FunctionComponent<Record<N, import('./types.t').FuseBoxType<N,A,S,I>&any>>|React.Component<Record<N, import('./types.t').FuseBoxType<N,A,S,I>&any>>}
  */
 const wire = (fuseBoxes = []) => (Child) => {
     // Set child

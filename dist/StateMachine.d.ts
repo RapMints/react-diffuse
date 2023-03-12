@@ -44,12 +44,13 @@ declare class StateMachine {
         options?: object | undefined;
     }) => {
         /**
+         * @template {import('./types.t').FuseBoxNameType} NameT
          * Store name
-         * @param {StoreNameType} storeName Store name
+         * @param {NameT} storeName Store name
          * @param {object|null} props Store props
          * @returns
          */
-        createStore: (storeName: StoreNameType, props?: object | null) => import("./types.t").FuseBoxType<ActionT, SelectorsT, InitialStateT>;
+        createStore: <NameT extends string>(storeName: NameT, props?: object | null) => import("./types.t").FuseBoxType<NameT, ActionT, SelectorsT, InitialStateT>;
     };
     useSelectionHook: (store: any, selector: any) => any;
     addFuseListener(storeName: any, func: any): void;
@@ -61,10 +62,11 @@ declare class StateMachine {
         type?: string | undefined;
         payload?: null | undefined;
     }) => () => any>;
-    runAction(storeName: any, action: any, payload: any): Promise<any>;
-    dispatch: (storeName: any) => ({ type, payload }: {
+    runAction(storeName: any, action: any, payload: any, callback?: () => undefined): Promise<any>;
+    dispatch: (storeName: any) => ({ type, payload, callback }: {
         type?: string | undefined;
         payload?: null | undefined;
+        callback: any;
     }) => Promise<any>;
 }
 //# sourceMappingURL=StateMachine.d.ts.map

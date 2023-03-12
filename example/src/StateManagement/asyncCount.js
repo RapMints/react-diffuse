@@ -34,7 +34,7 @@ const reducer = createReducer({
             CONNECT_ERROR()
           })
         }, */
-        GET_COUNT: async function({ state, payload }, {LOADING, PROGRESS, SUCCESS, FAIL}) {
+        GET_COUNT: async function({ state, payload, callback }, {LOADING, PROGRESS, SUCCESS, FAIL}) {
           try {
             LOADING();
             // Replace the url with your own on beeceptor
@@ -59,6 +59,7 @@ const reducer = createReducer({
     
             SUCCESS({ item: state.item + 1, percent: 100 });
           } catch (e) {
+            callback(e)
             FAIL({ error: e.message });
           }
         }

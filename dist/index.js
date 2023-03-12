@@ -283,21 +283,24 @@ var StateMachine = /*#__PURE__*/function () {
             dispatch: function dispatch(_temp) {
               var _ref12 = _temp === void 0 ? {} : _temp,
                 type = _ref12.type,
-                payload = _ref12.payload;
+                payload = _ref12.payload,
+                callback = _ref12.callback;
               if (that.actions[storeName][type] === undefined) {
                 console.warn("Action doesn't exist.");
                 return;
               }
               that.dispatch(storeName)({
                 type: type,
-                payload: payload != null ? payload : undefined
+                payload: payload != null ? payload : undefined,
+                callback: callback
               });
             },
             getAction: function getAction(actionName) {
-              var action = function action(payload) {
+              var action = function action(payload, callback) {
                 return store.dispatch({
                   type: actionName,
-                  payload: payload
+                  payload: payload,
+                  callback: callback
                 });
               };
               return action;
@@ -318,8 +321,8 @@ var StateMachine = /*#__PURE__*/function () {
               };
             },
             removeAction: function removeAction(actionName) {
-              var _this$actions;
-              _this === null || _this === void 0 ? true : (_this$actions = _this.actions) === null || _this$actions === void 0 ? true : delete _this$actions[storeName][actionName];
+              var _that$actions2;
+              that === null || that === void 0 ? true : (_that$actions2 = that.actions) === null || _that$actions2 === void 0 ? true : delete _that$actions2[storeName][actionName];
             },
             addMiddleWare: function addMiddleWare(_temp2) {
               var _ref13 = _temp2 === void 0 ? {} : _temp2,
@@ -405,10 +408,9 @@ var StateMachine = /*#__PURE__*/function () {
           that.store[storeName] = store;
           var fuseBox = {
             name: storeName,
-            useActions: store.getActions,
             actions: store.getActions(),
             useState: function useState() {
-              var _useState2 = React.useState(_this.store[storeName].getState()),
+              var _useState2 = React.useState(store.getState()),
                 fuse = _useState2[0],
                 setFuse = _useState2[1];
               React.useLayoutEffect(function () {
@@ -420,7 +422,8 @@ var StateMachine = /*#__PURE__*/function () {
                   _this.removeFuseListener(store.name, handleReducerChange);
                 };
               }, []);
-              return fuse;
+              var state = fuse;
+              return state;
             },
             selectors: store.getSelections()
           };
@@ -467,7 +470,8 @@ var StateMachine = /*#__PURE__*/function () {
         var _ref14$type = _ref14.type,
           type = _ref14$type === void 0 ? '' : _ref14$type,
           _ref14$payload = _ref14.payload,
-          payload = _ref14$payload === void 0 ? null : _ref14$payload;
+          payload = _ref14$payload === void 0 ? null : _ref14$payload,
+          callback = _ref14.callback;
         try {
           var _this$middleWare$stor, _this$middleWare, _this$middleWare$stor2, _this$middleWare$stor3, _this$middleWare2, _this$middleWare2$sto;
           var action = _this.getAction(storeName, type)["function"];
@@ -479,7 +483,7 @@ var StateMachine = /*#__PURE__*/function () {
           var afterWare = (_this$middleWare$stor3 = (_this$middleWare2 = _this.middleWare) === null || _this$middleWare2 === void 0 ? void 0 : (_this$middleWare2$sto = _this$middleWare2[storeName]) === null || _this$middleWare2$sto === void 0 ? void 0 : _this$middleWare2$sto.afterWare) != null ? _this$middleWare$stor3 : [];
           return Promise.resolve(_this.getFromMiddleWare(storeName)).then(function (runMiddleWare) {
             function _temp12() {
-              return Promise.resolve(_this.runAction(storeName, action, payload)).then(function (result) {
+              return Promise.resolve(_this.runAction(storeName, action, payload, callback)).then(function (result) {
                 function _temp10() {
                   return _this.state[storeName];
                 }
@@ -614,8 +618,8 @@ var StateMachine = /*#__PURE__*/function () {
     return this.state[storeName];
   };
   _proto.getAction = function getAction(storeName, actionName) {
-    var _this$actions$storeNa, _this$actions2, _this$actions2$storeN;
-    return (_this$actions$storeNa = (_this$actions2 = this.actions) === null || _this$actions2 === void 0 ? void 0 : (_this$actions2$storeN = _this$actions2[storeName]) === null || _this$actions2$storeN === void 0 ? void 0 : _this$actions2$storeN[actionName]) != null ? _this$actions$storeNa : null;
+    var _this$actions$storeNa, _this$actions, _this$actions$storeNa2;
+    return (_this$actions$storeNa = (_this$actions = this.actions) === null || _this$actions === void 0 ? void 0 : (_this$actions$storeNa2 = _this$actions[storeName]) === null || _this$actions$storeNa2 === void 0 ? void 0 : _this$actions$storeNa2[actionName]) != null ? _this$actions$storeNa : null;
   };
   _proto.getFromMiddleWare = function getFromMiddleWare(storeName) {
     var _this2 = this;
@@ -648,7 +652,12 @@ var StateMachine = /*#__PURE__*/function () {
       }
     });
   };
-  _proto.runAction = function runAction(storeName, action, payload) {
+  _proto.runAction = function runAction(storeName, action, payload, callback) {
+    if (callback === void 0) {
+      callback = function callback() {
+        return undefined;
+      };
+    }
     try {
       var _this3 = this;
       var result;
@@ -665,7 +674,8 @@ var StateMachine = /*#__PURE__*/function () {
         if (action instanceof Function) {
           result = action(_extends({
             state: _this3.getCurrentState(storeName),
-            payload: payload
+            payload: payload,
+            callback: callback
           }, _this3.props[storeName] !== null && {
             props: _this3.props[storeName]
           }), actions, stores);
@@ -706,56 +716,25 @@ var StateMachine$1 = new StateMachine();
 function useActions(fuseBox) {
   return fuseBox.actions;
 }
-function useDispatch(store) {
-  return StateMachine$1.store[store.name].dispatch;
+function useDispatch(fuseBox) {
+  return StateMachine$1.store[fuseBox.name].dispatch;
 }
 function useFuse(fuseBox) {
   return fuseBox.useState();
 }
-function useSelectors(store) {
-  return StateMachine$1.store[store.name].getSelectors();
+function useSelectors(fuseBox) {
+  return StateMachine$1.store[fuseBox.name].getSelectors();
 }
-function useFuseSelection(store, selector) {
-  var selection = mergeSelectors(selector, StateMachine$1.store[store.name].getState());
-  var _useState = React.useState(selection),
-    fuseSelection = _useState[0],
-    setFuseSelection = _useState[1];
-  React.useLayoutEffect(function () {
-    var handleReducerChange = function handleReducerChange(newStore) {
-      var newFuseSelection = mergeSelectors(selector, newStore);
-      var shouldUpdate = false;
-      if (newFuseSelection.value instanceof Function) {
-        for (var i = 0; i < newFuseSelection.stateSelections.length; i++) {
-          if (newFuseSelection.stateSelections[i] !== fuseSelection.stateSelections[i]) {
-            shouldUpdate = true;
-            break;
-          }
-        }
-      } else if (newFuseSelection.value !== fuseSelection.value) {
-        shouldUpdate = true;
-      }
-      if (shouldUpdate) {
-        setFuseSelection(newFuseSelection);
-      }
-    };
-    StateMachine$1.addFuseListener(store.name, handleReducerChange);
-    return function () {
-      StateMachine$1.removeFuseListener(store.name, handleReducerChange);
-    };
-  }, []);
-  if (fuseSelection.value instanceof Function) {
-    return fuseSelection.value.apply(fuseSelection, fuseSelection.stateSelections);
-  } else {
-    return fuseSelection.value;
-  }
+function useFuseSelection(fuseBox, selector) {
+  return StateMachine$1.useSelectionHook(fuseBox, selector);
 }
-var connectWire = function connectWire(store, Child) {
+var connectWire = function connectWire(fuseBox, Child) {
   return function (props) {
     var _fuse;
-    var context = useFuse(store);
-    var dispatch = useDispatch(store);
-    var actions = useActions(store);
-    var fuse = (_fuse = {}, _fuse[store.name] = {
+    var context = fuseBox.useState();
+    var dispatch = useDispatch(fuseBox);
+    var actions = fuseBox.actions;
+    var fuse = (_fuse = {}, _fuse[fuseBox.name] = {
       store: context,
       dispatch: dispatch,
       actions: actions
@@ -765,14 +744,14 @@ var connectWire = function connectWire(store, Child) {
     }, [props, context]);
   };
 };
-var wire = function wire(stores) {
-  if (stores === void 0) {
-    stores = [];
+var wire = function wire(fuseBoxes) {
+  if (fuseBoxes === void 0) {
+    fuseBoxes = [];
   }
   return function (Child) {
     var newChild = Child;
-    stores.forEach(function (store) {
-      newChild = connectWire(store, newChild);
+    fuseBoxes.forEach(function (fuseBox) {
+      newChild = connectWire(fuseBox, newChild);
     });
     return newChild;
   };
