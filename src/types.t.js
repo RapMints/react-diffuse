@@ -95,6 +95,7 @@
  * @template {ActionsType} ActionT
  * @template {SelectorsType} SelectorT
  * @template {InitialStateType} StateT
+ * @deprecated test
  * @typedef {Object} FuseBoxType
  * @property {NameT} name Fuse box name
  * @property {Record<keyof ActionT, ActionType>} actions Fuse box actions

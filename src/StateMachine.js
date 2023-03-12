@@ -3,6 +3,29 @@ import React, { useLayoutEffect, useState } from 'react'
 import { Types } from './types.t'
 
 /**
+ * @class Reducer
+ * @template {import('./types.t').ActionsType} ActionT
+ * @template {import('./types.t').SelectorsType} SelectorsT
+ * @template {import('./types.t').InitialStateType} InitialStateT
+ * @template {import('./types.t').MiddleWareType<keyof ActionT>} MiddleWareT
+ */
+class Reducer {
+    /**
+     * Deprecated
+     * @deprecated Use create fuse box
+     */
+    createStore = undefined
+    /**
+    * @param {<NameT extends string>(fuseBoxName: NameT, props?: object | null) => import('./types.t').FuseBoxType<NameT, ActionT, SelectorsT, InitialStateT>} create 
+    */
+    constructor(create) {
+        // @ts-ignore
+        this.createFuseBox = create
+        // @ts-ignore
+        this.createStore = create
+    }
+}
+/**
  * @typedef {string} StoreNameType
  */
 
@@ -38,6 +61,7 @@ class StateMachine {
      * @param {ActionT} reducerProps.actions Reducer actions
      * @param {MiddleWareT=} reducerProps.middleWare Reducer middleWare
      * @param {SelectorsT=} reducerProps.selectors Reducer selectors
+     * @returns {Reducer<ActionT, SelectorsT, InitialStateT, MiddleWareT>}
      */
     createReducer = ({ initialState, actions, selectors, middleWare}) => {
         const that = this
@@ -500,14 +524,7 @@ class StateMachine {
             return fuseBox
         }
         
-        const reducer = {
-            createFuseBox: create,
-            /**
-             * @deprecated Use createFuseBox
-             */
-            createStore: create
-        }
-
+        const reducer = new Reducer(create)
         return reducer
     }
 

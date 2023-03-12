@@ -120,6 +120,11 @@ const _iteratorSymbol = /*#__PURE__*/ typeof Symbol !== "undefined" ? (Symbol.it
 
 const _asyncIteratorSymbol = /*#__PURE__*/ typeof Symbol !== "undefined" ? (Symbol.asyncIterator || (Symbol.asyncIterator = Symbol("Symbol.asyncIterator"))) : "@@asyncIterator";
 
+var Reducer = function Reducer(create) {
+  this.createStore = undefined;
+  this.createFuseBox = create;
+  this.createStore = create;
+};
 var StateMachine = /*#__PURE__*/function () {
   function StateMachine() {
     var _this = this;
@@ -405,10 +410,7 @@ var StateMachine = /*#__PURE__*/function () {
         };
         return fuseBox;
       };
-      var reducer = {
-        createFuseBox: create,
-        createStore: create
-      };
+      var reducer = new Reducer(create);
       return reducer;
     };
     this.useSelectionHook = function (store, selector) {

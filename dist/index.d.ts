@@ -70,8 +70,8 @@ export const createReducer: <ActionT extends import("./types.t").ActionsType, Se
     middleWare?: MiddleWareT | undefined;
     selectors?: SelectorsT | undefined;
 }) => {
-    createFuseBox: <NameT extends string>(fuseBoxName: NameT, props?: object | null) => import("./types.t").FuseBoxType<NameT, ActionT, SelectorsT, InitialStateT>;
-    createStore: <NameT extends string>(fuseBoxName: NameT, props?: object | null) => import("./types.t").FuseBoxType<NameT, ActionT, SelectorsT, InitialStateT>;
+    createStore: undefined;
+    createFuseBox: <NameT extends string>(fuseBoxName: NameT, props?: object | null | undefined) => import("./types.t").FuseBoxType<NameT, ActionT, SelectorsT, InitialStateT>;
 };
 import React from "react";
 import { Component } from "react";
