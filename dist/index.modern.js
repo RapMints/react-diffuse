@@ -117,16 +117,34 @@ const _iteratorSymbol = /*#__PURE__*/ typeof Symbol !== "undefined" ? (Symbol.it
 
 const _asyncIteratorSymbol = /*#__PURE__*/ typeof Symbol !== "undefined" ? (Symbol.asyncIterator || (Symbol.asyncIterator = Symbol("Symbol.asyncIterator"))) : "@@asyncIterator";
 
+function mergeSelectors(selector, currentState) {
+  var stateSelections, value;
+  if (selector.length === 0) {
+    throw 'DiffuseError: No selectors specified';
+  }
+  if (selector.length === 1) {
+    value = selector[0](currentState);
+  } else {
+    var selectors = [].concat(selector);
+    var lastSelector = selectors.pop();
+    stateSelections = selectors.map(function (arg) {
+      return arg(currentState);
+    });
+    value = lastSelector;
+  }
+  return _extends({
+    value: value
+  }, stateSelections && {
+    stateSelections: stateSelections
+  });
+}
 var StateMachine = /*#__PURE__*/function () {
   function StateMachine() {
     var _this = this;
     this.createReducer = function (_ref) {
-      var _ref$initialState = _ref.initialState,
-        initialState = _ref$initialState === void 0 ? {} : _ref$initialState,
-        _ref$actions = _ref.actions,
-        actions = _ref$actions === void 0 ? {} : _ref$actions,
-        _ref$selectors = _ref.selectors,
-        selectors = _ref$selectors === void 0 ? {} : _ref$selectors,
+      var initialState = _ref.initialState,
+        actions = _ref.actions,
+        selectors = _ref.selectors,
         _ref$middleWare = _ref.middleWare,
         middleWare = _ref$middleWare === void 0 ? {} : _ref$middleWare,
         _ref$options = _ref.options,
@@ -156,6 +174,7 @@ var StateMachine = /*#__PURE__*/function () {
           that.initialState[storeName] = _extends({}, initState);
           that.state[storeName] = _extends({}, initState);
           that.selectors[storeName] = {};
+          that.selections[storeName] = {};
           that.actions[storeName] = {};
           that.props[storeName] = props;
           var newActions = _extends({}, config.useDiffuseInitializeState === true && {
@@ -272,19 +291,23 @@ var StateMachine = /*#__PURE__*/function () {
               });
             },
             getAction: function getAction(actionName) {
-              return function (payload) {
+              var action = function action(payload) {
                 return store.dispatch({
                   type: actionName,
                   payload: payload
                 });
               };
+              return action;
             },
             getActions: function getActions() {
               var _that$actions;
-              return Object.keys((_that$actions = that.actions) === null || _that$actions === void 0 ? void 0 : _that$actions[storeName]).reduce(function (prev, actionName) {
+              var actions = {};
+              var reduceFunction = function reduceFunction(prev, actionName) {
                 prev[actionName] = store.getAction(actionName);
                 return prev;
-              }, {});
+              };
+              actions = Object.keys((_that$actions = that.actions) === null || _that$actions === void 0 ? void 0 : _that$actions[storeName]).reduce(reduceFunction, actions);
+              return actions;
             },
             addAction: function addAction(actionName, action) {
               that.actions[storeName][actionName] = {
@@ -312,6 +335,12 @@ var StateMachine = /*#__PURE__*/function () {
             getSelector: function getSelector(selectorName) {
               return that.selectors[storeName][selectorName];
             },
+            getSelection: function getSelection(selectorName) {
+              return that.selections[storeName][selectorName];
+            },
+            getSelections: function getSelections() {
+              return that.selections[storeName];
+            },
             getSelectors: function getSelectors() {
               return that.selectors[storeName];
             },
@@ -320,6 +349,9 @@ var StateMachine = /*#__PURE__*/function () {
                 args[_key - 1] = arguments[_key];
               }
               that.selectors[storeName][selectorName] = args;
+              that.selections[storeName][selectorName] = function () {
+                return that.useSelectionHook(store, args);
+              };
             },
             getMiddleWare: function getMiddleWare() {
               return that.middleWare[storeName];
@@ -368,11 +400,64 @@ var StateMachine = /*#__PURE__*/function () {
             store.createSelector.apply(store, [selectorName].concat(selectors[selectorName]));
           }
           that.store[storeName] = store;
-          return {
-            name: storeName
+          var fuseBox = {
+            name: storeName,
+            useActions: store.getActions,
+            actions: store.getActions(),
+            useState: function useState$1() {
+              var _useState2 = useState(_this.store[storeName].getState()),
+                fuse = _useState2[0],
+                setFuse = _useState2[1];
+              useLayoutEffect(function () {
+                var handleReducerChange = function handleReducerChange(newStore) {
+                  setFuse(newStore);
+                };
+                _this.addFuseListener(store.name, handleReducerChange);
+                return function () {
+                  _this.removeFuseListener(store.name, handleReducerChange);
+                };
+              }, []);
+              return fuse;
+            },
+            selectors: store.getSelections()
           };
+          return fuseBox;
         }
       };
+    };
+    this.useSelectionHook = function (store, selector) {
+      var selection = mergeSelectors(selector, store.getState());
+      var _useState3 = useState(selection),
+        fuseSelection = _useState3[0],
+        setFuseSelection = _useState3[1];
+      useLayoutEffect(function () {
+        var handleReducerChange = function handleReducerChange(newStore) {
+          var newFuseSelection = mergeSelectors(selector, newStore);
+          var shouldUpdate = false;
+          if (newFuseSelection.value instanceof Function) {
+            for (var i = 0; i < newFuseSelection.stateSelections.length; i++) {
+              if (newFuseSelection.stateSelections[i] !== fuseSelection.stateSelections[i]) {
+                shouldUpdate = true;
+                break;
+              }
+            }
+          } else if (newFuseSelection.value !== fuseSelection.value) {
+            shouldUpdate = true;
+          }
+          if (shouldUpdate) {
+            setFuseSelection(newFuseSelection);
+          }
+        };
+        _this.addFuseListener(store.name, handleReducerChange);
+        return function () {
+          _this.removeFuseListener(store.name, handleReducerChange);
+        };
+      }, []);
+      if (fuseSelection.value instanceof Function) {
+        return fuseSelection.value.apply(fuseSelection, fuseSelection.stateSelections);
+      } else {
+        return fuseSelection.value;
+      }
     };
     this.dispatch = function (storeName) {
       return function (_ref14) {
@@ -466,6 +551,7 @@ var StateMachine = /*#__PURE__*/function () {
     this.store = {};
     this.storeDict = [];
     this.selectors = {};
+    this.selections = {};
     this.history = {};
     this.props = {};
   }
@@ -614,56 +700,23 @@ function isAsync(func) {
 }
 var StateMachine$1 = new StateMachine();
 
-function useActions(store) {
-  return StateMachine$1.store[store.name].getActions();
+function useActions(fuseBox) {
+  return fuseBox.actions;
 }
 function useDispatch(store) {
   return StateMachine$1.store[store.name].dispatch;
 }
-function useFuse(store) {
-  var _useState = useState(StateMachine$1.store[store.name].getState()),
-    fuse = _useState[0],
-    setFuse = _useState[1];
-  useLayoutEffect(function () {
-    var handleReducerChange = function handleReducerChange(newStore) {
-      setFuse(newStore);
-    };
-    StateMachine$1.addFuseListener(store.name, handleReducerChange);
-    return function () {
-      StateMachine$1.removeFuseListener(store.name, handleReducerChange);
-    };
-  }, []);
-  return fuse;
+function useFuse(fuseBox) {
+  return fuseBox.useState();
 }
 function useSelectors(store) {
   return StateMachine$1.store[store.name].getSelectors();
 }
-function mergeSelectors(selector, currentState) {
-  var stateSelections, value;
-  if (selector.length === 0) {
-    throw 'DiffuseError: No selectors specified';
-  }
-  if (selector.length === 1) {
-    value = selector[0](currentState);
-  } else {
-    var selectors = [].concat(selector);
-    var lastSelector = selectors.pop();
-    stateSelections = selectors.map(function (arg) {
-      return arg(currentState);
-    });
-    value = lastSelector;
-  }
-  return _extends({
-    value: value
-  }, stateSelections && {
-    stateSelections: stateSelections
-  });
-}
 function useFuseSelection(store, selector) {
   var selection = mergeSelectors(selector, StateMachine$1.store[store.name].getState());
-  var _useState2 = useState(selection),
-    fuseSelection = _useState2[0],
-    setFuseSelection = _useState2[1];
+  var _useState = useState(selection),
+    fuseSelection = _useState[0],
+    setFuseSelection = _useState[1];
   useLayoutEffect(function () {
     var handleReducerChange = function handleReducerChange(newStore) {
       var newFuseSelection = mergeSelectors(selector, newStore);

@@ -28,7 +28,7 @@ const reducer = createReducer({
     ]
   },
   selectors: {
-    MySelector: [(state) => `${state.item}`]
+    MySelector: [(state) => `${state.item}`, (string)=> (`Test String ${string}`)]
   },
 });
 

@@ -1,73 +1,62 @@
 import React, { useLayoutEffect, useMemo, useState } from 'react'
-import StateMachine from './StateMachine'
+import StateMachine, { mergeSelectors } from './StateMachine'
+import { Types } from './types.t'
 
-function useActions(store) {
-    return StateMachine.store[store.name].getActions()
+/**
+ * Get reducer actions
+ * @deprecated Use fuseBox.actions
+ * @template {import('./types.t').ActionsType} A
+ * @template {import('./types.t').SelectorsType} S
+ * @template {import('./types.t').InitialStateType} I
+ * @param {import('./types.t').FuseBoxType<A,S,I>} fuseBox
+ * @returns {Record<keyof A, import('./types.t').ActionType>}
+ */
+function useActions(fuseBox) {
+    return fuseBox.actions
 }
 
+/**
+ * 
+ * @param {object} store
+ * @param {string} store.name 'Store name'
+ * @returns 
+ */
 function useDispatch(store) {
     return StateMachine.store[store.name].dispatch
 }
 
-function useFuse(store) {
-    const [fuse, setFuse] = useState(StateMachine.store[store.name].getState())
-
-    useLayoutEffect(() => {
-        const handleReducerChange = (newStore) => {
-            setFuse(newStore)
-        }
-
-        StateMachine.addFuseListener(store.name, handleReducerChange)
-
-        return () => {
-            StateMachine.removeFuseListener(store.name, handleReducerChange)
-        }
-    }, [])
-
-    return fuse
+/**
+ * Get fuse
+ * @deprecated Use store.useState()
+ * @template {import('./types.t').ActionsType} A
+ * @template {import('./types.t').SelectorsType} S
+ * @template {import('./types.t').InitialStateType} I
+ * @param {import('./types.t').FuseBoxType<A,S,I>} fuseBox
+ * @returns {Record<keyof I, any>}
+ */
+function useFuse(fuseBox) {
+    return fuseBox.useState()
 }
 
+// @ts-ignore
 function useSelectors(store) {
     return StateMachine.store[store.name].getSelectors()
 }
 
-function mergeSelectors(selector, currentState) {
-    let stateSelections, value
-    
-    if (selector.length === 0) {
-        throw 'DiffuseError: No selectors specified'
-    }
-
-    if (selector.length === 1) {
-        value = selector[0](currentState)
-    }
-    else {
-        const selectors = [...selector]
-        let lastSelector = selectors.pop()
-        
-        stateSelections = selectors.map((arg) => {
-            return arg(currentState)
-        })
-
-        value = lastSelector
-    }
-
-    return {
-        value,
-        ...(stateSelections && {stateSelections: stateSelections})
-    }
-}
-
+// @ts-ignore
 function useFuseSelection(store, selector) {
     let selection = mergeSelectors(selector, StateMachine.store[store.name].getState())
     const [fuseSelection, setFuseSelection] = useState(selection)
 
     useLayoutEffect(() => {
+        // @ts-ignore
         const handleReducerChange = (newStore) => {
             const newFuseSelection = mergeSelectors(selector, newStore)
             let shouldUpdate = false
             if (newFuseSelection.value instanceof Function) {
+                // @ts-ignore
                 for (let i = 0; i < newFuseSelection.stateSelections.length; i++) {
+                    // @ts-ignore
                     if (newFuseSelection.stateSelections[i] !== fuseSelection.stateSelections[i]) {
                         shouldUpdate = true
                         break
@@ -91,6 +80,7 @@ function useFuseSelection(store, selector) {
     }, [])
 
     if (fuseSelection.value instanceof Function) {
+        // @ts-ignore
         return fuseSelection.value(...fuseSelection.stateSelections)
     }
     else {
@@ -98,12 +88,7 @@ function useFuseSelection(store, selector) {
     }
 }
 
-/**
- * Connects Child to a specified fuse
- * @param {string} fuseName Fuse to reference
- * @param {Component} Child Component to reference
- * @returns Wired component
- */
+// @ts-ignore
 const connectWire = (store, Child) => (props) => {
     // Get from fuse
     const context = useFuse(store)
@@ -123,16 +108,11 @@ const connectWire = (store, Child) => (props) => {
     }
 
     // Set up memoization
+    // @ts-ignore
     return useMemo(() => <Child {...fuse} {...props} />, [props, context])
 }
 
-/**
- * Wires component to a specified fuses
- * @param {object} properties
- * @param {string} properties.fuseName Fuse to reference
- * @param {Component} properties.component Component to reference
- * @returns Wired component
- */
+// @ts-ignore
 const wire = (stores = []) => (Child) => {
     // Set child
     let newChild = Child

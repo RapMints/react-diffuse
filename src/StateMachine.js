@@ -1,3 +1,41 @@
+import React, { useLayoutEffect, useState } from 'react'
+import { useFuseSelection, useSelectors } from '.'
+// @ts-ignore
+import { Types } from './types.t'
+
+/**
+ * @typedef {string} StoreNameType
+ */
+
+// @ts-ignore
+function mergeSelectors(selector, currentState) {
+    let stateSelections, value
+    
+    if (selector.length === 0) {
+        throw 'DiffuseError: No selectors specified'
+    }
+
+    if (selector.length === 1) {
+        value = selector[0](currentState)
+    }
+    else {
+        const selectors = [...selector]
+        let lastSelector = selectors.pop()
+        
+        stateSelections = selectors.map((arg) => {
+            return arg(currentState)
+        })
+
+        value = lastSelector
+    }
+
+    return {
+        value,
+        ...(stateSelections && {stateSelections: stateSelections})
+    }
+}
+
+
 class StateMachine {
     constructor() {
         this.state = {}
@@ -6,13 +44,32 @@ class StateMachine {
         this.listener = {}
         this.initialState = {}
         this.store = {}
+        // @ts-ignore
         this.storeDict = []
         this.selectors = {}
+        this.selections = {}
         this.history = {}
         this.props = {}
     }
 
-    createReducer = ({ initialState = {}, actions = {}, selectors = {}, middleWare = {}, options = {}}) => {
+    /**
+     * @name TEST#store
+     * @type {Object<string, function>}
+     */
+
+    /**
+     * @template {import('./types.t').ActionsType} ActionT
+     * @template {import('./types.t').SelectorsType} SelectorsT
+     * @template {import('./types.t').InitialStateType} InitialStateT
+     * Creates reducer
+     * @param {object} reducerProps Reducer properties
+     * @param {InitialStateT} reducerProps.initialState Reducer initial state
+     * @param {ActionT} reducerProps.actions Reducer actions
+     * @param {object=} reducerProps.middleWare Reducer middleWare
+     * @param {SelectorsT=} reducerProps.selectors Reducer selectors
+     * @param {object=} reducerProps.options 
+     */
+    createReducer = ({ initialState, actions, selectors, middleWare = {}, options = {}}) => {
         const that = this
 
         const defaultOptions = {
@@ -28,6 +85,12 @@ class StateMachine {
         }
 
         return {
+            /**
+             * Store name
+             * @param {StoreNameType} storeName Store name
+             * @param {object|null} props Store props 
+             * @returns 
+             */
             createStore: (storeName, props = null) => {
                 const diffuseState = {
                     diffuse: {
@@ -57,12 +120,15 @@ class StateMachine {
                 }
 
                 that.selectors[storeName] = {}
-
+                that.selections[storeName] = {}
                 that.actions[storeName] = {}
 
                 that.props[storeName] = props
 
                 // Set store actions
+                /**
+                 * @type {import('./types.t').ActionsType}
+                 */
                 let newActions = {
                     ...(config.useDiffuseInitializeState === true && {INITIALIZE_STATE: ({state, payload = {}}) => {
                         return {
@@ -70,7 +136,12 @@ class StateMachine {
                             ...payload
                         }
                     }}),
-                    ...(config.useDiffuseAsync === true && {  
+                    ...(config.useDiffuseAsync === true && {
+                        /**
+                         * 
+                         * @param {import('./types.t').ActionPropsType} params
+                         * @returns {object}
+                         */  
                         LOADING: ({state}) => {
                             return {
                                 diffuse: {
@@ -80,6 +151,11 @@ class StateMachine {
                                 }
                             }
                         },
+                        /**
+                         * 
+                         * @param {import('./types.t').ActionPropsType} params
+                         * @returns {object}
+                         */ 
                         SUCCESS: ({state, payload}) => {
                             return {
                                 diffuse: {
@@ -90,11 +166,21 @@ class StateMachine {
                                 ...payload
                             }
                         },
+                        /**
+                         * 
+                         * @param {import('./types.t').ActionPropsType} params
+                         * @returns {object}
+                         */ 
                         PROGRESS: ({state, payload}) => {
                             return {
                                 ...payload
                             }
                         },
+                        /**
+                         * 
+                         * @param {import('./types.t').ActionPropsType} params
+                         * @returns {object}
+                         */ 
                         FAIL: ({state, payload}) => {
                             return {
                                 diffuse: {
@@ -107,16 +193,31 @@ class StateMachine {
                         },
                     }),
                     ...(config.useDiffuseWebsocket === true && {
+                        /**
+                         * 
+                         * @param {import('./types.t').ActionPropsType} params
+                         * @returns {object}
+                         */ 
                         MESSAGE_RECIEVED: ({state, payload}) => {
                             return {
                                 ...payload
                             }
                         },
+                        /**
+                         * 
+                         * @param {import('./types.t').ActionPropsType} params
+                         * @returns {object}
+                         */ 
                         EMIT: ({state, payload}) => {
                             return {
                                 ...payload
                             }
                         },
+                        /**
+                         * 
+                         * @param {import('./types.t').ActionPropsType} params
+                         * @returns {object}
+                         */ 
                         CONNECT: ({state, payload}) => {
                             return {
                                 diffuse: {
@@ -126,6 +227,11 @@ class StateMachine {
                                 ...payload
                             }
                         },
+                        /**
+                         * 
+                         * @param {import('./types.t').ActionPropsType} params
+                         * @returns {object}
+                         */ 
                         DISCONNECT: ({state, payload}) => {
                             return {
                                 diffuse: {
@@ -135,6 +241,11 @@ class StateMachine {
                                 ...payload
                             }
                         },
+                        /**
+                         * 
+                         * @param {import('./types.t').ActionPropsType} params
+                         * @returns {object}
+                         */ 
                         CONNECT_ERROR: ({state, payload}) => {
                             return {
                                 diffuse: {
@@ -164,19 +275,32 @@ class StateMachine {
                     beforeWare: [],
                     afterWare: []
                 }
-
+                
                 // Create store object
                 const store = {
                     name: storeName,
                     getHistory: () => {
                         return that.history[storeName]
                     },
+                    /**
+                     * 
+                     * @returns {import('./types.t').FuseStateType}
+                     */
                     getState: () => {
                         return that.state?.[storeName]
                     },
+                    /**
+                     * 
+                     * @returns {import('./types.t').FuseStateType}
+                     */
                     getInitialState: () => {
                         return that.initialState?.[storeName]
                     },
+                    /**
+                     * 
+                     * @param {*} param0 
+                     * @returns 
+                     */
                     dispatch: ({ type, payload } = {}) => {
                         if (that.actions[storeName][type] === undefined) {
                             console.warn("Action doesn't exist.")
@@ -188,18 +312,55 @@ class StateMachine {
                             payload: payload ?? undefined
                         })
                     },
+                    /**
+                     * Get a fuse action
+                     * @param {keyof ActionT} actionName
+                     * @returns {import('./types.t').ActionType} 
+                     */
                     getAction: (actionName) => {
-                        return (payload) => store.dispatch({ type: actionName, payload })
+                        /**
+                         * @type {import('./types.t').ActionType}
+                         * @param {object|undefined} payload Payload
+                         */
+                        let action = (payload) => store.dispatch({ type: actionName, payload })
+                        return action
                     },
+                    /**
+                     * Get all fuse actions
+                     * @returns {Record<keyof ActionT, import('./types.t').ActionType>}
+                     */
                     getActions: () => {
-                        return Object.keys(that.actions?.[storeName]).reduce((prev, actionName) => {
+                        /**
+                         * @type {Record<keyof ActionT, import('./types.t').ActionType>}
+                         */
+                        // @ts-ignore
+                        let actions = {}
+                         
+                        /**
+                         * @param {Record<keyof ActionT, import('./types.t').ActionType>} prev
+                         * @param {keyof ActionT} actionName
+                         */
+                        let reduceFunction = (prev, actionName) => {
+                            /**
+                             * @type {Record<keyof ActionT, import('./types.t').ActionType>}
+                             *
+                             */
                             prev[actionName] = store.getAction(actionName)
                             return prev
-                        }, {})
+                        }
+                        
+                        /**
+                         * @type {Record<keyof ActionT, import('./types.t').ActionType>}
+                         */
+                        actions = Object.keys(that.actions?.[storeName]).reduce(reduceFunction, actions)
+
+                        return actions
                     },
+                    // @ts-ignore
                     addAction: (actionName, action) => {
                         that.actions[storeName][actionName] = {function: action}
                     },
+                    // @ts-ignore
                     removeAction: (actionName) => {
                         delete this?.actions?.[storeName][actionName]
                     },
@@ -211,14 +372,40 @@ class StateMachine {
                             that.middleWare?.[storeName].beforeWare.push(beforeWare)
                         }
                     },
+                    /**
+                     * Get selector function
+                     * @param {keyof SelectorsT} selectorName 
+                     * @returns {Function[]}
+                     */
                     getSelector: (selectorName) => {
                         return that.selectors[storeName][selectorName]
                     },
+                    /**
+                     * Get selector function
+                     * @param {keyof SelectorsT} selectorName 
+                     * @returns {Function[]}
+                     */
+                    getSelection: (selectorName) => {
+                        return that.selections[storeName][selectorName]
+                    },
+                    /**
+                     * Get selector function 
+                     * @returns {Record<keyof SelectorsT, import('./types.t').useSelectionsType>}
+                     */
+                    getSelections: () => {
+                        return that.selections[storeName]
+                    },
+                    /**
+                     * Get selector function
+                     * @returns {Record<keyof SelectorsT, import('./types.t').useSelectionsType>}
+                     */
                     getSelectors: () => {
                         return that.selectors[storeName]
                     },
+                    // @ts-ignore
                     createSelector: function createSelector(selectorName, ...args) {
                         that.selectors[storeName][selectorName] = args
+                        that.selections[storeName][selectorName] = () => that.useSelectionHook(store, args)
                     },
                     getMiddleWare: () => {
                         return that.middleWare[storeName]
@@ -254,16 +441,22 @@ class StateMachine {
                     store.addAction(actionName, newActions[actionName])
                 }
 
-                // Add before ware
+                // Add before ware 
+                //@ts-ignore
                 if (middleWare?.beforeWare) {
+                    // @ts-ignore
                     for (const index in middleWare.beforeWare) {
+                        // @ts-ignore
                         store.addMiddleWare({beforeWare: middleWare.beforeWare[index]})
                     }
                 }
 
                 // Add afterware
+                // @ts-ignore
                 if (middleWare?.afterWare) {
+                    // @ts-ignore
                     for (const index in middleWare.afterWare) {
+                        // @ts-ignore
                         store.addMiddleWare({afterWare: middleWare.afterWare[index]})
                     }
                 }
@@ -275,14 +468,90 @@ class StateMachine {
 
                 // Add store object to stores
                 that.store[storeName] = store
-
-                return {
-                    name: storeName
+                
+                /**
+                 * @type {import('./types.t').FuseBoxType<ActionT, SelectorsT, InitialStateT>}
+                 */
+                let fuseBox = {
+                    name: storeName,
+                    useActions: store.getActions,
+                    actions: store.getActions(),
+                    useState: () => {
+                        const [fuse, setFuse] = useState(this.store[storeName].getState())
+                    
+                        useLayoutEffect(() => {
+                            /**
+                             * 
+                             * @param {object} newStore 
+                             */
+                            const handleReducerChange = (newStore) => {
+                                setFuse(newStore)
+                            }
+                    
+                            this.addFuseListener(store.name, handleReducerChange)
+                    
+                            return () => {
+                                this.removeFuseListener(store.name, handleReducerChange)
+                            }
+                        }, [])
+                    
+                        return fuse
+                    },
+                    selectors: store.getSelections(),
                 }
+                return fuseBox
+                    
+                
             }
         }
     }
 
+    // @ts-ignore
+    useSelectionHook = (store,selector) => {
+        let selection = mergeSelectors(selector, store.getState())
+        const [fuseSelection, setFuseSelection] = useState(selection)
+    
+        useLayoutEffect(() => {
+            // @ts-ignore
+            const handleReducerChange = (newStore) => {
+                const newFuseSelection = mergeSelectors(selector, newStore)
+                let shouldUpdate = false
+                if (newFuseSelection.value instanceof Function) {
+                    // @ts-ignore
+                    for (let i = 0; i < newFuseSelection.stateSelections.length; i++) {
+                        // @ts-ignore
+                        if (newFuseSelection.stateSelections[i] !== fuseSelection.stateSelections[i]) {
+                            shouldUpdate = true
+                            break
+                        }
+                    }
+                }
+                else if (newFuseSelection.value !== fuseSelection.value) {
+                    shouldUpdate = true      
+                }  
+    
+                if (shouldUpdate) {
+                    setFuseSelection(newFuseSelection)
+                }
+            }
+    
+            this.addFuseListener(store.name, handleReducerChange)
+    
+            return () => {
+                this.removeFuseListener(store.name, handleReducerChange)
+            }
+        }, [])
+    
+        if (fuseSelection.value instanceof Function) {
+            // @ts-ignore
+            return fuseSelection.value(...fuseSelection.stateSelections)
+        }
+        else {
+            return fuseSelection.value
+        }
+    }
+
+    // @ts-ignore
     addFuseListener(storeName, func) {
         // If storeName exist in dictionary
         if (this.storeDict[storeName]) {
@@ -299,6 +568,7 @@ class StateMachine {
         }
     }
 
+    // @ts-ignore
     removeFuseListener(storeName, func) {
         // If storeName exist in dictionary
         if (this.storeDict.includes(storeName)) {
@@ -322,6 +592,7 @@ class StateMachine {
         }
     }
 
+    // @ts-ignore
     dispatchReducerListeners(storeName, result, dontSaveToHistory = false) {
         // If there is a result to push
         if (result !== undefined) {
@@ -355,15 +626,19 @@ class StateMachine {
         }
     }
 
+    // @ts-ignore
     getCurrentState(storeName) {
         return this.state[storeName]
     }
 
+    // @ts-ignore
     getAction(storeName, actionName) {
         return this.actions?.[storeName]?.[actionName] ?? null
     }
 
+    // @ts-ignore
     async getFromMiddleWare(storeName) {
+        // @ts-ignore
         return (middleWare, { type = '', payload = null }) => {
             let middleWareSelection = middleWare(storeName)
             let executeMiddleWare = middleWareSelection(this.getCurrentState(storeName))
@@ -377,6 +652,7 @@ class StateMachine {
         }
     }
 
+    // @ts-ignore
     async runAction(storeName, action, payload) {
         // Initialize results
         let result
@@ -415,6 +691,7 @@ class StateMachine {
         return result
     }
 
+    // @ts-ignore
     dispatch = (storeName) => async ({ type = '', payload = null }) => {
             let action = (this.getAction(storeName, type)).function
 
@@ -475,7 +752,7 @@ class StateMachine {
             return this.state[storeName]
         }
 }
-
+// @ts-ignore
 function isPromise(p) {
     if (typeof p === 'object' && typeof p.then === 'function') {
       return true;
@@ -483,7 +760,7 @@ function isPromise(p) {
   
     return false;
 }
-
+// @ts-ignore
 function isAsyncAction(func, actions) {
     try {
         return func.constructor.name === 'AsyncFunction' || isPromise(func({}, actions))
@@ -492,7 +769,7 @@ function isAsyncAction(func, actions) {
         return false
     }
 }
-
+// @ts-ignore
 function isAsync(func) {
     try {
         return func.constructor.name === 'AsyncFunction' || isPromise(func({}, {}))
@@ -501,4 +778,6 @@ function isAsync(func) {
         return false
     }
 }
+
+export {mergeSelectors}
 export default new StateMachine()

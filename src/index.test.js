@@ -1,7 +1,9 @@
-import Diffuse from './js'
+// @ts-ignore
+import { wire, useFuse, useActions, useDispatch, useFuseSelection, useSelectors, createReducer } from '.'
 
 describe('Diffuse', () => {
   it('is truthy', () => {
-    expect(Diffuse).toBeTruthy()
+    // @ts-ignore
+    expect({ wire, useFuse, useActions, useDispatch, useFuseSelection, useSelectors, createReducer }).toBeTruthy()
   })
 })

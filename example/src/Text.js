@@ -30,8 +30,7 @@ const Text2 = (props) => {
 
 const Text = (props) => {
   const actions = useActions(AReducer)
-  const selectors = useSelectors(AReducer)
-  const selection = useFuseSelection(AReducer, selectors.MySelector)
+  const selection = AReducer.selectors.MySelector() 
   
   return (
     <div

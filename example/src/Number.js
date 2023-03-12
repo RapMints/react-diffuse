@@ -1,5 +1,5 @@
 import React from 'react'
-import { useFuse, useActions, useSelectors, useFuseSelection} from "react-diffuse";
+import { useActions } from 'react-diffuse';
 import { AReducer, BReducer } from "./StateManagement/States";
 function randomColor() {
   const letters = "0123456789ABCDEF";
@@ -9,11 +9,10 @@ function randomColor() {
 }
 
 const Number = (props) => {
-  const actions = useActions(BReducer)
-  const listenForThis = useFuse(AReducer)
-  const fuse = useFuse(BReducer)
-  
-  
+  const actions = BReducer.actions
+  const listenForThis = AReducer.useState()
+  const fuse = BReducer.useState()
+  const state = BReducer.useState()
   const {item} = fuse
   return (
     <div

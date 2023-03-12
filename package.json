@@ -7,13 +7,13 @@
   "repository": "RapMints/react-diffuse",
   "main": "dist/index.js",
   "module": "dist/index.modern.js",
-  "source": "src/js/index.js",
+  "source": "src/index.js",
   "engines": {
     "node": ">=10"
   },
   "scripts": {
-    "build": "microbundle-crl --no-compress --format modern,cjs",
-    "start": "microbundle-crl watch --no-compress --format modern,cjs",
+    "build": "microbundle-crl --no-compress --generateTypes --format modern,cjs && tsc",
+    "start": "microbundle-crl watch --no-compress --generateTypes --format modern,cjs && tsc",
     "prepare": "run-s build",
     "test": "run-s test:unit test:lint test:build",
     "test:build": "run-s build",
@@ -31,6 +31,8 @@
     "react": "^18.0.0"
   },
   "devDependencies": {
+    "@types/mocha": "^10.0.1",
+    "@types/react": "^18.0.28",
     "babel-eslint": "^10.1.0",
     "eslint": "^8.34.0",
     "eslint-config-prettier": "^8.5.0",
@@ -48,7 +50,8 @@
     "npm-run-all": "^4.1.5",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
-    "react-scripts": "^5.0.1"
+    "react-scripts": "^5.0.1",
+    "typescript": "^4.9.5"
   },
   "dependencies": {
     "jsdoc": "^4.0.2"
