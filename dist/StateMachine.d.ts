@@ -4,10 +4,6 @@ export type StoreNameType = string;
 /**
  * @typedef {string} StoreNameType
  */
-export function mergeSelectors(selector: any, currentState: any): {
-    stateSelections?: any[] | undefined;
-    value: any;
-};
 declare class StateMachine {
     state: {};
     actions: {};
@@ -28,20 +24,19 @@ declare class StateMachine {
      * @template {import('./types.t').ActionsType} ActionT
      * @template {import('./types.t').SelectorsType} SelectorsT
      * @template {import('./types.t').InitialStateType} InitialStateT
+     * @template {import('./types.t').MiddleWareType<keyof ActionT>} MiddleWareT
      * Creates reducer
      * @param {object} reducerProps Reducer properties
      * @param {InitialStateT} reducerProps.initialState Reducer initial state
      * @param {ActionT} reducerProps.actions Reducer actions
-     * @param {object=} reducerProps.middleWare Reducer middleWare
+     * @param {MiddleWareT=} reducerProps.middleWare Reducer middleWare
      * @param {SelectorsT=} reducerProps.selectors Reducer selectors
-     * @param {object=} reducerProps.options
      */
-    createReducer: <ActionT extends import("./types.t").ActionsType, SelectorsT extends import("./types.t").SelectorsType, InitialStateT extends import("./types.t").InitialStateType>({ initialState, actions, selectors, middleWare, options }: {
+    createReducer: <ActionT extends import("./types.t").ActionsType, SelectorsT extends import("./types.t").SelectorsType, InitialStateT extends import("./types.t").InitialStateType, MiddleWareT extends import("./types.t").MiddleWareType<keyof ActionT>>({ initialState, actions, selectors, middleWare }: {
         initialState: InitialStateT;
         actions: ActionT;
-        middleWare?: object | undefined;
+        middleWare?: MiddleWareT | undefined;
         selectors?: SelectorsT | undefined;
-        options?: object | undefined;
     }) => {
         /**
          * @template {import('./types.t').FuseBoxNameType} NameT
@@ -52,16 +47,20 @@ declare class StateMachine {
          */
         createStore: <NameT extends string>(storeName: NameT, props?: object | null) => import("./types.t").FuseBoxType<NameT, ActionT, SelectorsT, InitialStateT>;
     };
+    mergeSelectors(selector: any, currentState: any): {
+        stateSelections?: any[] | undefined;
+        value: any;
+    };
     useSelectionHook: (store: any, selector: any) => any;
     addFuseListener(storeName: any, func: any): void;
     removeFuseListener(storeName: any, func: any): void;
     dispatchReducerListeners(storeName: any, result: any, dontSaveToHistory?: boolean): void;
     getCurrentState(storeName: any): any;
     getAction(storeName: any, actionName: any): any;
-    getFromMiddleWare(storeName: any): Promise<(middleWare: any, { type, payload }: {
+    getFromMiddleWare(storeName: any): (middleWare: any, { type, payload }: {
         type?: string | undefined;
         payload?: null | undefined;
-    }) => () => any>;
+    }) => any;
     runAction(storeName: any, action: any, payload: any, callback?: () => undefined): Promise<any>;
     dispatch: (storeName: any) => ({ type, payload, callback }: {
         type?: string | undefined;

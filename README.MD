@@ -17,18 +17,23 @@ EXAMPLE: https://codesandbox.io/s/wispy-leaf-iyp9k6
 <b>Table of Contents</b>
 1. Installation
 2. Usage
-3. Create Reducer
-4. Actions
-    1. Chaining Async Actions
-    2. Chaining Multiple Store Actions
-    3. Chaining Websocket Actions
-5. CreateStore
-6. Hooks
-    1. useFuse
-    2. useSelectors & useFuseSelection
-    3. useDispatch
-    4. useActions
-7. Wire
+    1. Create Reducer
+    2. <b style='color: blue'>(NEW)</b> Intellisense Capabilites
+    3. Actions
+        1. Chaining Async Actions
+        2. Chaining Multiple Store Actions
+        3. Chaining Websocket Actions
+    4. <b style='color: blue'>(NEW)</b> createFuseBox <b>(createStore has been DEPRECATED)</b>
+    5. Hooks <b style='color: red'>(DEPRECATED SEE "Using FuseBoxes" SECTION)</b>
+        1. useFuse <b style='color: red'>(DEPRECATED)</b>
+        2. useSelectors & useFuseSelection <b style='color: red'>(DEPRECATED)</b>
+        3. useDispatch <b style='color: red'>(DEPRECATED)</b>
+        4. useActions <b style='color: red'>(DEPRECATED)</b>
+    6. <b style='color: blue'>(NEW)</b> Using FuseBoxes 
+        1. useState
+        2. actions
+        3. selectors
+    7. Wire
 
 ## <b>Installation</b>
 Install npm package
@@ -76,13 +81,16 @@ As you can see there are 4 parts to this reducer.
 * Then, we have <b>actions</b>. Actions are jobs that you can dispatch from any component, inheriting a store. 
 * Lastly, we have <b>selections</b>. Selections mutate data from our state and only update when the mutation has changed. Selectors are just an array of selection functions. If only one function, that function takes in state as an argument. If more than one function every function except the last function takes in state. The last function takes all previous returns as its arguments for example
 
+### <b>Intellisense Capabilities</b>
+Now with jsdoc added all reducers have the capability of autocomplete. Whether it is state, actions, or selectors as you are coding options for auto complete are provided. With this in mind, we will be deprecating all hooks used to get state, actions, and selectors and introduce a new way of implementing Diffuse.
+
 ### <b>Actions</b>
 Actions can be run from dispatching or by running the action explicitly. Async functions and regular functions are handled the same and can both take in an object containing state, payload, and props. 
 
 *   state - Current state
 *   payload - Payload that can be passed in on running the action
 *   props - Props of current store which can be passed in when creating a store
-
+*   callback - Callback that can be passed in on running the action
 #### <b>Chaining Asynchronous Actions</b>
 The second object the action functions can recieve are actions which can be used to chain actions. Take a look below at the <i>GET_COUNT</i>
 
@@ -100,7 +108,7 @@ The second object the action functions can recieve are actions which can be used
                     item: state.item + 1
                 }
             },
-            GET_COUNT: async ({state, payload, props}, {SUCCESS, PROGRESS, FAIL, LOADING}) => {
+            GET_COUNT: async ({state, payload, props, callback}, {SUCCESS, PROGRESS, FAIL, LOADING}) => {
                 try {
                     LOADING()
 
@@ -116,7 +124,8 @@ The second object the action functions can recieve are actions which can be used
                     })
                 }
                 catch(e) {
-                    return FAIL({error: e.message})
+                    callback(e)
+                    FAIL({error: e.message})
                 }
             }
         }
@@ -171,16 +180,16 @@ In the example above example GET_COUNT is an async function and is chaining othe
 Additionally, actions from one store can use actions from another store. Similar to the above examples of a chaining actions, except you can use actions from other stores.
 ```
     actions: { 
-            INCREMENT: ({state}, actions, stores) => {
+            INCREMENT: ({state}, actions) => {
                 // Run action for another store
-                stores.BReducer.actions.DECREMENT()
+                BFuseBox.actions.DECREMENT()
 
                 // Run action for another store
-                stores.CReducer.actions.DECREMENT()
+                CFuseBox.actions.DECREMENT()
             },
         }
 ```
-NOTE: This design pattern will trigger a rerender on any component using BReducer or CReducer however, this is being called from AReducer
+NOTE: This design pattern will trigger a rerender on any component using BFuseBox or CFuseBox however, this is being called from AFuseBox
 
 #### <b>Chaining Websocket Actions</b>
 Similary, you can chain websocket actions just like async actions. There are 5 predetermined actions you can use when handling websockets: CONNECT, CONNECT_ERROR, MESSAGE_RECEIVED, DISCONNECT, & EMIT. Note that you can replace these action names.
@@ -258,30 +267,30 @@ Below is an example of a SUBSCRIBE, UNSUBSCRIBE, & EMIT action using socket io:
     }
 ```
 
-### createStore
-Once you've created your reducer you can use it to create stores like below:
+### createFuseBox
+We have changed the name of the function for creating stores from "createStore" to "createFuseBox", Once you've created your reducer you can use it to create stores like below:
 ```
     // Stores.js 
     
     import count from "./count";
 
-    const AStore = count.createStore('AStore', props: {url: "www.example.com"})
-    const BStore = count.createStore('BStore', props: {url: "www.example2.com"})
+    const AFuseBox = count.createFuseBox('AFuseBox', props: {url: "www.example.com"})
+    const BFuseBox = count.createFuseBox('BFuseBox', props: {url: "www.example2.com"})
 
-    export {AStore, BStore}
+    export {AFuseBox, BFuseBox}
 ```
-As you can see above we imported our count reducer we created above in the create reducer section. A single reducer can be used to create multiple stores. In this example we used the count reducer to create AStore and BStore
+As you can see above we imported our count reducer we created above in the create reducer section. A single reducer can be used to create multiple stores. In this exstoreNameample we used the count reducer to create AFuseBox and BFuseBox
 
-### <b>Hooks (functional components)</b>
+### <b>Hooks (functional components) <b style='color: red'>(DEPRECATED)</b></b>
 *** NOTE: All hooks take in a store as there first argument. This means you must import your store whenever using a hook. In this example we import from our file we created above in the create store example. See the CodeSandbox example ***
-#### <b>useFuse</b>
-The useFuse hook you can use to select a reducer from global state. For example to get _item_ from the _AReducer_ you would use:
+#### <b>useFuse <b style='color: red'>(DEPRECATED)</b></b>
+The useFuse hook you can use to select a reducer from global state. For example to get _item_ from the _AFuseBox_ you would use:
 
 ```
-    import { AStore } from '../StateManagement/Stores'
+    import { AFuseBox } from '../StateManagement/Stores'
 
     function Text(props) {
-        const item = useFuse(AStore)
+        const item = useFuse(AFuseBox)
 
         return (
             <button>
@@ -290,15 +299,15 @@ The useFuse hook you can use to select a reducer from global state. For example 
         )
     }
 ``` 
-#### <b>useSelectors and useFuseSelection</b>
+#### <b>useSelectors and useFuseSelection <b style='color: red'>(DEPRECATED)</b></b>
 The useSelectors hook is used to get all selectors specified in the reducer. useFuseSelection is used to apply the selector and get a selection. In the example below first we useSelector, by passing in the Store. Next we useFuseSelection to get us the selection of data, by passing in the store and selection. In the example below we are selecting the item and turning it into a string.
 
 ```
-    import { AStore } from '../StateManagement/Stores'
+    import { AFuseBox } from '../StateManagement/Stores'
 
     function Text(props) {
-        const selectors = useSelector(AStore)
-        const selection = useFuseSelection(AStore, selector.toString)
+        const selectors = useSelector(AFuseBox)
+        const selection = useFuseSelection(AFuseBox, selector.toString)
         return (
             <div>
                 {selection}
@@ -308,10 +317,10 @@ The useSelectors hook is used to get all selectors specified in the reducer. use
 ``` 
 You can also explicitly create your selector. Selectors are just an array of selection functions. If only one function, that function takes in state as an argument. If more than one function every function except the last function takes in state. The last function takes all previous returns as its arguments for example:
 ```
-    import { AStore } from '../StateManagement/Stores'
+    import { AFuseBox } from '../StateManagement/Stores'
 
     function Text(props) {
-        const sum = useFuseSelection(AStore, [
+        const sum = useFuseSelection(AFuseBox, [
             (state) => state.item1, 
             (state) => state.item2,
             (item1, item2) => {
@@ -327,16 +336,16 @@ You can also explicitly create your selector. Selectors are just an array of sel
     }
 ``` 
 
-This will return AStore's state and rerender the component using it whenever changed. 
+This will return AFuseBox's state and rerender the component using it whenever changed. 
 
-#### <b>useDispatch</b>
-The useDispatch hook allows you to dispatch actions for a specific reducer. For example if you wanted to dispatch actions for _AReducer_, it would look like this: 
+#### <b>useDispatch <b style='color: red'>(DEPRECATED)</b></b>
+The useDispatch hook allows you to dispatch actions for a specific reducer. For example if you wanted to dispatch actions for _AFuseBox_, it would look like this: 
 
 ```
-    import { AStore } from '../StateManagement/Stores'
+    import { AFuseBox } from '../StateManagement/Stores'
 
     function Text(props) {
-        const dispatch = useDispatch(AStore)
+        const dispatch = useDispatch(AFuseBox)
         
         return (
             <button onClick={() => dispatch({type: 'INCREMENT'})}>
@@ -346,20 +355,19 @@ The useDispatch hook allows you to dispatch actions for a specific reducer. For 
     }
 ``` 
 
-`const dispatch = useDispatch(AStore) `
+`const dispatch = useDispatch(AFuseBox) `
 
-This will return me a dispatch function you can use to dispatch actions to the AReducer. For example lets say you wanted to run an INCREMENT action you defined, then it would look something like this 
+This will return me a dispatch function you can use to dispatch actions to the AFuseBox. For example lets say you wanted to run an INCREMENT action you defined, then it would look something like this 
 
-`dispatch({type: 'INCREMENT', payload: {}})`
-
-### <b>useActions</b>
-This useActions hook allows you to use actions directly instead of dispatch. First you get the actions for AReducer like so:
+`dispatch({type: 'INCREMENT', payload: {}, callback: () => {}})`
+#### <b>useActions (DEPRECATED)</b>
+This useActions hook allows you to use actions directly instead of dispatch. First you get the actions for AFuseBox like so:
 
 ```
-    import { AStore } from '../StateManagement/Stores'
+    import { AFuseBox } from '../StateManagement/Stores'
 
     function Text(props) {
-        const actions = useActions(AStore)
+        const actions = useActions(AFuseBox)
         
         return (
             <button onClick={() => actions.INCREMENT()}>
@@ -368,38 +376,97 @@ This useActions hook allows you to use actions directly instead of dispatch. Fir
         )
     }
 ``` 
+Each action can take in a payload and callback like so:
+`actions.SOMEACTION(payload, callback)`
 
 <b>*NOTE: These 3 hooks deprecate `wire({fuseName: ..., Child: ...})`, however `wire` still has support because they are still necessary on class components.*</b>
 
+### <b>Using FuseBox</b>
+*** NOTE: All hooks take in a store as there first argument. This means you must import your store whenever using a hook. In this example we import from our file we created above in the create store example. See the CodeSandbox example ***
+#### <b>useState</b>
+The "useState" hook is used to get the state of a fusebox. For example to get _item_ from the _AFuseBox_ state you would use:
+
+```
+    import { AFuseBox } from '../StateManagement/Stores'
+
+    function Text(props) {
+        const item = AFuseBox.getState().item
+
+        return (
+            <button>
+                {item}
+            </button>
+        )
+    }
+```
+This will return AFuseBox's state and rerender the component using it whenever the state is changed. 
+
+#### <b>actions</b>
+Next we have "actions", which allows you to use actions directly instead of dispatch. First you get the actions for AFuseBox like so:
+
+```
+    import { AFuseBox } from '../StateManagement/Stores'
+
+    function Text(props) {
+        const actions = AFuseBox.actions
+        
+        return (
+            <button onClick={() => actions.INCREMENT({}, callback)}>
+                Dispatch
+            </button>
+        )
+    }
+``` 
+Each action can take in a payload and callback like so:
+`actions.SOMEACTION(payload, callback)`
+
+#### <b>selectors</b>
+Lastly, we have our "selectors". Selectors are used to get an aggregation the current state, based on selector functions provided in the createReducer Function. Each selector is function that is ran without props to return
+```
+    import { AFuseBox } from '../StateManagement/Stores'
+
+    function Text(props) {
+        const sum = AFuseBox.selectors.MySelector()
+
+        return (
+            <div>
+                {sum}
+            </div>
+        )
+    }
+``` 
+
+This will return AFuseBox's state aggregated using the selector and rerender the component using it whenever the selections value is changed. 
+
 ### <b>Wire (class components)</b>
-Lastly, we have wire. Wire is used to wire a component to a global state. Below we will wire a Text compononent to a global state AReducer
+Lastly, we have wire. Wire is used to wire a component to a global state. Below we will wire a Text compononent to a global state AFuseBox
 
 ```
     import { useEffect, useState } from "react";
     import { wire } from "./Diffuse";
-    import { AReducer } from "./StateManagement/States";
+    import { AFuseBox } from "./StateManagement/States";
 
     const Text = (props) => {
         useEffect(()=>{
             return () => {
-                props.AReducer.actions.INITIALIZE_STORE()
+                props.AFuseBox.actions.INITIALIZE_STORE()
             }
         }, [])
         return (
             <div style={{ backgroundColor: 'red' }} onClick={() =>
-                props.AReducer.actions.INCREMENT()
+                props.AFuseBox.actions.INCREMENT()
             }>
-            Items: {props.AReducer.store.item} 
+            Items: {props.AFuseBox.store.item} 
             <Text2 />
             </div>
         );
     };
 
-    export default wire([AReducer])(Text);
+    export default wire([AFuseBox])(Text);
 
 ```
-(AReducer is a string equal to AReducer). Notice that we import "wire" at the top and use it at export on the bottom. We pass two parameters to the object the <b>fuseName</b> which is the reducer you'd like to reference and the <b>Child</b> which represents the component to wire the fuses to to get the store and dispatch of the reducer in your props. In this case Text will be fused to the AReducer component, causing it to rerender only when its props or AReducer's state changes.
+(AFuseBox is a string equal to AFuseBox). Notice that we import "wire" at the top and use it at export on the bottom. We pass two parameters to the object the <b>fuseName</b> which is the reducer you'd like to reference and the <b>Child</b> which represents the component to wire the fuses to to get the store and dispatch of the reducer in your props. In this case Text will be fused to the AFuseBox component, causing it to rerender only when its props or AFuseBox's state changes.
 
 You can use INITIALIZE_STORE as shown above to initialize a global state to its initial state. You can pass through a payload that will be stored in the state on unmount
 
-Notice above we call the dispatch of AReducer by referencing it from props. ```props.AReducer.dispatch({type: 'INCREMENT'})``` this will cause ```props.AReducer.store.item``` to increment. Any other component inheriting the same reducer will rerender every time that dispatcher is called.
+Notice above we call the dispatch of AFuseBox by referencing it from props. ```props.AFuseBox.dispatch({type: 'INCREMENT'})``` this will cause ```props.AFuseBox.store.item``` to increment. Any other component inheriting the same reducer will rerender every time that dispatcher is called.

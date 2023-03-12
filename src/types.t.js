@@ -9,9 +9,10 @@
  */
 
 /**
+ * @template {string} ActionNameT
  * @typedef {Object} MiddleWareType
- * @property {Function[]=} beforeWare Actions beforeware
- * @property {Function[]=} afterWare Actions afterware
+ * @property {((storeName: FuseBoxNameType, state: DiffuseStateType&object, action: {payload: object, type: ActionNameT}) => object|any)[]=} beforeWare Actions beforeware
+ * @property {((storeName: FuseBoxNameType, state: DiffuseStateType&object, action: {payload: object, type: ActionNameT}) => object|any)[]=} afterWare Actions afterware
  */
 
 /**

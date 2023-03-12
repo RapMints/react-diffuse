@@ -3,17 +3,35 @@
  * @property {StateType} state Current fuse state
  * @property {object} payload Action payload
  * @property {object} props Fuse box props
- * @property {(err?: any) => void} callback Callback function to run
+ * @property {(err?: any) => void} callback Action callback
+ */
+/**
+ * @template {string} ActionNameT
+ * @typedef {Object} MiddleWareType
+ * @property {((storeName: FuseBoxNameType, state: DiffuseStateType&object, action: {payload: object, type: ActionNameT}) => object|any)[]=} beforeWare Actions beforeware
+ * @property {((storeName: FuseBoxNameType, state: DiffuseStateType&object, action: {payload: object, type: ActionNameT}) => object|any)[]=} afterWare Actions afterware
+ */
+/**
+ * @typedef {Object} DefaultActionsType
+ * @property {(payload: object|undefined) => void} LOADING Async loading action. Updates state with payload & sets state.diffuse.loading flag to true
+ * @property {(payload: object|undefined) => void} FAIL Async fail action. Updates state with payload, sets state.diffuse.err flag to true, & sets state.diffuse.loading flag to false
+ * @property {(payload: object|undefined) => void} SUCCESS Async fail action. Updates state with payload & sets state.diffuse.loading flag to false
+ * @property {(payload: object|undefined) => void} PROGRESS Async progress action. Updates state with payload
+ * @property {(payload: object|undefined) => void} CONNECT Use action on connect to websocket. Updates state with payload & sets state.diffuse.connectionStatus to 'CONNECTED'
+ * @property {(payload: object|undefined) => void} DISCONNECT Use action on disconnect from websocket. Updates state with payload & sets state.diffuse.connectionStatus to 'DISCONNECTED'
+ * @property {(payload: object|undefined) => void} EMIT Use action on emit to websocket. Updates state with payload
+ * @property {(payload: object|undefined) => void} CONNECT_ERROR Use action on websocket connection error. Updates state with payload & sets state.diffuse.connectionStatus to 'FAILED'
+ * @property {(payload: object) => void} MESSAGE_RECIEVED Use action on websocket message received. Updates state with payload
  */
 /**
  * Initial actions type
- * @typedef {(actionProps: ActionPropsType, actions: Record<'LOADING'|'FAIL'|'SUCCESS'|'PROGRESS'|'MESSAGE_RECIEVED'|'CONNECT'|'DISCONNECT'|'CONNECT_ERROR'|'EMIT', ActionType> & Record<keyof ActionsType, ActionType>) => object|Promise<ActionPropsType>} InitialActionType
+ * @typedef {(actionProps: ActionPropsType, actions: DefaultActionsType & ActionsType) => object|Promise<ActionPropsType>} InitialActionType
  */
 /**
  * @typedef {object} DiffuseStateProps Diffuse reducer state
  * @property {boolean} loading Diffuse loading flag
  * @property {boolean} error Diffuse error flag
- * @property {string} connectionStatus
+ * @property {string} connectionStatus Diffuse websocket connection status
  */
 /**
  * @typedef {Object.<string, any> & {diffuse: DiffuseStateProps}} StateType Diffuse state
@@ -83,14 +101,68 @@ export type ActionPropsType = {
      */
     props: object;
     /**
-     * Callback function to run
+     * Action callback
      */
     callback: (err?: any) => void;
+};
+export type MiddleWareType<ActionNameT extends string> = {
+    /**
+     * Actions beforeware
+     */
+    beforeWare?: ((storeName: FuseBoxNameType, state: DiffuseStateType & object, action: {
+        payload: object;
+        type: ActionNameT;
+    }) => object | any)[] | undefined;
+    /**
+     * Actions afterware
+     */
+    afterWare?: ((storeName: FuseBoxNameType, state: DiffuseStateType & object, action: {
+        payload: object;
+        type: ActionNameT;
+    }) => object | any)[] | undefined;
+};
+export type DefaultActionsType = {
+    /**
+     * Async loading action. Updates state with payload & sets state.diffuse.loading flag to true
+     */
+    LOADING: (payload: object | undefined) => void;
+    /**
+     * Async fail action. Updates state with payload, sets state.diffuse.err flag to true, & sets state.diffuse.loading flag to false
+     */
+    FAIL: (payload: object | undefined) => void;
+    /**
+     * Async fail action. Updates state with payload & sets state.diffuse.loading flag to false
+     */
+    SUCCESS: (payload: object | undefined) => void;
+    /**
+     * Async progress action. Updates state with payload
+     */
+    PROGRESS: (payload: object | undefined) => void;
+    /**
+     * Use action on connect to websocket. Updates state with payload & sets state.diffuse.connectionStatus to 'CONNECTED'
+     */
+    CONNECT: (payload: object | undefined) => void;
+    /**
+     * Use action on disconnect from websocket. Updates state with payload & sets state.diffuse.connectionStatus to 'DISCONNECTED'
+     */
+    DISCONNECT: (payload: object | undefined) => void;
+    /**
+     * Use action on emit to websocket. Updates state with payload
+     */
+    EMIT: (payload: object | undefined) => void;
+    /**
+     * Use action on websocket connection error. Updates state with payload & sets state.diffuse.connectionStatus to 'FAILED'
+     */
+    CONNECT_ERROR: (payload: object | undefined) => void;
+    /**
+     * Use action on websocket message received. Updates state with payload
+     */
+    MESSAGE_RECIEVED: (payload: object) => void;
 };
 /**
  * Initial actions type
  */
-export type InitialActionType = (actionProps: ActionPropsType, actions: Record<'LOADING' | 'FAIL' | 'SUCCESS' | 'PROGRESS' | 'MESSAGE_RECIEVED' | 'CONNECT' | 'DISCONNECT' | 'CONNECT_ERROR' | 'EMIT', ActionType> & Record<keyof ActionsType, ActionType>) => object | Promise<ActionPropsType>;
+export type InitialActionType = (actionProps: ActionPropsType, actions: DefaultActionsType & ActionsType) => object | Promise<ActionPropsType>;
 /**
  * Diffuse reducer state
  */
@@ -103,6 +175,9 @@ export type DiffuseStateProps = {
      * Diffuse error flag
      */
     error: boolean;
+    /**
+     * Diffuse websocket connection status
+     */
     connectionStatus: string;
 };
 /**

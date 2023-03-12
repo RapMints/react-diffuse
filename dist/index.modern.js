@@ -117,27 +117,6 @@ const _iteratorSymbol = /*#__PURE__*/ typeof Symbol !== "undefined" ? (Symbol.it
 
 const _asyncIteratorSymbol = /*#__PURE__*/ typeof Symbol !== "undefined" ? (Symbol.asyncIterator || (Symbol.asyncIterator = Symbol("Symbol.asyncIterator"))) : "@@asyncIterator";
 
-function mergeSelectors(selector, currentState) {
-  var stateSelections, value;
-  if (selector.length === 0) {
-    throw 'DiffuseError: No selectors specified';
-  }
-  if (selector.length === 1) {
-    value = selector[0](currentState);
-  } else {
-    var selectors = [].concat(selector);
-    var lastSelector = selectors.pop();
-    stateSelections = selectors.map(function (arg) {
-      return arg(currentState);
-    });
-    value = lastSelector;
-  }
-  return _extends({
-    value: value
-  }, stateSelections && {
-    stateSelections: stateSelections
-  });
-}
 var StateMachine = /*#__PURE__*/function () {
   function StateMachine() {
     var _this = this;
@@ -145,10 +124,7 @@ var StateMachine = /*#__PURE__*/function () {
       var initialState = _ref.initialState,
         actions = _ref.actions,
         selectors = _ref.selectors,
-        _ref$middleWare = _ref.middleWare,
-        middleWare = _ref$middleWare === void 0 ? {} : _ref$middleWare,
-        _ref$options = _ref.options,
-        options = _ref$options === void 0 ? {} : _ref$options;
+        middleWare = _ref.middleWare;
       var that = _this;
       var defaultOptions = {
         useDiffuseAsync: true,
@@ -156,7 +132,7 @@ var StateMachine = /*#__PURE__*/function () {
         useDiffuseWebsocket: true,
         plugins: []
       };
-      var config = _extends({}, defaultOptions, options);
+      var config = _extends({}, defaultOptions);
       return {
         createStore: function createStore(storeName, props) {
           if (props === void 0) {
@@ -185,13 +161,14 @@ var StateMachine = /*#__PURE__*/function () {
             }
           }, config.useDiffuseAsync === true && {
             LOADING: function LOADING(_ref3) {
-              var state = _ref3.state;
-              return {
+              var state = _ref3.state,
+                payload = _ref3.payload;
+              return _extends({
                 diffuse: _extends({}, state.diffuse, {
                   loading: true,
                   error: false
                 })
-              };
+              }, payload);
             },
             SUCCESS: function SUCCESS(_ref4) {
               var state = _ref4.state,
@@ -429,13 +406,13 @@ var StateMachine = /*#__PURE__*/function () {
       };
     };
     this.useSelectionHook = function (store, selector) {
-      var selection = mergeSelectors(selector, store.getState());
+      var selection = _this.mergeSelectors(selector, store.getState());
       var _useState3 = useState(selection),
         fuseSelection = _useState3[0],
         setFuseSelection = _useState3[1];
       useLayoutEffect(function () {
         var handleReducerChange = function handleReducerChange(newStore) {
-          var newFuseSelection = mergeSelectors(selector, newStore);
+          var newFuseSelection = _this.mergeSelectors(selector, newStore);
           var shouldUpdate = false;
           if (newFuseSelection.value instanceof Function) {
             for (var i = 0; i < newFuseSelection.stateSelections.length; i++) {
@@ -471,14 +448,7 @@ var StateMachine = /*#__PURE__*/function () {
           callback = _ref14.callback;
         try {
           var _this$middleWare$stor, _this$middleWare, _this$middleWare$stor2, _this$middleWare$stor3, _this$middleWare2, _this$middleWare2$sto;
-          var action = _this.getAction(storeName, type)["function"];
-          if (action === null) {
-            console.error('Action or reducer doesnt exist');
-            return Promise.resolve();
-          }
-          var beforeWare = (_this$middleWare$stor = (_this$middleWare = _this.middleWare) === null || _this$middleWare === void 0 ? void 0 : (_this$middleWare$stor2 = _this$middleWare[storeName]) === null || _this$middleWare$stor2 === void 0 ? void 0 : _this$middleWare$stor2.beforeWare) != null ? _this$middleWare$stor : [];
-          var afterWare = (_this$middleWare$stor3 = (_this$middleWare2 = _this.middleWare) === null || _this$middleWare2 === void 0 ? void 0 : (_this$middleWare2$sto = _this$middleWare2[storeName]) === null || _this$middleWare2$sto === void 0 ? void 0 : _this$middleWare2$sto.afterWare) != null ? _this$middleWare$stor3 : [];
-          return Promise.resolve(_this.getFromMiddleWare(storeName)).then(function (runMiddleWare) {
+          var _temp14 = function _temp14() {
             function _temp12() {
               return Promise.resolve(_this.runAction(storeName, action, payload, callback)).then(function (result) {
                 function _temp10() {
@@ -491,19 +461,17 @@ var StateMachine = /*#__PURE__*/function () {
                       function _temp7() {
                         _this.dispatchReducerListeners(storeName, result);
                       }
-                      var middleWareIsAsync = isAsync(afterWare[i]);
                       var result;
                       var executeMiddleWare = runMiddleWare(afterWare[i], {
                         type: type,
                         payload: payload
                       });
+                      result = executeMiddleWare();
                       var _temp6 = function () {
-                        if (middleWareIsAsync) {
-                          return Promise.resolve(executeMiddleWare()).then(function (_executeMiddleWare2) {
-                            result = _executeMiddleWare2;
+                        if (isPromise(result) === true) {
+                          return Promise.resolve(result).then(function (_result2) {
+                            result = _result2;
                           });
-                        } else {
-                          result = executeMiddleWare();
                         }
                       }();
                       return _temp6 && _temp6.then ? _temp6.then(_temp7) : _temp7(_temp6);
@@ -526,13 +494,12 @@ var StateMachine = /*#__PURE__*/function () {
                     type: type,
                     payload: payload
                   });
+                  result = executeMiddleWare();
                   var _temp3 = function () {
-                    if (middleWareIsAsync) {
-                      return Promise.resolve(executeMiddleWare()).then(function (_executeMiddleWare) {
-                        result = _executeMiddleWare;
+                    if (isPromise(result) === true) {
+                      return Promise.resolve(result).then(function (_result) {
+                        result = _result;
                       });
-                    } else {
-                      result = executeMiddleWare();
                     }
                   }();
                   return _temp3 && _temp3.then ? _temp3.then(_temp4) : _temp4(_temp3);
@@ -541,7 +508,23 @@ var StateMachine = /*#__PURE__*/function () {
               }
             }();
             return _temp11 && _temp11.then ? _temp11.then(_temp12) : _temp12(_temp11);
-          });
+          };
+          var action = _this.getAction(storeName, type)["function"];
+          if (action === null) {
+            console.error('Action or reducer doesnt exist');
+            return Promise.resolve();
+          }
+          var beforeWare = (_this$middleWare$stor = (_this$middleWare = _this.middleWare) === null || _this$middleWare === void 0 ? void 0 : (_this$middleWare$stor2 = _this$middleWare[storeName]) === null || _this$middleWare$stor2 === void 0 ? void 0 : _this$middleWare$stor2.beforeWare) != null ? _this$middleWare$stor : [];
+          var afterWare = (_this$middleWare$stor3 = (_this$middleWare2 = _this.middleWare) === null || _this$middleWare2 === void 0 ? void 0 : (_this$middleWare2$sto = _this$middleWare2[storeName]) === null || _this$middleWare2$sto === void 0 ? void 0 : _this$middleWare2$sto.afterWare) != null ? _this$middleWare$stor3 : [];
+          var runMiddleWare = _this.getFromMiddleWare(storeName);
+          var _temp13 = function () {
+            if (isPromise(runMiddleWare)) {
+              return Promise.resolve(runMiddleWare).then(function (_runMiddleWare) {
+                runMiddleWare = _runMiddleWare;
+              });
+            }
+          }();
+          return Promise.resolve(_temp13 && _temp13.then ? _temp13.then(_temp14) : _temp14(_temp13));
         } catch (e) {
           return Promise.reject(e);
         }
@@ -560,6 +543,27 @@ var StateMachine = /*#__PURE__*/function () {
     this.props = {};
   }
   var _proto = StateMachine.prototype;
+  _proto.mergeSelectors = function mergeSelectors(selector, currentState) {
+    var stateSelections, value;
+    if (selector.length === 0) {
+      throw 'DiffuseError: No selectors specified';
+    }
+    if (selector.length === 1) {
+      value = selector[0](currentState);
+    } else {
+      var selectors = [].concat(selector);
+      var lastSelector = selectors.pop();
+      stateSelections = selectors.map(function (arg) {
+        return arg(currentState);
+      });
+      value = lastSelector;
+    }
+    return _extends({
+      value: value
+    }, stateSelections && {
+      stateSelections: stateSelections
+    });
+  };
   _proto.addFuseListener = function addFuseListener(storeName, func) {
     if (this.storeDict[storeName]) {
       if (this.listener[storeName] === undefined) {
@@ -620,34 +624,17 @@ var StateMachine = /*#__PURE__*/function () {
   };
   _proto.getFromMiddleWare = function getFromMiddleWare(storeName) {
     var _this2 = this;
-    return Promise.resolve(function (middleWare, _ref15) {
+    return function (middleWare, _ref15) {
       var _ref15$type = _ref15.type,
         type = _ref15$type === void 0 ? '' : _ref15$type,
         _ref15$payload = _ref15.payload,
         payload = _ref15$payload === void 0 ? null : _ref15$payload;
-      var middleWareSelection = middleWare(storeName);
-      var executeMiddleWare = middleWareSelection(_this2.getCurrentState(storeName));
-      var isAsync = executeMiddleWare.constructor.name === 'AsyncFunction';
-      if (isAsync === true) {
-        return function () {
-          try {
-            return Promise.resolve(executeMiddleWare({
-              type: type,
-              payload: payload
-            }));
-          } catch (e) {
-            return Promise.reject(e);
-          }
-        };
-      } else {
-        return function () {
-          return executeMiddleWare({
-            type: type,
-            payload: payload
-          });
-        };
-      }
-    });
+      var result = middleWare(storeName, _this2.getCurrentState(storeName), {
+        type: type,
+        payload: payload
+      });
+      return result;
+    };
   };
   _proto.runAction = function runAction(storeName, action, payload, callback) {
     if (callback === void 0) {
@@ -667,7 +654,7 @@ var StateMachine = /*#__PURE__*/function () {
       }, {});
       var store = stores[storeName];
       var actions = store.actions;
-      var _temp14 = function () {
+      var _temp16 = function () {
         if (action instanceof Function) {
           result = action(_extends({
             state: _this3.getCurrentState(storeName),
@@ -676,17 +663,17 @@ var StateMachine = /*#__PURE__*/function () {
           }, _this3.props[storeName] !== null && {
             props: _this3.props[storeName]
           }), actions, stores);
-          var _temp13 = function () {
+          var _temp15 = function () {
             if (isPromise(result)) {
-              return Promise.resolve(result).then(function (_result) {
-                result = _result;
+              return Promise.resolve(result).then(function (_result3) {
+                result = _result3;
               });
             }
           }();
-          if (_temp13 && _temp13.then) return _temp13.then(function () {});
+          if (_temp15 && _temp15.then) return _temp15.then(function () {});
         }
       }();
-      return Promise.resolve(_temp14 && _temp14.then ? _temp14.then(function () {
+      return Promise.resolve(_temp16 && _temp16.then ? _temp16.then(function () {
         return result;
       }) : result);
     } catch (e) {
@@ -696,7 +683,7 @@ var StateMachine = /*#__PURE__*/function () {
   return StateMachine;
 }();
 function isPromise(p) {
-  if (typeof p === 'object' && typeof p.then === 'function') {
+  if (Boolean(p && typeof p.then === 'function')) {
     return true;
   }
   return false;
