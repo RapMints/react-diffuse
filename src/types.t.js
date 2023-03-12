@@ -9,7 +9,7 @@
 
 /**
  * Initial actions type
- * @typedef {(actionProps: ActionPropsType) => object} InitialActionType
+ * @typedef {(actionProps: ActionPropsType, actions: Record<'LOADING'|'FAIL'|'SUCCESS'|'PROGRESS'|'MESSAGE_RECIEVED'|'CONNECT'|'DISCONNECT'|'CONNECT_ERROR'|'EMIT', ActionType> & Record<keyof ActionsType, ActionType>) => object|Promise<ActionPropsType>} InitialActionType
  */
 
 /**
@@ -68,7 +68,7 @@
  * @template {SelectorsType} SelectorT
  * @template {InitialStateType} StateT
  * @typedef {Object} FuseBoxType
- * @property {keyof SelectorT} name Fuse box name
+ * @property {string} name Fuse box name
  * @property {Function} useActions
  * @property {Record<keyof ActionT, ActionType>} actions
  * @property {function():StateT&DiffuseStateType} useState

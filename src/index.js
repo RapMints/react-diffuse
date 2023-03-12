@@ -1,10 +1,10 @@
-import React, { useLayoutEffect, useMemo, useState } from 'react'
-import StateMachine, { mergeSelectors } from './StateMachine'
+import React, { Component, useMemo } from 'react'
+import StateMachine from './StateMachine'
 import { Types } from './types.t'
 
 /**
  * Get reducer actions
- * @deprecated Use fuseBox.actions
+ * @deprecated (Will be removed on version 3) Use [StoreName].actions
  * @template {import('./types.t').ActionsType} A
  * @template {import('./types.t').SelectorsType} S
  * @template {import('./types.t').InitialStateType} I
@@ -16,18 +16,21 @@ function useActions(fuseBox) {
 }
 
 /**
- * 
- * @param {object} store
- * @param {string} store.name 'Store name'
- * @returns 
+ * Get dispatch function for store
+ * @deprecated (Will be removed on version 3) Use [StoreName].useState()
+ * @template {import('./types.t').ActionsType} A
+ * @template {import('./types.t').SelectorsType} S
+ * @template {import('./types.t').InitialStateType} I
+ * @param {import('./types.t').FuseBoxType<A,S,I>} fuseBox
+ * @returns {Function}
  */
-function useDispatch(store) {
-    return StateMachine.store[store.name].dispatch
+function useDispatch(fuseBox) {
+    return StateMachine.store[fuseBox.name].dispatch
 }
 
 /**
  * Get fuse
- * @deprecated Use store.useState()
+ * @deprecated (Will be removed on version 3) Use [StoreName].useState()
  * @template {import('./types.t').ActionsType} A
  * @template {import('./types.t').SelectorsType} S
  * @template {import('./types.t').InitialStateType} I
@@ -38,69 +41,54 @@ function useFuse(fuseBox) {
     return fuseBox.useState()
 }
 
-// @ts-ignore
-function useSelectors(store) {
-    return StateMachine.store[store.name].getSelectors()
+/**
+ * Get fusebox selectors
+ * @deprecated (Will be removed on version 3) Use [StoreName].selectors
+ * @template {import('./types.t').ActionsType} A
+ * @template {import('./types.t').SelectorsType} S
+ * @template {import('./types.t').InitialStateType} I
+ * @param {import('./types.t').FuseBoxType<A,S,I>} fuseBox
+ * @returns {Record<keyof S, any>}
+ */
+function useSelectors(fuseBox) {
+    return StateMachine.store[fuseBox.name].getSelectors()
 }
 
-// @ts-ignore
-function useFuseSelection(store, selector) {
-    let selection = mergeSelectors(selector, StateMachine.store[store.name].getState())
-    const [fuseSelection, setFuseSelection] = useState(selection)
-
-    useLayoutEffect(() => {
-        // @ts-ignore
-        const handleReducerChange = (newStore) => {
-            const newFuseSelection = mergeSelectors(selector, newStore)
-            let shouldUpdate = false
-            if (newFuseSelection.value instanceof Function) {
-                // @ts-ignore
-                for (let i = 0; i < newFuseSelection.stateSelections.length; i++) {
-                    // @ts-ignore
-                    if (newFuseSelection.stateSelections[i] !== fuseSelection.stateSelections[i]) {
-                        shouldUpdate = true
-                        break
-                    }
-                }
-            }
-            else if (newFuseSelection.value !== fuseSelection.value) {
-                shouldUpdate = true      
-            }  
-
-            if (shouldUpdate) {
-                setFuseSelection(newFuseSelection)
-            }
-        }
-
-        StateMachine.addFuseListener(store.name, handleReducerChange)
-
-        return () => {
-            StateMachine.removeFuseListener(store.name, handleReducerChange)
-        }
-    }, [])
-
-    if (fuseSelection.value instanceof Function) {
-        // @ts-ignore
-        return fuseSelection.value(...fuseSelection.stateSelections)
-    }
-    else {
-        return fuseSelection.value
-    }
+/**
+ * Get fuse selection
+ * @deprecated (Will be removed on version 3) Use [StoreName].selectors()
+ * @template {import('./types.t').ActionsType} A
+ * @template {import('./types.t').SelectorsType} S
+ * @template {import('./types.t').InitialStateType} I
+ * @param {import('./types.t').FuseBoxType<A,S,I>} fuseBox
+ * @param {S} selector
+ * @returns {Record<keyof S, any>}
+ */
+function useFuseSelection(fuseBox, selector) {
+    return StateMachine.useSelectionHook(fuseBox, selector)
 }
 
-// @ts-ignore
-const connectWire = (store, Child) => (props) => {
+/**
+ * Connect wire
+ * @template {import('./types.t').ActionsType} A
+ * @template {import('./types.t').SelectorsType} S
+ * @template {import('./types.t').InitialStateType} I
+ * @param {import('./types.t').FuseBoxType<A,S,I>} fuseBox
+ * @param {React.Component} Child
+ * @returns {React.FunctionComponent}
+ */
+const connectWire = (fuseBox, Child) => (props) => {
     // Get from fuse
-    const context = useFuse(store)
+    const context = fuseBox.useState()
 
     // Get dispatch for fuse
-    const dispatch = useDispatch(store)
+    const dispatch = useDispatch(fuseBox)
 
-    const actions = useActions(store)
+    const actions = fuseBox.actions
 
     // Get fuse
     const fuse = {
-        [store.name]: {
+        [fuseBox.name]: {
             store: context,
             dispatch: dispatch,
             actions: actions
@@ -112,14 +100,22 @@ const connectWire = (store, Child) => (props) => {
     return useMemo(() => <Child {...fuse} {...props} />, [props, context])
 }
 
-// @ts-ignore
-const wire = (stores = []) => (Child) => {
+/**
+ * Wire class components to fusebox
+ * @template {import('./types.t').ActionsType} A
+ * @template {import('./types.t').SelectorsType} S
+ * @template {import('./types.t').InitialStateType} I
+ * @param {import('./types.t').FuseBoxType<A,S,I>[]} fuseBoxes
+ * @returns {(Child: React.Component) => React.FunctionComponent|React.Component}
+ */
+const wire = (fuseBoxes = []) => (Child) => {
     // Set child
     let newChild = Child
 
     // Connect all wires to fuses by name
-    stores.forEach((store) => {
-        newChild = connectWire(store, newChild)
+    fuseBoxes.forEach((fuseBox) => {
+        // @ts-ignore
+        newChild = connectWire(fuseBox, newChild)
     })
 
     return newChild

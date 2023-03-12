@@ -1,5 +1,4 @@
 import React, { useLayoutEffect, useState } from 'react'
-import { useFuseSelection, useSelectors } from '.'
 // @ts-ignore
 import { Types } from './types.t'
 
@@ -283,7 +282,7 @@ class StateMachine {
                         return that.history[storeName]
                     },
                     /**
-                     * 
+                     * Get state from state machine
                      * @returns {import('./types.t').FuseStateType}
                      */
                     getState: () => {
@@ -296,11 +295,7 @@ class StateMachine {
                     getInitialState: () => {
                         return that.initialState?.[storeName]
                     },
-                    /**
-                     * 
-                     * @param {*} param0 
-                     * @returns 
-                     */
+                    // @ts-ignore
                     dispatch: ({ type, payload } = {}) => {
                         if (that.actions[storeName][type] === undefined) {
                             console.warn("Action doesn't exist.")
