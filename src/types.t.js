@@ -2,9 +2,10 @@
 
 /**
  * @typedef {object} ActionPropsType Diffuse action props
- * @property {StateType} state
- * @property {object} payload
- * @property {object} props
+ * @property {StateType} state Current fuse state
+ * @property {object} payload Action payload
+ * @property {object} props Fuse box props
+ * @property {(err?: any) => void} callback Callback function to run
  */
 
 /**
@@ -44,7 +45,7 @@
 
 /**
  * Fuse box action type
- * @typedef {(payload?: object) => void} ActionType Action
+ * @typedef {(payload?: object, callback?: (err?: any) => void) => void} ActionType Action
  * @param {object} payload payload
  * @returns {void}
  */

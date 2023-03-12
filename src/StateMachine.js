@@ -296,7 +296,7 @@ class StateMachine {
                         return that.initialState?.[storeName]
                     },
                     // @ts-ignore
-                    dispatch: ({ type, payload } = {}) => {
+                    dispatch: ({ type, payload, callback } = {}) => {
                         if (that.actions[storeName][type] === undefined) {
                             console.warn("Action doesn't exist.")
                             return
@@ -304,7 +304,8 @@ class StateMachine {
 
                         that.dispatch(storeName)({
                             type: type,
-                            payload: payload ?? undefined
+                            payload: payload ?? undefined,
+                            callback: callback
                         })
                     },
                     /**
@@ -317,7 +318,7 @@ class StateMachine {
                          * @type {import('./types.t').ActionType}
                          * @param {object|undefined} payload Payload
                          */
-                        let action = (payload) => store.dispatch({ type: actionName, payload })
+                        let action = (payload, callback) => store.dispatch({ type: actionName, payload, callback })
                         return action
                     },
                     /**
@@ -648,7 +649,7 @@ class StateMachine {
     }
 
     // @ts-ignore
-    async runAction(storeName, action, payload) {
+    async runAction(storeName, action, payload, callback = () => (undefined)) {
         // Initialize results
         let result
         
@@ -674,6 +675,7 @@ class StateMachine {
             result = action({
                 state: this.getCurrentState(storeName),
                 payload: payload,
+                callback: callback,
                 ...(this.props[storeName] !== null && {props: this.props[storeName]})
             }, actions, stores)
 
@@ -687,7 +689,7 @@ class StateMachine {
     }
 
     // @ts-ignore
-    dispatch = (storeName) => async ({ type = '', payload = null }) => {
+    dispatch = (storeName) => async ({ type = '', payload = null, callback }) => {
             let action = (this.getAction(storeName, type)).function
 
             if (action === null) {
@@ -721,7 +723,7 @@ class StateMachine {
             }
 
             // Dispatch action
-            let result = await this.runAction(storeName, action, payload)
+            let result = await this.runAction(storeName, action, payload, callback)
             this.dispatchReducerListeners(storeName, result)
 
             // Dispatch after ware
@@ -747,6 +749,7 @@ class StateMachine {
             return this.state[storeName]
         }
 }
+
 // @ts-ignore
 function isPromise(p) {
     if (typeof p === 'object' && typeof p.then === 'function') {
@@ -755,15 +758,7 @@ function isPromise(p) {
   
     return false;
 }
-// @ts-ignore
-function isAsyncAction(func, actions) {
-    try {
-        return func.constructor.name === 'AsyncFunction' || isPromise(func({}, actions))
-    }
-    catch(e) {
-        return false
-    }
-}
+
 // @ts-ignore
 function isAsync(func) {
     try {
