@@ -4,10 +4,11 @@ import { Types } from './types.t'
 
 /**
  * @class Reducer
- * @template {import('./types.t').ActionsType} ActionT
+ * @template {import('./types.t').ActionsType<P>} ActionT
  * @template {import('./types.t').SelectorsType} SelectorsT
  * @template {import('./types.t').InitialStateType} InitialStateT
  * @template {import('./types.t').MiddleWareType<keyof ActionT>} MiddleWareT
+ * @template P Payload type
  */
 class Reducer {
     /**
@@ -16,7 +17,7 @@ class Reducer {
      */
     createStore = undefined
     /**
-    * @param {<NameT extends string>(fuseBoxName: NameT, props?: object | null) => import('./types.t').FuseBoxType<NameT, ActionT, SelectorsT, InitialStateT>} create 
+    * @param {<NameT extends string>(fuseBoxName: NameT, props?: object | null) => import('./types.t').FuseBoxType<NameT, ActionT, SelectorsT, InitialStateT, P>} create 
     */
     constructor(create) {
         // @ts-ignore
@@ -51,17 +52,18 @@ class StateMachine {
      */
 
     /**
-     * @template {import('./types.t').ActionsType} ActionT
+     * @template {import('./types.t').ActionsType<P>} ActionT
      * @template {import('./types.t').SelectorsType} SelectorsT
      * @template {import('./types.t').InitialStateType} InitialStateT
      * @template {import('./types.t').MiddleWareType<keyof ActionT>} MiddleWareT
+     * @template P Payload type
      * Creates reducer
      * @param {object} reducerProps Reducer properties
      * @param {InitialStateT} reducerProps.initialState Reducer initial state
      * @param {ActionT} reducerProps.actions Reducer actions
      * @param {MiddleWareT=} reducerProps.middleWare Reducer middleWare
      * @param {SelectorsT=} reducerProps.selectors Reducer selectors
-     * @returns {Reducer<ActionT, SelectorsT, InitialStateT, MiddleWareT>}
+     * @returns {Reducer<ActionT, SelectorsT, InitialStateT, MiddleWareT, P>}
      */
     createReducer = ({ initialState, actions, selectors, middleWare}) => {
         const that = this
@@ -125,7 +127,7 @@ class StateMachine {
 
             // Set store actions
             /**
-                * @type {import('./types.t').ActionsType}
+                * @type {import('./types.t').ActionsType<P>}
                 */
             let newActions = {
                 ...(config.useDiffuseInitializeState === true && {INITIALIZE_STATE: ({state, payload = {}}) => {
@@ -137,7 +139,7 @@ class StateMachine {
                 ...(config.useDiffuseAsync === true && {
                     /**
                         * 
-                        * @param {import('./types.t').ActionPropsType} params
+                        * @param {import('./types.t').ActionPropsType<P>} params
                         * @returns {object}
                         */  
                     LOADING: ({state, payload}) => {
@@ -152,7 +154,7 @@ class StateMachine {
                     },
                     /**
                         * 
-                        * @param {import('./types.t').ActionPropsType} params
+                        * @param {import('./types.t').ActionPropsType<P>} params
                         * @returns {object}
                         */ 
                     SUCCESS: ({state, payload}) => {
@@ -167,7 +169,7 @@ class StateMachine {
                     },
                     /**
                         * 
-                        * @param {import('./types.t').ActionPropsType} params
+                        * @param {import('./types.t').ActionPropsType<P>} params
                         * @returns {object}
                         */ 
                     PROGRESS: ({state, payload}) => {
@@ -177,7 +179,7 @@ class StateMachine {
                     },
                     /**
                         * 
-                        * @param {import('./types.t').ActionPropsType} params
+                        * @param {import('./types.t').ActionPropsType<P>} params
                         * @returns {object}
                         */ 
                     FAIL: ({state, payload}) => {
@@ -194,7 +196,7 @@ class StateMachine {
                 ...(config.useDiffuseWebsocket === true && {
                     /**
                         * 
-                        * @param {import('./types.t').ActionPropsType} params
+                        * @param {import('./types.t').ActionPropsType<P>} params
                         * @returns {object}
                         */ 
                     MESSAGE_RECIEVED: ({state, payload}) => {
@@ -204,7 +206,7 @@ class StateMachine {
                     },
                     /**
                         * 
-                        * @param {import('./types.t').ActionPropsType} params
+                        * @param {import('./types.t').ActionPropsType<P>} params
                         * @returns {object}
                         */ 
                     EMIT: ({state, payload}) => {
@@ -214,7 +216,7 @@ class StateMachine {
                     },
                     /**
                         * 
-                        * @param {import('./types.t').ActionPropsType} params
+                        * @param {import('./types.t').ActionPropsType<P>} params
                         * @returns {object}
                         */ 
                     CONNECT: ({state, payload}) => {
@@ -228,7 +230,7 @@ class StateMachine {
                     },
                     /**
                         * 
-                        * @param {import('./types.t').ActionPropsType} params
+                        * @param {import('./types.t').ActionPropsType<P>} params
                         * @returns {object}
                         */ 
                     DISCONNECT: ({state, payload}) => {
@@ -242,7 +244,7 @@ class StateMachine {
                     },
                     /**
                         * 
-                        * @param {import('./types.t').ActionPropsType} params
+                        * @param {import('./types.t').ActionPropsType<P>} params
                         * @returns {object}
                         */ 
                     CONNECT_ERROR: ({state, payload}) => {
@@ -319,34 +321,33 @@ class StateMachine {
                 /**
                     * Get a fuse action
                     * @param {keyof ActionT} actionName
-                    * @returns {import('./types.t').ActionType} 
+                    * @returns {import('./types.t').ActionType<P>} 
                     */
                 getAction: (actionName) => {
                     /**
-                        * @type {import('./types.t').ActionType}
-                        * @param {object|undefined} payload Payload
+                        * @type {import('./types.t').ActionType<P>}
                         */
                     let action = (payload, callback) => store.dispatch({ type: actionName, payload, callback })
                     return action
                 },
                 /**
                     * Get all fuse actions
-                    * @returns {Record<keyof ActionT, import('./types.t').ActionType>}
+                    * @returns {Record<keyof ActionT, import('./types.t').ActionType<P>>}
                     */
                 getActions: () => {
                     /**
-                        * @type {Record<keyof ActionT, import('./types.t').ActionType>}
+                        * @type {Record<keyof ActionT, import('./types.t').ActionType<P>>}
                         */
                     // @ts-ignore
                     let actions = {}
                         
                     /**
-                        * @param {Record<keyof ActionT, import('./types.t').ActionType>} prev
+                        * @param {Record<keyof ActionT, import('./types.t').ActionType<P>>} prev
                         * @param {keyof ActionT} actionName
                         */
                     let reduceFunction = (prev, actionName) => {
                         /**
-                            * @type {Record<keyof ActionT, import('./types.t').ActionType>}
+                            * @type {Record<keyof ActionT, import('./types.t').ActionType<P>>}
                             *
                             */
                         prev[actionName] = store.getAction(actionName)
@@ -354,7 +355,7 @@ class StateMachine {
                     }
                     
                     /**
-                        * @type {Record<keyof ActionT, import('./types.t').ActionType>}
+                        * @type {Record<keyof ActionT, import('./types.t').ActionType<P>>}
                         */
                     // @ts-ignore
                     actions = Object.keys(that.actions?.[fuseBoxName]).reduce(reduceFunction, actions)
@@ -487,7 +488,7 @@ class StateMachine {
             that.store[fuseBoxName] = store
             
             /**
-                * @type {import('./types.t').FuseBoxType<NameT, ActionT, SelectorsT, InitialStateT>}
+                * @type {import('./types.t').FuseBoxType<NameT, ActionT, SelectorsT, InitialStateT, P>}
                 */
             let fuseBox = {
                 name: fuseBoxName,
