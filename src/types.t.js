@@ -76,7 +76,6 @@
  * @template P payload
  * Fuse box action type
  * @typedef {(payload?: P, callback?: (err?: any) => void) => void} ActionType Action
- * @param {object} payload payload
  * @returns {void}
  */
 
@@ -103,7 +102,7 @@
  * @deprecated test
  * @typedef {Object} FuseBoxType
  * @property {NameT} name Fuse box name
- * @property {Record<keyof ActionT, ActionType<P>>} actions Fuse box actions
+ * @property {Record<keyof ActionT, ActionType<Record<keyof P, any>>>} actions Fuse box actions
  * @property {function():StateT&DiffuseStateType} useState Use fuse box state hook
  * @property {Record<keyof SelectorT, useSelectionsType>} selectors Fuse box selectors
  */

@@ -173,6 +173,7 @@ class StateMachine {
                         * @returns {object}
                         */ 
                     PROGRESS: ({state, payload}) => {
+                        // @ts-ignore
                         return {
                             ...payload
                         }
@@ -200,6 +201,7 @@ class StateMachine {
                         * @returns {object}
                         */ 
                     MESSAGE_RECIEVED: ({state, payload}) => {
+                        // @ts-ignore
                         return {
                             ...payload
                         }
@@ -210,6 +212,7 @@ class StateMachine {
                         * @returns {object}
                         */ 
                     EMIT: ({state, payload}) => {
+                        // @ts-ignore
                         return {
                             ...payload
                         }
@@ -304,8 +307,15 @@ class StateMachine {
                     // @ts-ignore
                     return that.initialState?.[fuseBoxName]
                 },
-                // @ts-ignore
-                dispatch: ({ type, payload, callback } = {}) => {
+                /**
+                 * 
+                 * @param {object} params
+                 * @param {keyof ActionT} params.type
+                 * @param {P|undefined} params.payload
+                 * @param {((err?: any) => void) | undefined} params.callback 
+                 * @returns 
+                 */
+                dispatch: ({ type, payload, callback }) => {
                     // @ts-ignore
                     if (that.actions[fuseBoxName][type] === undefined) {
                         console.warn("Action doesn't exist.")
@@ -313,41 +323,43 @@ class StateMachine {
                     }
 
                     that.dispatch(fuseBoxName)({
+                        // @ts-ignore
                         type: type,
+                        // @ts-ignore
                         payload: payload ?? undefined,
                         callback: callback
                     })
                 },
                 /**
-                    * Get a fuse action
-                    * @param {keyof ActionT} actionName
-                    * @returns {import('./types.t').ActionType<P>} 
-                    */
+                * Get a fuse action
+                * @param {keyof ActionT} actionName
+                * @returns {import('./types.t').ActionType<Record<keyof P, any>>} 
+                */
                 getAction: (actionName) => {
                     /**
-                        * @type {import('./types.t').ActionType<P>}
+                        * @type {import('./types.t').ActionType<Record<keyof P, any>>}
                         */
                     let action = (payload, callback) => store.dispatch({ type: actionName, payload, callback })
                     return action
                 },
                 /**
-                    * Get all fuse actions
-                    * @returns {Record<keyof ActionT, import('./types.t').ActionType<P>>}
-                    */
+                * Get all fuse actions
+                * @returns {Record<keyof ActionT, import('./types.t').ActionType<Record<keyof P, any>>>}
+                */
                 getActions: () => {
                     /**
-                        * @type {Record<keyof ActionT, import('./types.t').ActionType<P>>}
+                        * @type {Record<keyof ActionT, import('./types.t').ActionType<Record<keyof P, any>>>}
                         */
                     // @ts-ignore
                     let actions = {}
                         
                     /**
-                        * @param {Record<keyof ActionT, import('./types.t').ActionType<P>>} prev
+                        * @param {Record<keyof ActionT, import('./types.t').ActionType<Record<keyof P, any>>>} prev
                         * @param {keyof ActionT} actionName
                         */
                     let reduceFunction = (prev, actionName) => {
                         /**
-                            * @type {Record<keyof ActionT, import('./types.t').ActionType<P>>}
+                            * @type {Record<keyof ActionT, import('./types.t').ActionType<Record<keyof P, any>>>}
                             *
                             */
                         prev[actionName] = store.getAction(actionName)
@@ -355,7 +367,7 @@ class StateMachine {
                     }
                     
                     /**
-                        * @type {Record<keyof ActionT, import('./types.t').ActionType<P>>}
+                        * @type {Record<keyof ActionT, import('./types.t').ActionType<Record<keyof P, any>>>}
                         */
                     // @ts-ignore
                     actions = Object.keys(that.actions?.[fuseBoxName]).reduce(reduceFunction, actions)
@@ -364,6 +376,7 @@ class StateMachine {
                 },
                 // @ts-ignore
                 addAction: (actionName, action) => {
+                    
                     // @ts-ignore
                     that.actions[fuseBoxName][actionName] = {function: action}
                 },
@@ -488,10 +501,14 @@ class StateMachine {
             that.store[fuseBoxName] = store
             
             /**
-                * @type {import('./types.t').FuseBoxType<NameT, ActionT, SelectorsT, InitialStateT, P>}
-                */
+             * 
+            * @type {import('./types.t').FuseBoxType<NameT, ActionT, SelectorsT, InitialStateT, P>}
+            */
             let fuseBox = {
                 name: fuseBoxName,
+                /**
+                 * 
+                 */
                 actions: store.getActions(),
                 useState: () => {
                     const [fuse, setFuse] = useState(store.getState())
