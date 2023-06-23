@@ -64,7 +64,7 @@ export function useFuseSelection<N extends string, A extends import("./types.t")
  * @returns {Record<keyof S, any>}
  */
 export function useSelectors<N extends string, A extends import("./types.t").ActionsType, S extends import("./types.t").SelectorsType, I extends import("./types.t").InitialStateType>(fuseBox: import("./types.t").FuseBoxType<N, A, S, I>): Record<keyof S, any>;
-export const createReducer: <ActionT extends import("./types.t").ActionsType, SelectorsT extends import("./types.t").SelectorsType, InitialStateT extends import("./types.t").InitialStateType, MiddleWareT extends import("./types.t").MiddleWareType<keyof ActionT>>({ initialState, actions, selectors, middleWare }: {
+export const createReducer: <ActionT extends import("./types.t").ActionsType, SelectorsT extends import("./types.t").SelectorsType, InitialStateT extends import("./types.t").InitialStateType, MiddleWareT extends import("./types.t").MiddleWareType<string>, P>({ initialState, actions, selectors, middleWare }: {
     initialState: InitialStateT;
     actions: ActionT;
     middleWare?: MiddleWareT | undefined;

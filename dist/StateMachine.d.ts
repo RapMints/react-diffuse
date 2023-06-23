@@ -24,7 +24,8 @@ declare class StateMachine {
      * @template {import('./types.t').ActionsType} ActionT
      * @template {import('./types.t').SelectorsType} SelectorsT
      * @template {import('./types.t').InitialStateType} InitialStateT
-     * @template {import('./types.t').MiddleWareType<keyof ActionT>} MiddleWareT
+     * @template {import('./types.t').MiddleWareType<string>} MiddleWareT
+     * @template P Payload type
      * Creates reducer
      * @param {object} reducerProps Reducer properties
      * @param {InitialStateT} reducerProps.initialState Reducer initial state
@@ -33,7 +34,7 @@ declare class StateMachine {
      * @param {SelectorsT=} reducerProps.selectors Reducer selectors
      * @returns {Reducer<ActionT, SelectorsT, InitialStateT, MiddleWareT>}
      */
-    createReducer: <ActionT extends import("./types.t").ActionsType, SelectorsT extends import("./types.t").SelectorsType, InitialStateT extends import("./types.t").InitialStateType, MiddleWareT extends import("./types.t").MiddleWareType<keyof ActionT>>({ initialState, actions, selectors, middleWare }: {
+    createReducer: <ActionT extends import("./types.t").ActionsType, SelectorsT extends import("./types.t").SelectorsType, InitialStateT extends import("./types.t").InitialStateType, MiddleWareT extends import("./types.t").MiddleWareType<string>, P>({ initialState, actions, selectors, middleWare }: {
         initialState: InitialStateT;
         actions: ActionT;
         middleWare?: MiddleWareT | undefined;
@@ -65,9 +66,9 @@ declare class StateMachine {
  * @template {import('./types.t').ActionsType} ActionT
  * @template {import('./types.t').SelectorsType} SelectorsT
  * @template {import('./types.t').InitialStateType} InitialStateT
- * @template {import('./types.t').MiddleWareType<keyof ActionT>} MiddleWareT
+ * @template {import('./types.t').MiddleWareType<string>} MiddleWareT
  */
-declare class Reducer<ActionT extends import("./types.t").ActionsType, SelectorsT extends import("./types.t").SelectorsType, InitialStateT extends import("./types.t").InitialStateType, MiddleWareT extends import("./types.t").MiddleWareType<keyof ActionT>> {
+declare class Reducer<ActionT extends import("./types.t").ActionsType, SelectorsT extends import("./types.t").SelectorsType, InitialStateT extends import("./types.t").InitialStateType, MiddleWareT extends import("./types.t").MiddleWareType<string>> {
     /**
     * @param {<NameT extends string>(fuseBoxName: NameT, props?: object | null) => import('./types.t').FuseBoxType<NameT, ActionT, SelectorsT, InitialStateT>} create
     */

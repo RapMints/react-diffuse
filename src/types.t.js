@@ -1,10 +1,9 @@
 
 
 /**
- * @template P Payload type
  * @typedef {object} ActionPropsType Diffuse action props
  * @property {StateType} state Current fuse state
- * @property {P} payload Action payload
+ * @property {object} payload Action payload
  * @property {object} props Fuse box props
  * @property {(err?: any) => void} callback Action callback
  */
@@ -30,9 +29,8 @@
  */
 
 /**
- * @template P Payload type
  * Initial actions type
- * @typedef {(actionProps: ActionPropsType<P>, actions: DefaultActionsType & ActionsType<P>) => object|Promise<ActionPropsType<P>>} InitialActionType
+ * @typedef {(actionProps: ActionPropsType, actions: DefaultActionsType & ActionsType) => object|Promise<ActionPropsType>} InitialActionType
  */
 
 /**
@@ -57,9 +55,8 @@
  */
 
 /**
- * @template P Payload type
  * Reducer Actions Type
- * @typedef {Record<string, InitialActionType<P>>} ActionsType
+ * @typedef {Record<string, InitialActionType>} ActionsType
  */
 
 /**
@@ -73,9 +70,8 @@
  */
 
 /**
- * @template P payload
  * Fuse box action type
- * @typedef {(payload?: P, callback?: (err?: any) => void) => void} ActionType Action
+ * @typedef {(payload?: object, callback?: (err?: any) => void) => void} ActionType Action
  * @returns {void}
  */
 
@@ -95,14 +91,13 @@
 
 /**
  * @template {FuseBoxNameType} NameT
- * @template {ActionsType<P>} ActionT
+ * @template {ActionsType} ActionT
  * @template {SelectorsType} SelectorT
  * @template {InitialStateType} StateT
- * @template P Payload type
  * @deprecated test
  * @typedef {Object} FuseBoxType
  * @property {NameT} name Fuse box name
- * @property {Record<keyof ActionT, ActionType<Record<keyof P, any>>>} actions Fuse box actions
+ * @property {Record<keyof ActionT, ActionType>} actions Fuse box actions
  * @property {function():StateT&DiffuseStateType} useState Use fuse box state hook
  * @property {Record<keyof SelectorT, useSelectionsType>} selectors Fuse box selectors
  */

@@ -142,16 +142,18 @@ var StateMachine = /*#__PURE__*/function () {
       };
       var config = _extends({}, defaultOptions);
       var create = function create(fuseBoxName, props) {
+        var _initialState$diffuse;
         if (props === void 0) {
           props = null;
         }
         var diffuseState = {
           diffuse: _extends({}, config.useDiffuseAsync === true && {
             loading: false,
-            error: false
+            error: false,
+            completed: true
           }, config.useDiffuseWebsocket === true && {
             connectionStatus: 'DISCONNECTED'
-          })
+          }, (_initialState$diffuse = initialState === null || initialState === void 0 ? void 0 : initialState.diffuse) != null ? _initialState$diffuse : {})
         };
         var initState = _extends({}, Object.keys(diffuseState.diffuse).length !== 0 && _extends({}, diffuseState), initialState);
         that.initialState[fuseBoxName] = _extends({}, initState);
@@ -173,7 +175,8 @@ var StateMachine = /*#__PURE__*/function () {
             return _extends({
               diffuse: _extends({}, state.diffuse, {
                 loading: true,
-                error: false
+                error: false,
+                completed: false
               })
             }, payload);
           },
@@ -183,7 +186,8 @@ var StateMachine = /*#__PURE__*/function () {
             return _extends({
               diffuse: _extends({}, state.diffuse, {
                 loading: false,
-                error: false
+                error: false,
+                completed: true
               })
             }, payload);
           },
@@ -197,7 +201,8 @@ var StateMachine = /*#__PURE__*/function () {
             return _extends({
               diffuse: _extends({}, state.diffuse, {
                 loading: false,
-                error: true
+                error: true,
+                completed: false
               })
             }, payload);
           }
@@ -261,9 +266,8 @@ var StateMachine = /*#__PURE__*/function () {
             var _that$initialState;
             return (_that$initialState = that.initialState) === null || _that$initialState === void 0 ? void 0 : _that$initialState[fuseBoxName];
           },
-          dispatch: function dispatch(_temp) {
-            var _ref12 = _temp === void 0 ? {} : _temp,
-              type = _ref12.type,
+          dispatch: function dispatch(_ref12) {
+            var type = _ref12.type,
               payload = _ref12.payload,
               callback = _ref12.callback;
             if (that.actions[fuseBoxName][type] === undefined) {
@@ -305,8 +309,8 @@ var StateMachine = /*#__PURE__*/function () {
             var _that$actions2;
             that === null || that === void 0 ? true : (_that$actions2 = that.actions) === null || _that$actions2 === void 0 ? true : delete _that$actions2[fuseBoxName][actionName];
           },
-          addMiddleWare: function addMiddleWare(_temp2) {
-            var _ref13 = _temp2 === void 0 ? {} : _temp2,
+          addMiddleWare: function addMiddleWare(_temp) {
+            var _ref13 = _temp === void 0 ? {} : _temp,
               _ref13$afterWare = _ref13.afterWare,
               afterWare = _ref13$afterWare === void 0 ? null : _ref13$afterWare,
               _ref13$beforeWare = _ref13.beforeWare,
@@ -387,6 +391,34 @@ var StateMachine = /*#__PURE__*/function () {
           store.createSelector.apply(store, [selectorName].concat(selectors[selectorName]));
         }
         that.store[fuseBoxName] = store;
+        var promiseWrapper = function promiseWrapper(promise, status) {
+          var suspender;
+          var suspenderStatus = 'pending';
+          var result;
+          if (promise !== undefined) {
+            suspender = promise.then(function (value) {
+              suspenderStatus = 'success';
+              result = value;
+              status.current = undefined;
+            }, function (error) {
+              suspenderStatus = 'error';
+              result = error;
+              status.current = undefined;
+            });
+          }
+          return function () {
+            switch (suspenderStatus) {
+              case 'pending':
+                throw suspender;
+              case 'success':
+                return result;
+              case 'error':
+                throw result;
+              default:
+                throw new Error('Unknown status');
+            }
+          };
+        };
         var fuseBox = {
           name: fuseBoxName,
           actions: store.getActions(),
@@ -394,8 +426,35 @@ var StateMachine = /*#__PURE__*/function () {
             var _useState2 = React.useState(store.getState()),
               fuse = _useState2[0],
               setFuse = _useState2[1];
+            var status = React.useRef();
+            var run = React.useRef(function () {
+              try {
+                return Promise.resolve(new Promise(function (resolve) {
+                  status.current = resolve;
+                }));
+              } catch (e) {
+                return Promise.reject(e);
+              }
+            });
+            var promise = React.useRef();
             React.useLayoutEffect(function () {
+              if (status.current === undefined) {
+                promise.current = run.current();
+              }
               var handleReducerChange = function handleReducerChange(newStore) {
+                var _newStore$diffuse, _newStore$diffuse2, _newStore$diffuse3, _newStore$diffuse4, _newStore$diffuse5, _newStore$diffuse6;
+                var currentStatus;
+                if ((newStore === null || newStore === void 0 ? void 0 : (_newStore$diffuse = newStore.diffuse) === null || _newStore$diffuse === void 0 ? void 0 : _newStore$diffuse.loading) === true && (newStore === null || newStore === void 0 ? void 0 : (_newStore$diffuse2 = newStore.diffuse) === null || _newStore$diffuse2 === void 0 ? void 0 : _newStore$diffuse2.completed) === false) {
+                  currentStatus = 'pending';
+                  promise.current = run.current();
+                } else if ((newStore === null || newStore === void 0 ? void 0 : (_newStore$diffuse3 = newStore.diffuse) === null || _newStore$diffuse3 === void 0 ? void 0 : _newStore$diffuse3.loading) === false && (newStore === null || newStore === void 0 ? void 0 : (_newStore$diffuse4 = newStore.diffuse) === null || _newStore$diffuse4 === void 0 ? void 0 : _newStore$diffuse4.completed) === true) {
+                  currentStatus = 'fulfilled';
+                } else if ((newStore === null || newStore === void 0 ? void 0 : (_newStore$diffuse5 = newStore.diffuse) === null || _newStore$diffuse5 === void 0 ? void 0 : _newStore$diffuse5.loading) === false && (newStore === null || newStore === void 0 ? void 0 : (_newStore$diffuse6 = newStore.diffuse) === null || _newStore$diffuse6 === void 0 ? void 0 : _newStore$diffuse6.error) !== false) {
+                  currentStatus = 'failed';
+                }
+                if (currentStatus === 'fulfilled' && status.current !== undefined) {
+                  status.current(newStore);
+                }
                 setFuse(newStore);
               };
               _this.addFuseListener(store.name, handleReducerChange);
@@ -403,8 +462,12 @@ var StateMachine = /*#__PURE__*/function () {
                 _this.removeFuseListener(store.name, handleReducerChange);
               };
             }, []);
-            var state = fuse;
-            return state;
+            console.log('status', status);
+            console.log('promise', promise.current);
+            if ((promise === null || promise === void 0 ? void 0 : promise.current) !== undefined && status.current !== undefined) {
+              return promiseWrapper(promise.current, status)();
+            }
+            return fuse;
           },
           selectors: store.getSelections()
         };
@@ -456,17 +519,17 @@ var StateMachine = /*#__PURE__*/function () {
           callback = _ref14.callback;
         try {
           var _this$middleWare$stor, _this$middleWare, _this$middleWare$stor2, _this$middleWare$stor3, _this$middleWare2, _this$middleWare2$sto;
-          var _temp14 = function _temp14() {
-            function _temp12() {
+          var _temp13 = function _temp13() {
+            function _temp11() {
               return Promise.resolve(_this.runAction(storeName, action, payload, callback)).then(function (result) {
-                function _temp10() {
+                function _temp9() {
                   return _this.state[storeName];
                 }
                 _this.dispatchReducerListeners(storeName, result);
-                var _temp9 = function () {
+                var _temp8 = function () {
                   if (afterWare.length !== 0) {
-                    var _temp8 = _forTo(afterWare, function (i) {
-                      function _temp7() {
+                    var _temp7 = _forTo(afterWare, function (i) {
+                      function _temp6() {
                         _this.dispatchReducerListeners(storeName, result);
                       }
                       var result;
@@ -475,25 +538,25 @@ var StateMachine = /*#__PURE__*/function () {
                         payload: payload
                       });
                       result = executeMiddleWare();
-                      var _temp6 = function () {
+                      var _temp5 = function () {
                         if (isPromise(result) === true) {
                           return Promise.resolve(result).then(function (_result2) {
                             result = _result2;
                           });
                         }
                       }();
-                      return _temp6 && _temp6.then ? _temp6.then(_temp7) : _temp7(_temp6);
+                      return _temp5 && _temp5.then ? _temp5.then(_temp6) : _temp6(_temp5);
                     });
-                    if (_temp8 && _temp8.then) return _temp8.then(function () {});
+                    if (_temp7 && _temp7.then) return _temp7.then(function () {});
                   }
                 }();
-                return _temp9 && _temp9.then ? _temp9.then(_temp10) : _temp10(_temp9);
+                return _temp8 && _temp8.then ? _temp8.then(_temp9) : _temp9(_temp8);
               });
             }
-            var _temp11 = function () {
+            var _temp10 = function () {
               if (beforeWare.length !== 0) {
-                var _temp5 = _forTo(beforeWare, function (i) {
-                  function _temp4() {
+                var _temp4 = _forTo(beforeWare, function (i) {
+                  function _temp3() {
                     _this.dispatchReducerListeners(storeName, result);
                   }
                   var middleWareIsAsync = isAsync(beforeWare[i]);
@@ -503,19 +566,19 @@ var StateMachine = /*#__PURE__*/function () {
                     payload: payload
                   });
                   result = executeMiddleWare();
-                  var _temp3 = function () {
+                  var _temp2 = function () {
                     if (isPromise(result) === true) {
                       return Promise.resolve(result).then(function (_result) {
                         result = _result;
                       });
                     }
                   }();
-                  return _temp3 && _temp3.then ? _temp3.then(_temp4) : _temp4(_temp3);
+                  return _temp2 && _temp2.then ? _temp2.then(_temp3) : _temp3(_temp2);
                 });
-                if (_temp5 && _temp5.then) return _temp5.then(function () {});
+                if (_temp4 && _temp4.then) return _temp4.then(function () {});
               }
             }();
-            return _temp11 && _temp11.then ? _temp11.then(_temp12) : _temp12(_temp11);
+            return _temp10 && _temp10.then ? _temp10.then(_temp11) : _temp11(_temp10);
           };
           var action = _this.getAction(storeName, type)["function"];
           if (action === null) {
@@ -525,14 +588,14 @@ var StateMachine = /*#__PURE__*/function () {
           var beforeWare = (_this$middleWare$stor = (_this$middleWare = _this.middleWare) === null || _this$middleWare === void 0 ? void 0 : (_this$middleWare$stor2 = _this$middleWare[storeName]) === null || _this$middleWare$stor2 === void 0 ? void 0 : _this$middleWare$stor2.beforeWare) != null ? _this$middleWare$stor : [];
           var afterWare = (_this$middleWare$stor3 = (_this$middleWare2 = _this.middleWare) === null || _this$middleWare2 === void 0 ? void 0 : (_this$middleWare2$sto = _this$middleWare2[storeName]) === null || _this$middleWare2$sto === void 0 ? void 0 : _this$middleWare2$sto.afterWare) != null ? _this$middleWare$stor3 : [];
           var runMiddleWare = _this.getFromMiddleWare(storeName);
-          var _temp13 = function () {
+          var _temp12 = function () {
             if (isPromise(runMiddleWare)) {
               return Promise.resolve(runMiddleWare).then(function (_runMiddleWare) {
                 runMiddleWare = _runMiddleWare;
               });
             }
           }();
-          return Promise.resolve(_temp13 && _temp13.then ? _temp13.then(_temp14) : _temp14(_temp13));
+          return Promise.resolve(_temp12 && _temp12.then ? _temp12.then(_temp13) : _temp13(_temp12));
         } catch (e) {
           return Promise.reject(e);
         }
@@ -662,7 +725,7 @@ var StateMachine = /*#__PURE__*/function () {
       }, {});
       var store = stores[storeName];
       var actions = store.actions;
-      var _temp16 = function () {
+      var _temp15 = function () {
         if (action instanceof Function) {
           result = action(_extends({
             state: _this3.getCurrentState(storeName),
@@ -671,17 +734,17 @@ var StateMachine = /*#__PURE__*/function () {
           }, _this3.props[storeName] !== null && {
             props: _this3.props[storeName]
           }), actions, stores);
-          var _temp15 = function () {
+          var _temp14 = function () {
             if (isPromise(result)) {
               return Promise.resolve(result).then(function (_result3) {
                 result = _result3;
               });
             }
           }();
-          if (_temp15 && _temp15.then) return _temp15.then(function () {});
+          if (_temp14 && _temp14.then) return _temp14.then(function () {});
         }
       }();
-      return Promise.resolve(_temp16 && _temp16.then ? _temp16.then(function () {
+      return Promise.resolve(_temp15 && _temp15.then ? _temp15.then(function () {
         return result;
       }) : result);
     } catch (e) {

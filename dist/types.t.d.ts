@@ -58,7 +58,6 @@
 /**
  * Fuse box action type
  * @typedef {(payload?: object, callback?: (err?: any) => void) => void} ActionType Action
- * @param {object} payload payload
  * @returns {void}
  */
 /**
@@ -77,6 +76,7 @@
  * @template {ActionsType} ActionT
  * @template {SelectorsType} SelectorT
  * @template {InitialStateType} StateT
+ * @deprecated test
  * @typedef {Object} FuseBoxType
  * @property {NameT} name Fuse box name
  * @property {Record<keyof ActionT, ActionType>} actions Fuse box actions

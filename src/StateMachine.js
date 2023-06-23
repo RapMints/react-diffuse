@@ -1,14 +1,15 @@
-import React, { useLayoutEffect, useState } from 'react'
+// @ts-ignore
+import React, { useLayoutEffect, useRef, useState } from 'react'
+// @ts-ignore
 // @ts-ignore
 import { Types } from './types.t'
 
 /**
  * @class Reducer
- * @template {import('./types.t').ActionsType<P>} ActionT
+ * @template {import('./types.t').ActionsType} ActionT
  * @template {import('./types.t').SelectorsType} SelectorsT
  * @template {import('./types.t').InitialStateType} InitialStateT
- * @template {import('./types.t').MiddleWareType<keyof ActionT>} MiddleWareT
- * @template P Payload type
+ * @template {import('./types.t').MiddleWareType<string>} MiddleWareT
  */
 class Reducer {
     /**
@@ -17,7 +18,7 @@ class Reducer {
      */
     createStore = undefined
     /**
-    * @param {<NameT extends string>(fuseBoxName: NameT, props?: object | null) => import('./types.t').FuseBoxType<NameT, ActionT, SelectorsT, InitialStateT, P>} create 
+    * @param {<NameT extends string>(fuseBoxName: NameT, props?: object | null) => import('./types.t').FuseBoxType<NameT, ActionT, SelectorsT, InitialStateT>} create 
     */
     constructor(create) {
         // @ts-ignore
@@ -52,10 +53,10 @@ class StateMachine {
      */
 
     /**
-     * @template {import('./types.t').ActionsType<P>} ActionT
+     * @template {import('./types.t').ActionsType} ActionT
      * @template {import('./types.t').SelectorsType} SelectorsT
      * @template {import('./types.t').InitialStateType} InitialStateT
-     * @template {import('./types.t').MiddleWareType<keyof ActionT>} MiddleWareT
+     * @template {import('./types.t').MiddleWareType<string>} MiddleWareT
      * @template P Payload type
      * Creates reducer
      * @param {object} reducerProps Reducer properties
@@ -63,7 +64,7 @@ class StateMachine {
      * @param {ActionT} reducerProps.actions Reducer actions
      * @param {MiddleWareT=} reducerProps.middleWare Reducer middleWare
      * @param {SelectorsT=} reducerProps.selectors Reducer selectors
-     * @returns {Reducer<ActionT, SelectorsT, InitialStateT, MiddleWareT, P>}
+     * @returns {Reducer<ActionT, SelectorsT, InitialStateT, MiddleWareT>}
      */
     createReducer = ({ initialState, actions, selectors, middleWare}) => {
         const that = this
@@ -90,11 +91,13 @@ class StateMachine {
                 diffuse: {
                     ...(config.useDiffuseAsync === true && {
                         loading: false,
-                        error: false
+                        error: false,
+                        completed: true,
                     }),
                     ...(config.useDiffuseWebsocket === true && {
                         connectionStatus: 'DISCONNECTED'
-                    })
+                    }),
+                    ...(initialState?.diffuse ?? {})
                 }
             }
 
@@ -127,9 +130,10 @@ class StateMachine {
 
             // Set store actions
             /**
-                * @type {import('./types.t').ActionsType<P>}
+                * @type {import('./types.t').ActionsType}
                 */
             let newActions = {
+                // @ts-ignore
                 ...(config.useDiffuseInitializeState === true && {INITIALIZE_STATE: ({state, payload = {}}) => {
                     return {
                         ...initState,
@@ -139,7 +143,7 @@ class StateMachine {
                 ...(config.useDiffuseAsync === true && {
                     /**
                         * 
-                        * @param {import('./types.t').ActionPropsType<P>} params
+                        * @param {import('./types.t').ActionPropsType} params
                         * @returns {object}
                         */  
                     LOADING: ({state, payload}) => {
@@ -147,14 +151,15 @@ class StateMachine {
                             diffuse: {
                                 ...state.diffuse,
                                 loading: true,
-                                error: false
+                                error: false,
+                                completed: false
                             },
                             ...payload
                         }
                     },
                     /**
                         * 
-                        * @param {import('./types.t').ActionPropsType<P>} params
+                        * @param {import('./types.t').ActionPropsType} params
                         * @returns {object}
                         */ 
                     SUCCESS: ({state, payload}) => {
@@ -162,16 +167,18 @@ class StateMachine {
                             diffuse: {
                                 ...state.diffuse,
                                 loading: false,
-                                error: false
+                                error: false,
+                                completed: true
                             },
                             ...payload
                         }
                     },
                     /**
                         * 
-                        * @param {import('./types.t').ActionPropsType<P>} params
+                        * @param {import('./types.t').ActionPropsType} params
                         * @returns {object}
                         */ 
+                    // @ts-ignore
                     PROGRESS: ({state, payload}) => {
                         // @ts-ignore
                         return {
@@ -180,7 +187,7 @@ class StateMachine {
                     },
                     /**
                         * 
-                        * @param {import('./types.t').ActionPropsType<P>} params
+                        * @param {import('./types.t').ActionPropsType} params
                         * @returns {object}
                         */ 
                     FAIL: ({state, payload}) => {
@@ -188,7 +195,8 @@ class StateMachine {
                             diffuse: {
                                 ...state.diffuse,
                                 loading: false,
-                                error: true
+                                error: true,
+                                completed: false,
                             },
                             ...payload
                         }
@@ -197,9 +205,10 @@ class StateMachine {
                 ...(config.useDiffuseWebsocket === true && {
                     /**
                         * 
-                        * @param {import('./types.t').ActionPropsType<P>} params
+                        * @param {import('./types.t').ActionPropsType} params
                         * @returns {object}
                         */ 
+                    // @ts-ignore
                     MESSAGE_RECIEVED: ({state, payload}) => {
                         // @ts-ignore
                         return {
@@ -208,9 +217,10 @@ class StateMachine {
                     },
                     /**
                         * 
-                        * @param {import('./types.t').ActionPropsType<P>} params
+                        * @param {import('./types.t').ActionPropsType} params
                         * @returns {object}
                         */ 
+                    // @ts-ignore
                     EMIT: ({state, payload}) => {
                         // @ts-ignore
                         return {
@@ -219,7 +229,7 @@ class StateMachine {
                     },
                     /**
                         * 
-                        * @param {import('./types.t').ActionPropsType<P>} params
+                        * @param {import('./types.t').ActionPropsType} params
                         * @returns {object}
                         */ 
                     CONNECT: ({state, payload}) => {
@@ -233,7 +243,7 @@ class StateMachine {
                     },
                     /**
                         * 
-                        * @param {import('./types.t').ActionPropsType<P>} params
+                        * @param {import('./types.t').ActionPropsType} params
                         * @returns {object}
                         */ 
                     DISCONNECT: ({state, payload}) => {
@@ -247,7 +257,7 @@ class StateMachine {
                     },
                     /**
                         * 
-                        * @param {import('./types.t').ActionPropsType<P>} params
+                        * @param {import('./types.t').ActionPropsType} params
                         * @returns {object}
                         */ 
                     CONNECT_ERROR: ({state, payload}) => {
@@ -311,7 +321,7 @@ class StateMachine {
                  * 
                  * @param {object} params
                  * @param {keyof ActionT} params.type
-                 * @param {P|undefined} params.payload
+                 * @param {object|undefined} params.payload
                  * @param {((err?: any) => void) | undefined} params.callback 
                  * @returns 
                  */
@@ -333,33 +343,33 @@ class StateMachine {
                 /**
                 * Get a fuse action
                 * @param {keyof ActionT} actionName
-                * @returns {import('./types.t').ActionType<Record<keyof P, any>>} 
+                * @returns {import('./types.t').ActionType} 
                 */
                 getAction: (actionName) => {
                     /**
-                        * @type {import('./types.t').ActionType<Record<keyof P, any>>}
+                        * @type {import('./types.t').ActionType}
                         */
                     let action = (payload, callback) => store.dispatch({ type: actionName, payload, callback })
                     return action
                 },
                 /**
                 * Get all fuse actions
-                * @returns {Record<keyof ActionT, import('./types.t').ActionType<Record<keyof P, any>>>}
+                * @returns {Record<keyof ActionT, import('./types.t').ActionType>}
                 */
                 getActions: () => {
                     /**
-                        * @type {Record<keyof ActionT, import('./types.t').ActionType<Record<keyof P, any>>>}
+                        * @type {Record<keyof ActionT, import('./types.t').ActionType>}
                         */
                     // @ts-ignore
                     let actions = {}
                         
                     /**
-                        * @param {Record<keyof ActionT, import('./types.t').ActionType<Record<keyof P, any>>>} prev
+                        * @param {Record<keyof ActionT, import('./types.t').ActionType>} prev
                         * @param {keyof ActionT} actionName
                         */
                     let reduceFunction = (prev, actionName) => {
                         /**
-                            * @type {Record<keyof ActionT, import('./types.t').ActionType<Record<keyof P, any>>>}
+                            * @type {Record<keyof ActionT, import('./types.t').ActionType>}
                             *
                             */
                         prev[actionName] = store.getAction(actionName)
@@ -367,7 +377,7 @@ class StateMachine {
                     }
                     
                     /**
-                        * @type {Record<keyof ActionT, import('./types.t').ActionType<Record<keyof P, any>>>}
+                        * @type {Record<keyof ActionT, import('./types.t').ActionType>}
                         */
                     // @ts-ignore
                     actions = Object.keys(that.actions?.[fuseBoxName]).reduce(reduceFunction, actions)
@@ -500,9 +510,48 @@ class StateMachine {
             // @ts-ignore
             that.store[fuseBoxName] = store
             
+            // @ts-ignore
+            // @ts-ignore
+            let promiseWrapper = (promise, status) => {
+                // @ts-ignore
+                let suspender
+                let suspenderStatus = 'pending'
+                // @ts-ignore
+                let result
+                if (promise !== undefined) {
+                    // @ts-ignore
+                    suspender = promise.then((value) => {
+                        suspenderStatus = 'success'
+                        result = value
+                        status.current = undefined
+                    }, 
+                    // @ts-ignore
+                    (error) => {
+                        suspenderStatus = 'error'
+                        result = error
+                        status.current = undefined
+                    })
+                }
+
+                return () => {
+                    switch (suspenderStatus) {
+                        case 'pending':
+                          // @ts-ignore
+                          throw suspender;
+                        case 'success':
+                          // @ts-ignore
+                          return result;
+                        case 'error':
+                          // @ts-ignore
+                          throw result;
+                        default:
+                          throw new Error('Unknown status');
+                    }
+                }
+            }
             /**
              * 
-            * @type {import('./types.t').FuseBoxType<NameT, ActionT, SelectorsT, InitialStateT, P>}
+            * @type {import('./types.t').FuseBoxType<NameT, ActionT, SelectorsT, InitialStateT>}
             */
             let fuseBox = {
                 name: fuseBoxName,
@@ -510,15 +559,54 @@ class StateMachine {
                  * 
                  */
                 actions: store.getActions(),
+                // @ts-ignore
                 useState: () => {
                     const [fuse, setFuse] = useState(store.getState())
-                
+                    const status = useRef()
+                    
+                    const run = useRef(async () => {
+                        return new Promise(resolve => {
+                            // @ts-ignore
+                            status.current = resolve
+                        })
+                    })
+                    
+                    const promise = useRef()
+
                     useLayoutEffect(() => {
+                        if (status.current === undefined) {
+                            // @ts-ignore
+                            promise.current = run.current()
+                        }
+
                         /**
-                            * 
-                            * @param {object} newStore 
-                            */
+                        * 
+                        * @param {object} newStore 
+                        */
                         const handleReducerChange = (newStore) => {
+                            // @ts-ignore
+                            let currentStatus
+
+                            // @ts-ignore
+                            if (newStore?.diffuse?.loading === true && newStore?.diffuse?.completed === false) {
+                                currentStatus = 'pending'
+                                // @ts-ignore
+                                promise.current = run.current()
+                            }
+                            // @ts-ignore
+                            else if (newStore?.diffuse?.loading === false && newStore?.diffuse?.completed === true) {
+                                currentStatus = 'fulfilled'
+                            }
+                            // @ts-ignore
+                            else if (newStore?.diffuse?.loading === false && newStore?.diffuse?.error !== false) {
+                                currentStatus = 'failed'
+                            }
+
+                            if (currentStatus === 'fulfilled' && status.current !== undefined) {
+                                // @ts-ignore
+                                status.current(newStore)
+                            }
+
                             setFuse(newStore)
                         }
                 
@@ -530,10 +618,15 @@ class StateMachine {
                     }, [])
                     
                     /**
-                        * @type {InitialStateT & import('./types.t').DiffuseStateType}
-                        */
+                     * @type {InitialStateT & import('./types.t').DiffuseStateType}
+                    */
                     // @ts-ignore
                     const state = fuse
+                    
+                    if (promise?.current !== undefined && status.current !== undefined) {
+                        return promiseWrapper(promise.current, status)()
+                    }
+
                     return state
                 },
                 selectors: store.getSelections(),
@@ -776,6 +869,7 @@ class StateMachine {
             // Dispatch before ware
             if (beforeWare.length !== 0) {
                 for (let i = 0; i < beforeWare.length; i++) {
+                    // @ts-ignore
                     const middleWareIsAsync = isAsync(beforeWare[i])
                     let result
                     // @ts-ignore
