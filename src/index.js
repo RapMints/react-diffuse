@@ -1,5 +1,6 @@
-import React, { Component, useMemo } from 'react'
+import React, { Component, Suspense, useMemo } from 'react'
 import StateMachine from './StateMachine'
+// @ts-ignore
 import { Types } from './types.t'
 
 /**
@@ -130,6 +131,77 @@ const wire = (fuseBoxes = []) => (Child) => {
     return newChild
 }
 
+/**
+ * @class DiffuseBoundary
+ * @description Handle async suspension and errors from fetchState functions
+ * @extends {React.Component<import('./types.t').ErrorBoundaryPropsType>}
+ */
+class DiffuseBoundary extends React.Component {
+    // @ts-ignore
+    constructor(props) {
+        super(props);
+        this.state = { hasError: false, error: undefined };
+    }
+  
+    // @ts-ignore
+    static getDerivedStateFromError(error) {
+        // Update state so the next render will show the fallback UI.
+        return { hasError: true, error: error};
+    }
+  
+    // @ts-ignore
+    componentDidCatch(error, errorInfo) {
+        // If error is not from diffuse throw error up
+        if (error?.currentState?.diffuse?.error === undefined) {
+            throw error
+        }
+        // If is a diffuse error
+        else {
+            if (this.props.onCatchError !== undefined) {
+                // @ts-ignore
+                this.props.onCatchError(error, errorInfo)
+            }
+        }
+    }
+
+    /**
+     * 
+     * @param {object} props
+     * @param {any} props.error 
+     * @returns 
+     */
+    ErrorFallbackWrapper = ({error}) => {
+        if (error.store === undefined) {
+            throw error
+        }
+
+        const fuse = error?.store()
+        if (fuse.diffuse.error === false) {
+            this.setState({hasError: false, error: undefined});
+        }
+
+        return (
+            // @ts-ignore
+            <this.props.ErrorFallbackComponent state={error?.currentState} />
+        )
+    }
+  
+    render() {
+        if (this.state.hasError && this.state.error) {
+            return (
+                // @ts-ignore
+                <this.ErrorFallbackWrapper error={this.state.error} />
+            )
+        }
+  
+        return (
+            <Suspense fallback={this.props.SuspenseFallback}> 
+                {this.props.children};
+            </Suspense> 
+        )
+    }
+}
+
 const createReducer = StateMachine.createReducer
 
-export { wire, useFuse, useActions, useDispatch, useFuseSelection, useSelectors, createReducer }
+export { wire, useFuse, useActions, useDispatch, useFuseSelection, useSelectors, createReducer, DiffuseBoundary }

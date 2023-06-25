@@ -73,6 +73,33 @@ export const createReducer: <ActionT extends import("./types.t").ActionsType, Se
     createStore: undefined;
     createFuseBox: <NameT extends string>(fuseBoxName: NameT, props?: object | null | undefined) => import("./types.t").FuseBoxType<NameT, ActionT, SelectorsT, InitialStateT>;
 };
+/**
+ * @class DiffuseBoundary
+ * @description Handle async suspension and errors from fetchState functions
+ * @extends {React.Component<import('./types.t').ErrorBoundaryPropsType>}
+ */
+export class DiffuseBoundary extends React.Component<import("./types.t").ErrorBoundaryPropsType, any, any> {
+    static getDerivedStateFromError(error: any): {
+        hasError: boolean;
+        error: any;
+    };
+    constructor(props: any);
+    state: {
+        hasError: boolean;
+        error: undefined;
+    };
+    componentDidCatch(error: any, errorInfo: any): void;
+    /**
+     *
+     * @param {object} props
+     * @param {any} props.error
+     * @returns
+     */
+    ErrorFallbackWrapper: ({ error }: {
+        error: any;
+    }) => JSX.Element;
+    render(): JSX.Element;
+}
 import React from "react";
 import { Component } from "react";
 //# sourceMappingURL=index.d.ts.map

@@ -10,7 +10,7 @@ import socketClient  from "socket.io-client";
 const reducer = createReducer({
     initialState: {
         percent: 100,
-        item: 0
+        item: 0,
     },
     actions: {
         INCREMENT: ({state, payload}) => {
@@ -39,7 +39,7 @@ const reducer = createReducer({
             LOADING();
             // Replace the url with your own on beeceptor
             let ApiRes = await axios
-              .get("https://diffuse2.free.beeceptor.com")
+              .get("https://diffuse4.free.beeceptor.com")
               .then(
                 (value) =>
                   new Promise((resolve) => {
@@ -56,11 +56,11 @@ const reducer = createReducer({
             });
     
             await sleep;
-    
+
             SUCCESS({ item: state.item + 1, percent: 100 });
           } catch (e) {
-            callback(e)
-            FAIL({ error: e.message });
+            console.log(e)
+            FAIL({ error: e.message});
           }
         }
     },
@@ -70,10 +70,10 @@ const reducer = createReducer({
     middleWare: {
       afterWare: [
         logger("after")
-      ],
+      ],/* 
       beforeWare: [
         logger("before")
-      ]
+      ] */
     }
 })
 

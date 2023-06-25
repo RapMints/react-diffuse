@@ -17,6 +17,28 @@ function _extends() {
   };
   return _extends.apply(this, arguments);
 }
+function _inheritsLoose(subClass, superClass) {
+  subClass.prototype = Object.create(superClass.prototype);
+  subClass.prototype.constructor = subClass;
+  _setPrototypeOf(subClass, superClass);
+}
+function _setPrototypeOf(o, p) {
+  _setPrototypeOf = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function _setPrototypeOf(o, p) {
+    o.__proto__ = p;
+    return o;
+  };
+  return _setPrototypeOf(o, p);
+}
+var id = 0;
+function _classPrivateFieldLooseKey(name) {
+  return "__private_" + id++ + "_" + name;
+}
+function _classPrivateFieldLooseBase(receiver, privateKey) {
+  if (!Object.prototype.hasOwnProperty.call(receiver, privateKey)) {
+    throw new TypeError("attempted to use private field on non-instance");
+  }
+  return receiver;
+}
 
 // A type of promise-like that resolves synchronously and supports only one observer
 const _Pact = /*#__PURE__*/(function() {
@@ -125,15 +147,103 @@ var Reducer = function Reducer(create) {
   this.createFuseBox = create;
   this.createStore = create;
 };
+var _newPromise = /*#__PURE__*/_classPrivateFieldLooseKey("newPromise");
+var _defaultExecutor = /*#__PURE__*/_classPrivateFieldLooseKey("defaultExecutor");
+var DiffusePromise = /*#__PURE__*/function () {
+  function DiffusePromise(_store, executor) {
+    var _this = this;
+    if (executor === void 0) {
+      executor = null;
+    }
+    Object.defineProperty(this, _newPromise, {
+      writable: true,
+      value: function value() {
+        return new Promise(function (res, rej) {
+          _this.resolve = res;
+          _this.reject = rej;
+          _this.status = 'pending';
+        });
+      }
+    });
+    Object.defineProperty(this, _defaultExecutor, {
+      writable: true,
+      value: function value(store, resolve, reject) {
+        var _store$diffuse, _store$diffuse2, _store$diffuse3, _store$diffuse4;
+        if ((store === null || store === void 0 ? void 0 : (_store$diffuse = store.diffuse) === null || _store$diffuse === void 0 ? void 0 : _store$diffuse.loading) === false && (store === null || store === void 0 ? void 0 : (_store$diffuse2 = store.diffuse) === null || _store$diffuse2 === void 0 ? void 0 : _store$diffuse2.completed) === true) {
+          resolve();
+        } else if ((store === null || store === void 0 ? void 0 : (_store$diffuse3 = store.diffuse) === null || _store$diffuse3 === void 0 ? void 0 : _store$diffuse3.loading) === false && (store === null || store === void 0 ? void 0 : (_store$diffuse4 = store.diffuse) === null || _store$diffuse4 === void 0 ? void 0 : _store$diffuse4.error) !== false) {
+          reject();
+        }
+      }
+    });
+    this["continue"] = function (store) {
+      if (_this.resolve && _this.reject) {
+        var resolve = function resolve() {
+          _this.status = 'completed';
+          _this.resolve(store);
+          _this.resolve = undefined;
+          _this.reject = undefined;
+        };
+        var reject = function reject() {
+          _this.status = 'completed';
+          _this.reject({
+            currentState: store,
+            store: _this.fuseBox
+          });
+          _this.resolve = undefined;
+          _this.reject = undefined;
+        };
+        if (_this.executor === null) {
+          _classPrivateFieldLooseBase(_this, _defaultExecutor)[_defaultExecutor](store, resolve, reject);
+        } else {
+          _this.executor(store, resolve, reject);
+        }
+      }
+      return _this;
+    };
+    this.promise = _classPrivateFieldLooseBase(this, _newPromise)[_newPromise]();
+    this.status = 'pending';
+    this.fuseBox = _store;
+    this.firstLoad = true;
+    this.executor = executor;
+  }
+  var _proto = DiffusePromise.prototype;
+  _proto.getStore = function getStore() {
+    var status = "pending";
+    var result;
+    var suspender = this.promise.then(function (r) {
+      status = "success";
+      result = r;
+    }, function (e) {
+      status = "error";
+      result = e;
+    });
+    var that = this;
+    return {
+      read: function read() {
+        if (status === "pending") {
+          throw suspender;
+        } else if (status === "error") {
+          that.promise = undefined;
+          throw result;
+        } else if (status === "success") {
+          that.promise = undefined;
+          return result;
+        }
+      }
+    };
+  };
+  return DiffusePromise;
+}();
 var StateMachine = /*#__PURE__*/function () {
   function StateMachine() {
-    var _this = this;
+    var _this2 = this;
     this.createReducer = function (_ref) {
       var initialState = _ref.initialState,
         actions = _ref.actions,
         selectors = _ref.selectors,
         middleWare = _ref.middleWare;
-      var that = _this;
+      var that = _this2;
       var defaultOptions = {
         useDiffuseAsync: true,
         useDiffuseInitializeState: true,
@@ -142,14 +252,16 @@ var StateMachine = /*#__PURE__*/function () {
       };
       var config = _extends({}, defaultOptions);
       var create = function create(fuseBoxName, props) {
+        var _initialState$diffuse;
         if (props === void 0) {
           props = null;
         }
         var diffuseState = {
-          diffuse: _extends({}, config.useDiffuseAsync === true && {
+          diffuse: _extends({}, config.useDiffuseAsync === true && _extends({
             loading: false,
-            error: false
-          }, config.useDiffuseWebsocket === true && {
+            error: false,
+            completed: false
+          }, (_initialState$diffuse = initialState.diffuse) != null ? _initialState$diffuse : {}), config.useDiffuseWebsocket === true && {
             connectionStatus: 'DISCONNECTED'
           })
         };
@@ -173,7 +285,8 @@ var StateMachine = /*#__PURE__*/function () {
             return _extends({
               diffuse: _extends({}, state.diffuse, {
                 loading: true,
-                error: false
+                error: false,
+                completed: false
               })
             }, payload);
           },
@@ -183,7 +296,8 @@ var StateMachine = /*#__PURE__*/function () {
             return _extends({
               diffuse: _extends({}, state.diffuse, {
                 loading: false,
-                error: false
+                error: false,
+                completed: true
               })
             }, payload);
           },
@@ -197,7 +311,8 @@ var StateMachine = /*#__PURE__*/function () {
             return _extends({
               diffuse: _extends({}, state.diffuse, {
                 loading: false,
-                error: true
+                error: true,
+                completed: false
               })
             }, payload);
           }
@@ -398,13 +513,46 @@ var StateMachine = /*#__PURE__*/function () {
               var handleReducerChange = function handleReducerChange(newStore) {
                 setFuse(newStore);
               };
-              _this.addFuseListener(store.name, handleReducerChange);
+              _this2.addFuseListener(store.name, handleReducerChange);
               return function () {
-                _this.removeFuseListener(store.name, handleReducerChange);
+                _this2.removeFuseListener(store.name, handleReducerChange);
               };
             }, []);
             var state = fuse;
             return state;
+          },
+          useFetchState: function useFetchState(executor) {
+            if (executor === void 0) {
+              executor = null;
+            }
+            var _useState3 = React.useState(null),
+              promise = _useState3[0],
+              setPromise = _useState3[1];
+            var diffusePromise = React.useRef();
+            var initialState = React.useRef(null);
+            React.useLayoutEffect(function () {
+              if (initialState.current === null) {
+                initialState.current = store.getState();
+                if (diffusePromise.current === undefined) {
+                  diffusePromise.current = new DiffusePromise(fuseBox.useState, executor);
+                }
+                diffusePromise.current["continue"](initState);
+                setPromise(diffusePromise.current.getStore());
+              }
+              var handleReducerChange = function handleReducerChange(newStore) {
+                var _diffusePromise$curre;
+                if (((_diffusePromise$curre = diffusePromise.current) === null || _diffusePromise$curre === void 0 ? void 0 : _diffusePromise$curre.promise) === undefined) {
+                  diffusePromise.current = new DiffusePromise(fuseBox.useState, executor);
+                }
+                diffusePromise.current["continue"](newStore);
+                setPromise(diffusePromise.current.getStore());
+              };
+              _this2.addFuseListener(store.name, handleReducerChange);
+              return function () {
+                _this2.removeFuseListener(store.name, handleReducerChange);
+              };
+            }, []);
+            return promise === null || promise === void 0 ? void 0 : promise.read();
           },
           selectors: store.getSelections()
         };
@@ -414,13 +562,13 @@ var StateMachine = /*#__PURE__*/function () {
       return reducer;
     };
     this.useSelectionHook = function (store, selector) {
-      var selection = _this.mergeSelectors(selector, store.getState());
-      var _useState3 = React.useState(selection),
-        fuseSelection = _useState3[0],
-        setFuseSelection = _useState3[1];
+      var selection = _this2.mergeSelectors(selector, store.getState());
+      var _useState4 = React.useState(selection),
+        fuseSelection = _useState4[0],
+        setFuseSelection = _useState4[1];
       React.useLayoutEffect(function () {
         var handleReducerChange = function handleReducerChange(newStore) {
-          var newFuseSelection = _this.mergeSelectors(selector, newStore);
+          var newFuseSelection = _this2.mergeSelectors(selector, newStore);
           var shouldUpdate = false;
           if (newFuseSelection.value instanceof Function) {
             for (var i = 0; i < newFuseSelection.stateSelections.length; i++) {
@@ -436,9 +584,9 @@ var StateMachine = /*#__PURE__*/function () {
             setFuseSelection(newFuseSelection);
           }
         };
-        _this.addFuseListener(store.name, handleReducerChange);
+        _this2.addFuseListener(store.name, handleReducerChange);
         return function () {
-          _this.removeFuseListener(store.name, handleReducerChange);
+          _this2.removeFuseListener(store.name, handleReducerChange);
         };
       }, []);
       if (fuseSelection.value instanceof Function) {
@@ -455,19 +603,19 @@ var StateMachine = /*#__PURE__*/function () {
           payload = _ref14$payload === void 0 ? null : _ref14$payload,
           callback = _ref14.callback;
         try {
-          var _this$middleWare$stor, _this$middleWare, _this$middleWare$stor2, _this$middleWare$stor3, _this$middleWare2, _this$middleWare2$sto;
+          var _this2$middleWare$sto, _this2$middleWare, _this2$middleWare$sto2, _this2$middleWare$sto3, _this2$middleWare2, _this2$middleWare2$st;
           var _temp14 = function _temp14() {
             function _temp12() {
-              return Promise.resolve(_this.runAction(storeName, action, payload, callback)).then(function (result) {
+              return Promise.resolve(_this2.runAction(storeName, action, payload, callback)).then(function (result) {
                 function _temp10() {
-                  return _this.state[storeName];
+                  return _this2.state[storeName];
                 }
-                _this.dispatchReducerListeners(storeName, result);
+                _this2.dispatchReducerListeners(storeName, result);
                 var _temp9 = function () {
                   if (afterWare.length !== 0) {
                     var _temp8 = _forTo(afterWare, function (i) {
                       function _temp7() {
-                        _this.dispatchReducerListeners(storeName, result);
+                        _this2.dispatchReducerListeners(storeName, result);
                       }
                       var result;
                       var executeMiddleWare = runMiddleWare(afterWare[i], {
@@ -494,9 +642,8 @@ var StateMachine = /*#__PURE__*/function () {
               if (beforeWare.length !== 0) {
                 var _temp5 = _forTo(beforeWare, function (i) {
                   function _temp4() {
-                    _this.dispatchReducerListeners(storeName, result);
+                    _this2.dispatchReducerListeners(storeName, result);
                   }
-                  var middleWareIsAsync = isAsync(beforeWare[i]);
                   var result;
                   var executeMiddleWare = runMiddleWare(beforeWare[i], {
                     type: type,
@@ -517,14 +664,14 @@ var StateMachine = /*#__PURE__*/function () {
             }();
             return _temp11 && _temp11.then ? _temp11.then(_temp12) : _temp12(_temp11);
           };
-          var action = _this.getAction(storeName, type)["function"];
+          var action = _this2.getAction(storeName, type)["function"];
           if (action === null) {
             console.error('Action or reducer doesnt exist');
             return Promise.resolve();
           }
-          var beforeWare = (_this$middleWare$stor = (_this$middleWare = _this.middleWare) === null || _this$middleWare === void 0 ? void 0 : (_this$middleWare$stor2 = _this$middleWare[storeName]) === null || _this$middleWare$stor2 === void 0 ? void 0 : _this$middleWare$stor2.beforeWare) != null ? _this$middleWare$stor : [];
-          var afterWare = (_this$middleWare$stor3 = (_this$middleWare2 = _this.middleWare) === null || _this$middleWare2 === void 0 ? void 0 : (_this$middleWare2$sto = _this$middleWare2[storeName]) === null || _this$middleWare2$sto === void 0 ? void 0 : _this$middleWare2$sto.afterWare) != null ? _this$middleWare$stor3 : [];
-          var runMiddleWare = _this.getFromMiddleWare(storeName);
+          var beforeWare = (_this2$middleWare$sto = (_this2$middleWare = _this2.middleWare) === null || _this2$middleWare === void 0 ? void 0 : (_this2$middleWare$sto2 = _this2$middleWare[storeName]) === null || _this2$middleWare$sto2 === void 0 ? void 0 : _this2$middleWare$sto2.beforeWare) != null ? _this2$middleWare$sto : [];
+          var afterWare = (_this2$middleWare$sto3 = (_this2$middleWare2 = _this2.middleWare) === null || _this2$middleWare2 === void 0 ? void 0 : (_this2$middleWare2$st = _this2$middleWare2[storeName]) === null || _this2$middleWare2$st === void 0 ? void 0 : _this2$middleWare2$st.afterWare) != null ? _this2$middleWare$sto3 : [];
+          var runMiddleWare = _this2.getFromMiddleWare(storeName);
           var _temp13 = function () {
             if (isPromise(runMiddleWare)) {
               return Promise.resolve(runMiddleWare).then(function (_runMiddleWare) {
@@ -550,8 +697,8 @@ var StateMachine = /*#__PURE__*/function () {
     this.history = {};
     this.props = {};
   }
-  var _proto = StateMachine.prototype;
-  _proto.mergeSelectors = function mergeSelectors(selector, currentState) {
+  var _proto2 = StateMachine.prototype;
+  _proto2.mergeSelectors = function mergeSelectors(selector, currentState) {
     var stateSelections, value;
     if (selector.length === 0) {
       throw 'DiffuseError: No selectors specified';
@@ -572,7 +719,7 @@ var StateMachine = /*#__PURE__*/function () {
       stateSelections: stateSelections
     });
   };
-  _proto.addFuseListener = function addFuseListener(storeName, func) {
+  _proto2.addFuseListener = function addFuseListener(storeName, func) {
     if (this.storeDict[storeName]) {
       if (this.listener[storeName] === undefined) {
         this.listener[storeName] = [];
@@ -582,7 +729,7 @@ var StateMachine = /*#__PURE__*/function () {
       console.warn("Reducer doesn't exist");
     }
   };
-  _proto.removeFuseListener = function removeFuseListener(storeName, func) {
+  _proto2.removeFuseListener = function removeFuseListener(storeName, func) {
     if (this.storeDict.includes(storeName)) {
       var _this$listener;
       var reducerListener = (_this$listener = this.listener) === null || _this$listener === void 0 ? void 0 : _this$listener[storeName];
@@ -596,7 +743,7 @@ var StateMachine = /*#__PURE__*/function () {
       console.warn("Reducer doesn't exist");
     }
   };
-  _proto.dispatchReducerListeners = function dispatchReducerListeners(storeName, result, dontSaveToHistory) {
+  _proto2.dispatchReducerListeners = function dispatchReducerListeners(storeName, result, dontSaveToHistory) {
     if (dontSaveToHistory === void 0) {
       dontSaveToHistory = false;
     }
@@ -623,40 +770,40 @@ var StateMachine = /*#__PURE__*/function () {
       }
     }
   };
-  _proto.getCurrentState = function getCurrentState(storeName) {
+  _proto2.getCurrentState = function getCurrentState(storeName) {
     return this.state[storeName];
   };
-  _proto.getAction = function getAction(storeName, actionName) {
+  _proto2.getAction = function getAction(storeName, actionName) {
     var _this$actions$storeNa, _this$actions, _this$actions$storeNa2;
     return (_this$actions$storeNa = (_this$actions = this.actions) === null || _this$actions === void 0 ? void 0 : (_this$actions$storeNa2 = _this$actions[storeName]) === null || _this$actions$storeNa2 === void 0 ? void 0 : _this$actions$storeNa2[actionName]) != null ? _this$actions$storeNa : null;
   };
-  _proto.getFromMiddleWare = function getFromMiddleWare(storeName) {
-    var _this2 = this;
+  _proto2.getFromMiddleWare = function getFromMiddleWare(storeName) {
+    var _this3 = this;
     return function (middleWare, _ref15) {
       var _ref15$type = _ref15.type,
         type = _ref15$type === void 0 ? '' : _ref15$type,
         _ref15$payload = _ref15.payload,
         payload = _ref15$payload === void 0 ? null : _ref15$payload;
-      var result = middleWare(storeName, _this2.getCurrentState(storeName), {
+      var result = middleWare(storeName, _this3.getCurrentState(storeName), {
         type: type,
         payload: payload
       });
       return result;
     };
   };
-  _proto.runAction = function runAction(storeName, action, payload, callback) {
+  _proto2.runAction = function runAction(storeName, action, payload, callback) {
     if (callback === void 0) {
       callback = function callback() {
         return undefined;
       };
     }
     try {
-      var _this3 = this;
+      var _this4 = this;
       var result;
-      var stores = Object.keys(_this3.store).reduce(function (previous, current) {
-        previous[_this3.store[current].name] = {
-          state: _this3.store[current].getState(),
-          actions: _this3.store[current].getActions()
+      var stores = Object.keys(_this4.store).reduce(function (previous, current) {
+        previous[_this4.store[current].name] = {
+          state: _this4.store[current].getState(),
+          actions: _this4.store[current].getActions()
         };
         return previous;
       }, {});
@@ -665,11 +812,11 @@ var StateMachine = /*#__PURE__*/function () {
       var _temp16 = function () {
         if (action instanceof Function) {
           result = action(_extends({
-            state: _this3.getCurrentState(storeName),
+            state: _this4.getCurrentState(storeName),
             payload: payload,
             callback: callback
-          }, _this3.props[storeName] !== null && {
-            props: _this3.props[storeName]
+          }, _this4.props[storeName] !== null && {
+            props: _this4.props[storeName]
           }), actions, stores);
           var _temp15 = function () {
             if (isPromise(result)) {
@@ -695,13 +842,6 @@ function isPromise(p) {
     return true;
   }
   return false;
-}
-function isAsync(func) {
-  try {
-    return func.constructor.name === 'AsyncFunction' || isPromise(func({}, {}));
-  } catch (e) {
-    return false;
-  }
 }
 var StateMachine$1 = new StateMachine();
 
@@ -748,8 +888,72 @@ var wire = function wire(fuseBoxes) {
     return newChild;
   };
 };
+var DiffuseBoundary = /*#__PURE__*/function (_React$Component) {
+  _inheritsLoose(DiffuseBoundary, _React$Component);
+  function DiffuseBoundary(props) {
+    var _this2 = this;
+    var _this;
+    _this = _React$Component.call(this, props) || this;
+    _this.ErrorFallbackWrapper = function (_ref) {
+      var error = _ref.error;
+      if (error.store === undefined) {
+        throw error;
+      }
+      var fuse = error === null || error === void 0 ? void 0 : error.store();
+      if (fuse.diffuse.error === false) {
+        _this.setState({
+          hasError: false,
+          error: undefined
+        });
+      }
+      return (
+        /*#__PURE__*/
+        React__default.createElement(_this2.props.ErrorFallbackComponent, {
+          state: error === null || error === void 0 ? void 0 : error.currentState
+        })
+      );
+    };
+    _this.state = {
+      hasError: false,
+      error: undefined
+    };
+    return _this;
+  }
+  DiffuseBoundary.getDerivedStateFromError = function getDerivedStateFromError(error) {
+    return {
+      hasError: true,
+      error: error
+    };
+  };
+  var _proto = DiffuseBoundary.prototype;
+  _proto.componentDidCatch = function componentDidCatch(error, errorInfo) {
+    var _error$currentState, _error$currentState$d;
+    if ((error === null || error === void 0 ? void 0 : (_error$currentState = error.currentState) === null || _error$currentState === void 0 ? void 0 : (_error$currentState$d = _error$currentState.diffuse) === null || _error$currentState$d === void 0 ? void 0 : _error$currentState$d.error) === undefined) {
+      throw error;
+    } else {
+      if (this.props.onCatchError !== undefined) {
+        this.props.onCatchError(error, errorInfo);
+      }
+    }
+  };
+  _proto.render = function render() {
+    if (this.state.hasError && this.state.error) {
+      return (
+        /*#__PURE__*/
+        React__default.createElement(this.ErrorFallbackWrapper, {
+          error: this.state.error
+        })
+      );
+    }
+    return /*#__PURE__*/React__default.createElement(React.Suspense, {
+      fallback: this.props.SuspenseFallback
+    }, this.props.children, ";");
+  };
+  return DiffuseBoundary;
+}(React__default.Component);
 var createReducer = StateMachine$1.createReducer;
 
+exports.DiffuseBoundary = DiffuseBoundary;
 exports.createReducer = createReducer;
 exports.useActions = useActions;
 exports.useDispatch = useDispatch;

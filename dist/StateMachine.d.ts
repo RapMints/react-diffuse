@@ -65,9 +65,9 @@ declare class StateMachine {
  * @template {import('./types.t').ActionsType} ActionT
  * @template {import('./types.t').SelectorsType} SelectorsT
  * @template {import('./types.t').InitialStateType} InitialStateT
- * @template {import('./types.t').MiddleWareType<keyof ActionT>} MiddleWareT
+ * @template {import('./types.t').MiddleWareType<ActionT>} MiddleWareT
  */
-declare class Reducer<ActionT extends import("./types.t").ActionsType, SelectorsT extends import("./types.t").SelectorsType, InitialStateT extends import("./types.t").InitialStateType, MiddleWareT extends import("./types.t").MiddleWareType<keyof ActionT>> {
+declare class Reducer<ActionT extends import("./types.t").ActionsType, SelectorsT extends import("./types.t").SelectorsType, InitialStateT extends import("./types.t").InitialStateType, MiddleWareT extends import("./types.t").MiddleWareType<ActionT>> {
     /**
     * @param {<NameT extends string>(fuseBoxName: NameT, props?: object | null) => import('./types.t').FuseBoxType<NameT, ActionT, SelectorsT, InitialStateT>} create
     */

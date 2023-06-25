@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useState } from 'react'
+import React, { useLayoutEffect, useRef, useState } from 'react'
 // @ts-ignore
 import { Types } from './types.t'
 
@@ -7,7 +7,7 @@ import { Types } from './types.t'
  * @template {import('./types.t').ActionsType} ActionT
  * @template {import('./types.t').SelectorsType} SelectorsT
  * @template {import('./types.t').InitialStateType} InitialStateT
- * @template {import('./types.t').MiddleWareType<keyof ActionT>} MiddleWareT
+ * @template {import('./types.t').MiddleWareType<ActionT>} MiddleWareT
  */
 class Reducer {
     /**
@@ -25,6 +25,106 @@ class Reducer {
         this.createStore = create
     }
 }
+
+class DiffusePromise {
+    // @ts-ignore
+    constructor(store, executor = null) {
+        this.promise = this.#newPromise()
+        this.status = 'pending'
+        this.fuseBox = store
+        this.firstLoad = true
+        // @ts-ignore
+        this.executor = executor
+    }
+
+    #newPromise = () => {
+        return new Promise((res, rej) => {
+            this.resolve = res
+            this.reject = rej
+            this.status = 'pending'
+        })
+    }
+
+    // @ts-ignore
+    #defaultExecutor = (store, resolve, reject) => {
+        if (store?.diffuse?.loading === false && store?.diffuse?.completed === true) {
+            // @ts-ignore
+            resolve()
+        }
+        else if (store?.diffuse?.loading === false && store?.diffuse?.error !== false) {
+            // @ts-ignore
+            reject()
+        }
+    }
+
+    // @ts-ignore
+    continue = (store) => {
+        if (this.resolve && this.reject) {
+            let resolve = () => {
+                this.status = 'completed'
+                // @ts-ignore
+                this.resolve(store)
+                this.resolve = undefined
+                this.reject = undefined
+            }
+
+            let reject = () => {
+                this.status = 'completed'
+                // @ts-ignore
+                this.reject({currentState: store, store: this.fuseBox})
+                this.resolve = undefined
+                this.reject = undefined
+            }
+
+            if (this.executor === null) {
+                this.#defaultExecutor(store, resolve, reject)
+            }
+            else {
+                this.executor(store, resolve, reject)
+            }
+        }
+
+        return this
+    }
+
+    // @ts-ignore
+    getStore() {
+        let status = "pending";
+        // @ts-ignore
+        let result;
+        let suspender = this.promise.then(
+            // @ts-ignore
+            (r) => {
+                status = "success";
+                result = r;
+            },
+            // @ts-ignore
+            (e) => {
+                status = "error";
+                result = e;
+            }
+        );
+        let that = this
+        return {
+          read() {
+            if (status === "pending") {
+                throw suspender;
+            } else if (status === "error") {
+                // @ts-ignore
+                that.promise = undefined
+                // @ts-ignore
+                throw result;
+            } else if (status === "success") {
+                // @ts-ignore
+                that.promise = undefined
+                // @ts-ignore
+                return result;
+            }
+          }
+        };
+    }
+}
+
 /**
  * @typedef {string} StoreNameType
  */
@@ -88,7 +188,9 @@ class StateMachine {
                 diffuse: {
                     ...(config.useDiffuseAsync === true && {
                         loading: false,
-                        error: false
+                        error: false,
+                        completed: false,
+                        ...(initialState.diffuse ?? {})
                     }),
                     ...(config.useDiffuseWebsocket === true && {
                         connectionStatus: 'DISCONNECTED'
@@ -145,7 +247,8 @@ class StateMachine {
                             diffuse: {
                                 ...state.diffuse,
                                 loading: true,
-                                error: false
+                                error: false,
+                                completed: false
                             },
                             ...payload
                         }
@@ -160,7 +263,8 @@ class StateMachine {
                             diffuse: {
                                 ...state.diffuse,
                                 loading: false,
-                                error: false
+                                error: false,
+                                completed: true
                             },
                             ...payload
                         }
@@ -185,7 +289,8 @@ class StateMachine {
                             diffuse: {
                                 ...state.diffuse,
                                 loading: false,
-                                error: true
+                                error: true,
+                                completed: false
                             },
                             ...payload
                         }
@@ -485,10 +590,10 @@ class StateMachine {
             // Add store object to stores
             // @ts-ignore
             that.store[fuseBoxName] = store
-            
+
             /**
-                * @type {import('./types.t').FuseBoxType<NameT, ActionT, SelectorsT, InitialStateT>}
-                */
+            * @type {import('./types.t').FuseBoxType<NameT, ActionT, SelectorsT, InitialStateT>}
+            */
             let fuseBox = {
                 name: fuseBoxName,
                 actions: store.getActions(),
@@ -517,6 +622,58 @@ class StateMachine {
                     // @ts-ignore
                     const state = fuse
                     return state
+                },
+                useFetchState: (executor = null) => {
+                    const [promise, setPromise] = useState(null)
+                    const diffusePromise = useRef()
+                    const initialState = useRef(null)
+
+                    useLayoutEffect(() => {
+
+                        if (initialState.current === null) {
+                            // @ts-ignore
+                            initialState.current = store.getState()
+                            
+                            // @ts-ignore
+                            if (diffusePromise.current === undefined) {
+                                // @ts-ignore
+                                diffusePromise.current = new DiffusePromise(fuseBox.useState, executor)
+                            }
+                            
+                            // @ts-ignore
+                            diffusePromise.current.continue(initState)
+
+                            // @ts-ignore
+                            setPromise(diffusePromise.current.getStore())
+                        }
+
+                        /**
+                        * Handle reducer change
+                        * @param {object} newStore 
+                        */
+                        const handleReducerChange = (newStore) => {
+                            // @ts-ignore
+                            if (diffusePromise.current?.promise === undefined) {
+                                // @ts-ignore
+                                diffusePromise.current = new DiffusePromise(fuseBox.useState, executor)
+                            }
+                            
+                            // @ts-ignore
+                            diffusePromise.current.continue(newStore)
+
+                            // @ts-ignore
+                            setPromise(diffusePromise.current.getStore())
+                        }
+                
+                        this.addFuseListener(store.name, handleReducerChange)
+                
+                        return () => {
+                            this.removeFuseListener(store.name, handleReducerChange)
+                        }
+                    }, [])
+
+                    // @ts-ignore
+                    return promise?.read()
                 },
                 selectors: store.getSelections(),
             }
@@ -758,7 +915,6 @@ class StateMachine {
             // Dispatch before ware
             if (beforeWare.length !== 0) {
                 for (let i = 0; i < beforeWare.length; i++) {
-                    const middleWareIsAsync = isAsync(beforeWare[i])
                     let result
                     // @ts-ignore
                     let executeMiddleWare = runMiddleWare(beforeWare[i], {
