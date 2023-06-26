@@ -4,20 +4,6 @@ import StateMachine from './StateMachine'
 import { Types } from './types.t'
 
 /**
- * Get reducer actions
- * @deprecated (Will be removed on version 3) Use [StoreName].actions
- * @template {import('./types.t').FuseBoxNameType} N
- * @template {import('./types.t').ActionsType} A
- * @template {import('./types.t').SelectorsType} S
- * @template {import('./types.t').InitialStateType} I
- * @param {import('./types.t').FuseBoxType<N,A,S,I>} fuseBox
- * @returns {Record<keyof A, import('./types.t').ActionType>}
- */
-function useActions(fuseBox) {
-    return fuseBox.actions
-}
-
-/**
  * Get dispatch function for store
  * @deprecated (Will be removed on version 3) Use [StoreName].useState()
  * @template {import('./types.t').FuseBoxNameType} N
@@ -30,50 +16,6 @@ function useActions(fuseBox) {
 function useDispatch(fuseBox) {
     // @ts-ignore
     return StateMachine.store[fuseBox.name].dispatch
-}
-
-/**
- * Get fuse
- * @deprecated (Will be removed on version 3) Use [StoreName].useState()
- * @template {import('./types.t').FuseBoxNameType} N
- * @template {import('./types.t').ActionsType} A
- * @template {import('./types.t').SelectorsType} S
- * @template {import('./types.t').InitialStateType} I
- * @param {import('./types.t').FuseBoxType<N,A,S,I>} fuseBox
- * @returns {Record<keyof I, any>}
- */
-function useFuse(fuseBox) {
-    return fuseBox.useState()
-}
-
-/**
- * Get fusebox selectors
- * @deprecated (Will be removed on version 3) Use [StoreName].selectors
- * @template {import('./types.t').FuseBoxNameType} N
- * @template {import('./types.t').ActionsType} A
- * @template {import('./types.t').SelectorsType} S
- * @template {import('./types.t').InitialStateType} I
- * @param {import('./types.t').FuseBoxType<N,A,S,I>} fuseBox
- * @returns {Record<keyof S, any>}
- */
-function useSelectors(fuseBox) {
-    // @ts-ignore
-    return StateMachine.store[fuseBox.name].getSelectors()
-}
-
-/**
- * Get fuse selection
- * @deprecated (Will be removed on version 3) Use [StoreName].selectors()
- * @template {import('./types.t').FuseBoxNameType} N
- * @template {import('./types.t').ActionsType} A
- * @template {import('./types.t').SelectorsType} S
- * @template {import('./types.t').InitialStateType} I
- * @param {import('./types.t').FuseBoxType<N,A,S,I>} fuseBox
- * @param {S} selector
- * @returns {Record<keyof S, any>}
- */
-function useFuseSelection(fuseBox, selector) {
-    return StateMachine.useSelectionHook(fuseBox, selector)
 }
 
 /**
@@ -196,7 +138,7 @@ class DiffuseBoundary extends React.Component {
   
         return (
             <Suspense fallback={this.props.SuspenseFallback}> 
-                {this.props.children};
+                {this.props.children}
             </Suspense> 
         )
     }
@@ -204,4 +146,4 @@ class DiffuseBoundary extends React.Component {
 
 const createReducer = StateMachine.createReducer
 
-export { wire, useFuse, useActions, useDispatch, useFuseSelection, useSelectors, createReducer, DiffuseBoundary }
+export { wire, createReducer, DiffuseBoundary }

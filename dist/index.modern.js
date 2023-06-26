@@ -842,20 +842,8 @@ function isPromise(p) {
 }
 var StateMachine$1 = new StateMachine();
 
-function useActions(fuseBox) {
-  return fuseBox.actions;
-}
 function useDispatch(fuseBox) {
   return StateMachine$1.store[fuseBox.name].dispatch;
-}
-function useFuse(fuseBox) {
-  return fuseBox.useState();
-}
-function useSelectors(fuseBox) {
-  return StateMachine$1.store[fuseBox.name].getSelectors();
-}
-function useFuseSelection(fuseBox, selector) {
-  return StateMachine$1.useSelectionHook(fuseBox, selector);
 }
 var connectWire = function connectWire(fuseBox, Child) {
   return function (props) {
@@ -944,11 +932,11 @@ var DiffuseBoundary = /*#__PURE__*/function (_React$Component) {
     }
     return /*#__PURE__*/React.createElement(Suspense, {
       fallback: this.props.SuspenseFallback
-    }, this.props.children, ";");
+    }, this.props.children);
   };
   return DiffuseBoundary;
 }(React.Component);
 var createReducer = StateMachine$1.createReducer;
 
-export { DiffuseBoundary, createReducer, useActions, useDispatch, useFuse, useFuseSelection, useSelectors, wire };
+export { DiffuseBoundary, createReducer, wire };
 //# sourceMappingURL=index.modern.js.map

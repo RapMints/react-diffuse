@@ -23,17 +23,6 @@ const reducer = createReducer({
                 item: state.item - 1
             }
         },
-        /* SUBSCRIBE: ({state, payload}, {CONNECT, CONNECT_ERROR}) => {
-          socket.on('connection', data => {
-            console.log('connected')
-            CONNECT()
-          })
-
-          socket.on("connect_error", (err) => {
-            console.log(`connect_error due to ${err.message}`);
-            CONNECT_ERROR()
-          })
-        }, */
         GET_COUNT: async function({ state, payload, callback }, {LOADING, PROGRESS, SUCCESS, FAIL}) {
           try {
             LOADING();
@@ -70,10 +59,7 @@ const reducer = createReducer({
     middleWare: {
       afterWare: [
         logger("after")
-      ],/* 
-      beforeWare: [
-        logger("before")
-      ] */
+      ],
     }
 })
 

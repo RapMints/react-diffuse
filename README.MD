@@ -23,17 +23,13 @@ EXAMPLE: https://codesandbox.io/s/wispy-leaf-iyp9k6
         1. Chaining Async Actions
         2. Chaining Multiple Store Actions
         3. Chaining Websocket Actions
-    4. <b style='color: blue'>(NEW)</b> createFuseBox <b>(createStore has been DEPRECATED)</b>
-    5. Hooks <b style='color: red'>(DEPRECATED SEE "Using FuseBoxes" SECTION)</b>
-        1. useFuse <b style='color: red'>(DEPRECATED)</b>
-        2. useSelectors & useFuseSelection <b style='color: red'>(DEPRECATED)</b>
-        3. useDispatch <b style='color: red'>(DEPRECATED)</b>
-        4. useActions <b style='color: red'>(DEPRECATED)</b>
-    6. <b style='color: blue'>(NEW)</b> Using FuseBoxes 
+    4. <b style='color: blue'>(NEW)</b> createFuseBox
+    5. <b style='color: blue'>(NEW)</b> Using FuseBoxes 
         1. useState
-        2. actions
-        3. selectors
-    7. Wire
+        2. useFetchState & DiffuseBoundary
+        3. actions
+        4. selectors
+    6. Wire
 
 ## <b>Installation</b>
 Install npm package
@@ -311,106 +307,6 @@ We have changed the name of the function for creating stores from "createStore" 
 ```
 As you can see above we imported our count reducer we created above in the create reducer section. A single reducer can be used to create multiple stores. In this exstoreNameample we used the count reducer to create AFuseBox and BFuseBox
 
-### <b>Hooks (functional components) <b style='color: red'>(DEPRECATED)</b></b>
-*** NOTE: All hooks take in a store as there first argument. This means you must import your store whenever using a hook. In this example we import from our file we created above in the create store example. See the CodeSandbox example ***
-#### <b>useFuse <b style='color: red'>(DEPRECATED)</b></b>
-The useFuse hook you can use to select a reducer from global state. For example to get _item_ from the _AFuseBox_ you would use:
-
-```
-    import { AFuseBox } from '../StateManagement/Stores'
-
-    function Text(props) {
-        const item = useFuse(AFuseBox)
-
-        return (
-            <button>
-                {item}
-            </button>
-        )
-    }
-``` 
-#### <b>useSelectors and useFuseSelection <b style='color: red'>(DEPRECATED)</b></b>
-The useSelectors hook is used to get all selectors specified in the reducer. useFuseSelection is used to apply the selector and get a selection. In the example below first we useSelector, by passing in the Store. Next we useFuseSelection to get us the selection of data, by passing in the store and selection. In the example below we are selecting the item and turning it into a string.
-
-```
-    import { AFuseBox } from '../StateManagement/Stores'
-
-    function Text(props) {
-        const selectors = useSelector(AFuseBox)
-        const selection = useFuseSelection(AFuseBox, selector.toString)
-        return (
-            <div>
-                {selection}
-            </div>
-        )
-    }
-``` 
-You can also explicitly create your selector. Selectors are just an array of selection functions. If only one function, that function takes in state as an argument. If more than one function every function except the last function takes in state. The last function takes all previous returns as its arguments for example:
-```
-    import { AFuseBox } from '../StateManagement/Stores'
-
-    function Text(props) {
-        const sum = useFuseSelection(AFuseBox, [
-            (state) => state.item1, 
-            (state) => state.item2,
-            (item1, item2) => {
-                item1 + item2
-            }
-        ])
-
-        return (
-            <div>
-                {sum}
-            </div>
-        )
-    }
-``` 
-
-This will return AFuseBox's state and rerender the component using it whenever changed. 
-
-#### <b>useDispatch <b style='color: red'>(DEPRECATED)</b></b>
-The useDispatch hook allows you to dispatch actions for a specific reducer. For example if you wanted to dispatch actions for _AFuseBox_, it would look like this: 
-
-```
-    import { AFuseBox } from '../StateManagement/Stores'
-
-    function Text(props) {
-        const dispatch = useDispatch(AFuseBox)
-        
-        return (
-            <button onClick={() => dispatch({type: 'INCREMENT'})}>
-                Dispatch
-            </button>
-        )
-    }
-``` 
-
-`const dispatch = useDispatch(AFuseBox) `
-
-This will return me a dispatch function you can use to dispatch actions to the AFuseBox. For example lets say you wanted to run an INCREMENT action you defined, then it would look something like this 
-
-`dispatch({type: 'INCREMENT', payload: {}, callback: () => {}})`
-#### <b>useActions (DEPRECATED)</b>
-This useActions hook allows you to use actions directly instead of dispatch. First you get the actions for AFuseBox like so:
-
-```
-    import { AFuseBox } from '../StateManagement/Stores'
-
-    function Text(props) {
-        const actions = useActions(AFuseBox)
-        
-        return (
-            <button onClick={() => actions.INCREMENT()}>
-                Dispatch
-            </button>
-        )
-    }
-``` 
-Each action can take in a payload and callback like so:
-`actions.SOMEACTION(payload, callback)`
-
-<b>*NOTE: These 3 hooks deprecate `wire({fuseName: ..., Child: ...})`, however `wire` still has support because they are still necessary on class components.*</b>
-
 ### <b>Using FuseBox</b>
 #### <b>useState</b>
 The "useState" hook is used to get the state of a fusebox. For example to get _item_ from the _AFuseBox_ state you would use:
@@ -429,6 +325,51 @@ The "useState" hook is used to get the state of a fusebox. For example to get _i
     }
 ```
 This will return AFuseBox's state and rerender the component using it whenever the state is changed. 
+
+#### <b>useFetchState & DiffuseBoundary</b>
+The "useFetchState" hook & "DiffuseBoundary" Component are used together to handle loading and errors for asyncronous actions. Firstly, we will tackle the "useFetchState" hook, which is used to fetch the state of a fusebox while waiting for an asyncronous action to finish. For example below we are fetching the text in the Text Component using the "useFetchState" hook passed down from Main:
+
+```
+    import { AFuseBox } from '../StateManagement/Stores'
+
+    function Text(props) {
+        const fuseBox = props.fetchText()
+
+        return (
+            <span>
+                {fuseBox.text}
+            </span>
+        )
+    }
+
+    function Main(props) {
+        useEffect(() => {
+            AFuseBox.actions.getText()
+        },[])
+        return (
+            <DiffuseBoundary 
+                SuspenseFallback={<>LOADING.................</>} 
+                ErrorFallbackComponent={({state}) => { console.log(state); return (<>{state.error}</>)}}
+            >
+                <Text fetchText={AFuseBox.useFetchState}/>
+            </DiffuseBoundary>
+        )
+    }
+```
+Notice how we wrapped "Text" in "DiffuseBoundary", this will ensure that while waiting on the asyncronous action to finish the inner component will fall back "SuspenseFallback" and when an error occurs on the asyncronous action the inner component will fallback to "ErrorFallbackComponent".
+
+An action being resolved or rejected is determined by "store.diffuse" in the default executor. The executor can be overwritten like so:
+```
+    AFuseBox.useFetchState((state, resolve, reject) => {
+        if (store?.diffuse?.loading === false && store?.diffuse?.completed === true) {
+            resolve()
+        }
+        else if (store?.diffuse?.loading === false && store?.diffuse?.error !== false) {
+            reject()
+        }
+    })
+```
+NOTE: This an example of the default executor.
 
 #### <b>actions</b>
 Next we have "actions", which allows you to use actions directly instead of dispatch. First you get the actions for AFuseBox like so:

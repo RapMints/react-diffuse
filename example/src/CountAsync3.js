@@ -1,6 +1,5 @@
 import React, {  useLayoutEffect } from 'react'
-import { useActions, useFuse, useSelectors, useFuseSelection } from "react-diffuse";
-import { AsyncReducer, AsyncReducer2 } from "./StateManagement/States";
+import { AsyncReducer2 } from "./StateManagement/States";
 
 function randomColor() {
   const letters = "0123456789ABCDEF";
@@ -20,15 +19,14 @@ const CountAsync3 = (props) => {
       reject()
   }
   })
-  console.log(fuse)
+  console.log('FUSE', fuse)
   return (
     <div style={{ backgroundColor: `${randomColor()}` }}
     >
-      NumberAsync:{` ${fuse?.item} `}
-      Times clicked! Color changes on click from NumberAsync or Text. 
-      <br></br>
+      useFetchState:{` ${fuse?.item} `}
+      Times clicked! Color changes on click from NumberAsync. 
     </div>
-  );
-};
+  )
+}
 
 export default CountAsync3

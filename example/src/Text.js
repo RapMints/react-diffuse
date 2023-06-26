@@ -29,7 +29,7 @@ const Text2 = (props) => {
 };
 
 const Text = (props) => {
-  const actions = useActions(AReducer)
+  const actions = AReducer.actions
   const selection = AReducer.selectors.MySelector() 
   
   return (
