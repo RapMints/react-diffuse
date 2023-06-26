@@ -879,17 +879,9 @@ var DiffuseBoundary = /*#__PURE__*/function (_React$Component) {
     var _this2 = this;
     var _this;
     _this = _React$Component.call(this, props) || this;
-    _this.errorCondition = function (error) {
-      if (_this.props.errorCondition !== undefined) {
-        return _this.props.errorCondition(error);
-      } else {
-        var _error$currentState, _error$currentState$d;
-        return (error === null || error === void 0 ? void 0 : (_error$currentState = error.currentState) === null || _error$currentState === void 0 ? void 0 : (_error$currentState$d = _error$currentState.diffuse) === null || _error$currentState$d === void 0 ? void 0 : _error$currentState$d.error) === undefined;
-      }
-    };
     _this.ErrorFallbackWrapper = function (_ref) {
       var error = _ref.error;
-      if (error.store === undefined) {
+      if (error.currentState || error.store === undefined) {
         throw error;
       }
       var fuse = error === null || error === void 0 ? void 0 : error.store();

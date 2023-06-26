@@ -11,6 +11,19 @@
   "engines": {
     "node": ">=10"
   },
+  "keywords": [
+    "diffuse",
+    "reducer",
+    "predictable",
+    "functional",
+    "state",
+    "state management",
+    "immutable",
+    "hot",
+    "live",
+    "suspense",
+    "error boundary"
+  ],
   "scripts": {
     "build": "microbundle-crl --no-compress --generateTypes --format modern,cjs && tsc",
     "start": "microbundle-crl watch --no-compress --generateTypes --format modern,cjs && tsc",
