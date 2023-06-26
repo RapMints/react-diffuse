@@ -90,19 +90,12 @@ class DiffuseBoundary extends React.Component {
         // Update state so the next render will show the fallback UI.
         return { hasError: true, error: error};
     }
-  
+
     // @ts-ignore
     componentDidCatch(error, errorInfo) {
-        // If error is not from diffuse throw error up
-        if (error?.currentState?.diffuse?.error === undefined) {
-            throw error
-        }
-        // If is a diffuse error
-        else {
-            if (this.props.onCatchError !== undefined) {
-                // @ts-ignore
-                this.props.onCatchError(error, errorInfo)
-            }
+        if (this.props.onCatchError !== undefined) {
+            // @ts-ignore
+            this.props.onCatchError(error, errorInfo)
         }
     }
 
@@ -113,7 +106,8 @@ class DiffuseBoundary extends React.Component {
      * @returns 
      */
     ErrorFallbackWrapper = ({error}) => {
-        if (error.store === undefined) {
+        // Not a diffuse error
+        if (error.currentState || error.store === undefined) {
             throw error
         }
 

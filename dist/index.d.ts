@@ -32,6 +32,7 @@ export class DiffuseBoundary extends React.Component<import("./types.t").ErrorBo
         hasError: boolean;
         error: undefined;
     };
+    errorCondition: (error: any) => any;
     componentDidCatch(error: any, errorInfo: any): void;
     /**
      *
