@@ -48,7 +48,6 @@ const reducer = createReducer({
 
             SUCCESS({ item: state.item + 1, percent: 100 });
           } catch (e) {
-            console.log(e)
             FAIL({ error: e.message});
           }
         }

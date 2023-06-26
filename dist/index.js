@@ -908,6 +908,13 @@ var DiffuseBoundary = /*#__PURE__*/function (_React$Component) {
     return _this;
   }
   DiffuseBoundary.getDerivedStateFromError = function getDerivedStateFromError(error) {
+    var _error$currentState, _error$currentState$d;
+    if ((error === null || error === void 0 ? void 0 : (_error$currentState = error.currentState) === null || _error$currentState === void 0 ? void 0 : (_error$currentState$d = _error$currentState.diffuse) === null || _error$currentState$d === void 0 ? void 0 : _error$currentState$d.error) === undefined) {
+      return {
+        hasError: false,
+        error: undefined
+      };
+    }
     return {
       hasError: true,
       error: error
@@ -915,13 +922,8 @@ var DiffuseBoundary = /*#__PURE__*/function (_React$Component) {
   };
   var _proto = DiffuseBoundary.prototype;
   _proto.componentDidCatch = function componentDidCatch(error, errorInfo) {
-    var _error$currentState, _error$currentState$d;
-    if ((error === null || error === void 0 ? void 0 : (_error$currentState = error.currentState) === null || _error$currentState === void 0 ? void 0 : (_error$currentState$d = _error$currentState.diffuse) === null || _error$currentState$d === void 0 ? void 0 : _error$currentState$d.error) === undefined) {
-      throw error;
-    } else {
-      if (this.props.onCatchError !== undefined) {
-        this.props.onCatchError(error, errorInfo);
-      }
+    if (this.props.onCatchError !== undefined) {
+      this.props.onCatchError(error, errorInfo);
     }
   };
   _proto.render = function render() {

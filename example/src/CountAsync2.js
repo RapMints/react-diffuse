@@ -12,11 +12,7 @@ function randomColor() {
 const CountAsync2 = (props) => {
   return (
     <div disabled={props.AsyncReducer2?.store?.diffuse?.loading === true} style={{ backgroundColor: `${randomColor()}` }} onClick={() => {
-      AsyncReducer2.actions.GET_COUNT({}, (err)=> {
-        if (err !== undefined) {
-          console.log('From Call back',err)
-        }
-      })
+      AsyncReducer2.actions.GET_COUNT({})
       }
       }
     >
