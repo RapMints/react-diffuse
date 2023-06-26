@@ -6,10 +6,10 @@
  * @property {(err?: any) => void} callback Action callback
  */
 /**
- * @template {string} ActionNameT
+ * @template {import('./types.t').ActionsType} ActionTypeT
  * @typedef {Object} MiddleWareType
- * @property {((storeName: FuseBoxNameType, state: DiffuseStateType&object, action: {payload: object, type: ActionNameT}) => object|any)[]=} beforeWare Actions beforeware
- * @property {((storeName: FuseBoxNameType, state: DiffuseStateType&object, action: {payload: object, type: ActionNameT}) => object|any)[]=} afterWare Actions afterware
+ * @property {((storeName: FuseBoxNameType, state: DiffuseStateType&object, action: {payload: object, type: keyof ActionTypeT}) => object|any)[]=} beforeWare Actions beforeware
+ * @property {((storeName: FuseBoxNameType, state: DiffuseStateType&object, action: {payload: object, type: keyof ActionTypeT}) => object|any)[]=} afterWare Actions afterware
  */
 /**
  * @typedef {Object} DefaultActionsType
@@ -73,15 +73,31 @@
  * @typedef {() => any} useSelectionsType
  */
 /**
+ * @template S
+ * @callback DiffusePromiseExecutor
+ * @param {S} state Get state
+ * @param {function():void} resolve Resolve state fetch
+ * @param {function():void} reject Reject state fetch
+ */
+/**
  * @template {FuseBoxNameType} NameT
  * @template {ActionsType} ActionT
  * @template {SelectorsType} SelectorT
  * @template {InitialStateType} StateT
+ * @deprecated test
  * @typedef {Object} FuseBoxType
  * @property {NameT} name Fuse box name
  * @property {Record<keyof ActionT, ActionType>} actions Fuse box actions
  * @property {function():StateT&DiffuseStateType} useState Use fuse box state hook
  * @property {Record<keyof SelectorT, useSelectionsType>} selectors Fuse box selectors
+ * @property {(executor: null|(DiffusePromiseExecutor<StateT>)) => StateT&DiffuseStateType} useFetchState Use fuse box state hook
+ */
+/**
+ * @typedef {object} ErrorBoundaryPropsType
+ * @property {React.ReactNode} children
+ * @property {React.Component<{state: import('./types.t').InitialStateType}>} ErrorFallbackComponent Error fallback component, shows when a diffuse error occurs on an inner component
+ * @property {React.ReactNode} SuspenseFallback Suspension fallback, shows when a inner component fetches state from diffuse
+ * @property {function} onCatchError On catching diffuse error from fallback
  */
 export const Types: {};
 /**
@@ -105,20 +121,20 @@ export type ActionPropsType = {
      */
     callback: (err?: any) => void;
 };
-export type MiddleWareType<ActionNameT extends string> = {
+export type MiddleWareType<ActionTypeT extends ActionsType> = {
     /**
      * Actions beforeware
      */
     beforeWare?: ((storeName: FuseBoxNameType, state: DiffuseStateType & object, action: {
         payload: object;
-        type: ActionNameT;
+        type: keyof ActionTypeT;
     }) => object | any)[] | undefined;
     /**
      * Actions afterware
      */
     afterWare?: ((storeName: FuseBoxNameType, state: DiffuseStateType & object, action: {
         payload: object;
-        type: ActionNameT;
+        type: keyof ActionTypeT;
     }) => object | any)[] | undefined;
 };
 export type DefaultActionsType = {
@@ -225,6 +241,7 @@ export type FuseStateType = object;
  */
 export type SelectorType = (arg0: any) => any[];
 export type useSelectionsType = () => any;
+export type DiffusePromiseExecutor<S> = (state: S, resolve: () => void, reject: () => void) => any;
 export type FuseBoxType<NameT extends string, ActionT extends ActionsType, SelectorT extends SelectorsType, StateT extends InitialStateType> = {
     /**
      * Fuse box name
@@ -242,5 +259,26 @@ export type FuseBoxType<NameT extends string, ActionT extends ActionsType, Selec
      * Fuse box selectors
      */
     selectors: Record<keyof SelectorT, useSelectionsType>;
+    /**
+     * Use fuse box state hook
+     */
+    useFetchState: (executor: null | (DiffusePromiseExecutor<StateT>)) => StateT & DiffuseStateType;
+};
+export type ErrorBoundaryPropsType = {
+    children: React.ReactNode;
+    /**
+     * Error fallback component, shows when a diffuse error occurs on an inner component
+     */
+    ErrorFallbackComponent: React.Component<{
+        state: import('./types.t').InitialStateType;
+    }>;
+    /**
+     * Suspension fallback, shows when a inner component fetches state from diffuse
+     */
+    SuspenseFallback: React.ReactNode;
+    /**
+     * On catching diffuse error from fallback
+     */
+    onCatchError: Function;
 };
 //# sourceMappingURL=types.t.d.ts.map

@@ -1,5 +1,5 @@
 # <b>Diffuse</b>
-Light weight global state managment solution
+A light-weight state management solution
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/RapMints/react-diffuse/b41c2fdcdb9d6cac3e89d17c05a7d954fc6d848b/diffuse.svg"  width=300" height="300">
@@ -14,473 +14,315 @@ Light weight global state managment solution
 
 EXAMPLE: https://codesandbox.io/s/wispy-leaf-iyp9k6
 
-<b>Table of Contents</b>
+## <b>Introduction</b>
+React-Diffuse is a state management library for React that aims to address the shortcomings of other state management libraries. It provides a lightweight, efficient, and intuitive way to manage state in your React applications. This guide will walk you through the installation and usage of React-Diffuse, highlighting its unique features and how they tackle common problems in state management.
+
+## <b>Table of Contents</b>
 1. Installation
 2. Usage
-    1. Create Reducer
-    2. <b style='color: blue'>(NEW)</b> Intellisense Capabilites
+    1. Intellisense Capabilities
+    2. Creating a Reducer
     3. Actions
-        1. Chaining Async Actions
-        2. Chaining Multiple Store Actions
-        3. Chaining Websocket Actions
-    4. <b style='color: blue'>(NEW)</b> createFuseBox <b>(createStore has been DEPRECATED)</b>
-    5. Hooks <b style='color: red'>(DEPRECATED SEE "Using FuseBoxes" SECTION)</b>
-        1. useFuse <b style='color: red'>(DEPRECATED)</b>
-        2. useSelectors & useFuseSelection <b style='color: red'>(DEPRECATED)</b>
-        3. useDispatch <b style='color: red'>(DEPRECATED)</b>
-        4. useActions <b style='color: red'>(DEPRECATED)</b>
-    6. <b style='color: blue'>(NEW)</b> Using FuseBoxes 
+        1. Chaining Asynchronous Actions
+        2. Chaining Websocket Actions
+    4. Creating a FuseBox
+    5. Using FuseBoxes 
         1. useState
-        2. actions
-        3. selectors
-    7. Wire
+        2. useFetchState & DiffuseBoundary
+        3. Actions
+        4. Selectors
+    6. Wire (for class components)
+    7. Q&A: How React-Diffuse Tackles Common State Management Problems
 
 ## <b>Installation</b>
-Install npm package
-```
+To install React-Diffuse, use the following npm command:
+
+```bash
 npm install react-diffuse
 ```
 
 ## <b>Usage</b>
-### <b>Create reducer</b>
-Firstly, we have the reducer, which will look something like this:
-```
-    import { createReducer } from "react-diffuse"
-
-    const reducer = createReducer({
-        initialState: {
-            item: 0
-        },
-        middleware: { 
-            beforeWare: [ ... ],
-            afterWare: [ ... ]
-        },
-        actions: { 
-            INCREMENT: ({state, payload}) => {
-                return {
-                    item: state.item + 1
-                }
-            },
-            DECREMENT: ({state}) => {
-                return {
-                    item: state.item + 1
-                }
-            },
-        },
-        selectors: {
-            toString: [
-                (state) => `item is ${state.item}`, 
-                (string) => `STRING: ${string}`
-            ]
-        }
-    })
-``` 
-As you can see there are 4 parts to this reducer. 
-* First we have an  <b>initialState</b>, the initial state of your reducer, in the above example we have an initial state where the item is 0. 
-* Next, we have <b>middleware</b>, Where we can place before ware and after ware to run before or after the actions are completed in dispatch. 
-* Then, we have <b>actions</b>. Actions are jobs that you can dispatch from any component, inheriting a store. 
-* Lastly, we have <b>selections</b>. Selections mutate data from our state and only update when the mutation has changed. Selectors are just an array of selection functions. If only one function, that function takes in state as an argument. If more than one function every function except the last function takes in state. The last function takes all previous returns as its arguments for example
 
 ### <b>Intellisense Capabilities</b>
-Now with jsdoc added all reducers have the capability of autocomplete. Whether it is state, actions, or selectors as you are coding options for auto complete are provided. With this in mind, we will be deprecating all hooks used to get state, actions, and selectors and introduce a new way of implementing Diffuse.
-NOTE: Requires tsconfig.json to work. Example:
+React-Diffuse now supports Intellisense, providing autocomplete capabilities for reducers. This includes state, actions, and selectors. As a result, we are deprecating all hooks used to get state, actions, and selectors, and introducing a new way of implementing Diffuse. Note that this feature requires a `tsconfig.json` file to work.
+Example:
 ```
-  {
-  "compilerOptions": {
-    "jsx": "react",
-    "target": "ESNext",
-    "module": "ESNext",
-    "lib": [
-      "DOM",
-      "ESNext"
-    ],
-    "allowJs": true,
-    "checkJs": false,
-    "declaration": true,
-    "emitDeclarationOnly": true,
-    "declarationMap": true,
-    "declarationDir": "./dist",
-    "noEmit": false,
-    "strict": false,
-    "suppressImplicitAnyIndexErrors": true,
-    "noImplicitThis": false,
-    "moduleResolution": "node",
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": false,
-  },
-  "include": [
-    "src"
-  ]
+{
+    "compilerOptions": {
+        "jsx": "react",
+        "target": "ESNext",
+        "module": "ESNext",
+        "lib": [
+        "DOM",
+        "ESNext"
+        ],
+        "allowJs": true,
+        "checkJs": false,
+        "declaration": true,
+        "emitDeclarationOnly": true,
+        "declarationMap": true,
+        "declarationDir": "./dist",
+        "noEmit": false,
+        "strict": false,
+        "suppressImplicitAnyIndexErrors": true,
+        "noImplicitThis": false,
+        "moduleResolution": "node",
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": false,
+    },
+    "include": [
+        "src"
+    ]
 }
 ```
-### <b>Actions</b>
-Actions can be run from dispatching or by running the action explicitly. Async functions and regular functions are handled the same and can both take in an object containing state, payload, and props. 
 
-*   state - Current state
-*   payload - Payload that can be passed in on running the action
-*   props - Props of current store which can be passed in when creating a store
-*   callback - Callback that can be passed in on running the action
-#### <b>Chaining Asynchronous Actions</b>
-The second object the action functions can recieve are actions which can be used to chain actions. Take a look below at the <i>GET_COUNT</i>
+### <b>Creating a Reducer</b>
+A reducer in React-Diffuse is composed of four parts: `initialState`, `middleware`, `actions`, and `selectors`. Here's an example of a reducer:
 
-<b>*** NOTE The names INITIALIZE_STORE, LOADING, SUCCESS, FAIL, and PROGRESS are reserved and may not be used when creating your own action names</b>
+```javascript
+import { createReducer } from "react-diffuse"
 
-```
+const reducer = createReducer({
+    initialState: {
+        item: 0
+    },
+    middleware: { 
+        beforeWare: [ ... ],
+        afterWare: [ ... ]
+    },
     actions: { 
-            INCREMENT: ({state}, actions) => {
-                return {
-                    item: state.item + 1
-                }
-            },
-            DECREMENT: ({state}, actions) => {
-                return {
-                    item: state.item + 1
-                }
-            },
-            GET_COUNT: async ({state, payload, props, callback}, {SUCCESS, PROGRESS, FAIL, LOADING}) => {
-                try {
-                    LOADING()
-
-                    let res = await axios.get(props.url)
-                    
-                    PROGRESS({percent: 50})
-
-                    res = await axios.get(props.url)
-
-                    SUCCESS({
-                        item: res.count,
-                        percent: 100
-                    })
-                }
-                catch(e) {
-                    callback(e)
-                    FAIL({error: e.message})
-                }
+        INCREMENT: ({state, payload}) => {
+            return {
+                item: state.item + 1
             }
-        }
-```
-In the example above example GET_COUNT is an async function and is chaining other actions such as LOADING, PROGRESS, and SUCCESS or FAIL. You may use any action you've created in chaining.
-
-* LOADING will change the state to 
-```
-    state: {
-        diffuse: {
-            ...,
-            loading: true
-        }
-        // Some "payload", if any
-        ...
+        },
+        DECREMENT: ({state}) => {
+            return {
+                item: state.item - 1
+            }
+        },
+    },
+    selectors: {
+        toString: [
+            (state) => `item is ${state.item}`, 
+            (string) => `STRING: ${string}`
+        ]
     }
-```
-* PROGRESS will change the state to 
-```
-    state: {
-        ...
-        // Some "payload", if any
-        ...
-    }
-```
-* SUCCESS will change the state to 
-```
-    state: {
-        diffuse: {
-            ...,
-            loading: false
-            error: false
-        }
-        // Some "payload", if any
-        ...
-    }
+})
 ```
 
-* FAIL will change the state to 
-```
-    state: {
-        diffuse: {
-            ...,
-            loading: false,
-            error: true
-        }
-        // Some "payload", if any
-        ...
-    }
-```
-#### <b>Chaining Multiple Store Actions</b>
-Additionally, actions from one store can use actions from another store. Similar to the above examples of a chaining actions, except you can use actions from other stores.
-```
-    actions: { 
-            INCREMENT: ({state}, actions) => {
-                // Run action for another store
-                BFuseBox.actions.DECREMENT()
+- `initialState`: This is the initial state of your reducer. In the example above, we have an initial state where `item` is `0`.
 
-                // Run action for another store
-                CFuseBox.actions.DECREMENT()
-            },
+- `middleware`: This is where you can place middleware to run before or after the actions are completed in dispatch. 
+
+- `actions`: Actions are tasks that you can dispatch from any component, inheriting a store. 
+
+- `selectors`: Selectors mutate data from our state and only update when the mutation has changed. They are an array of selection functions. If there's only one function, that function takes in state as an argument. If there's more than one function, every function except the last one takes in state. The last function takes all previous returns as its arguments.
+
+### <b>Actions</b>
+Actions in React-Diffuse can be run by dispatching or by running the action explicitly. Both asynchronous and regular functions are handled the same way and can take in an object containing `state`, `payload`, and `props`.
+
+- `state`: The current state.
+- `payload`: The payload that can be passed in when running the action.
+- `props`: The props of the current store, which can be passed in when creating a store.
+- `callback`: A callback that can be
+
+passed in when running the action.
+
+#### <b>Chaining Asynchronous Actions</b>
+React-Diffuse allows you to chain actions within asynchronous actions. This is particularly useful when you want to manage different states of an asynchronous operation, such as loading, progress, success, and failure. Here's an example:
+
+```javascript
+actions: { 
+    GET_COUNT: async ({state, payload, props, callback}, {SUCCESS, PROGRESS, FAIL, LOADING}) => {
+        try {
+            LOADING()
+
+            let res = await axios.get(props.url)
+            
+            PROGRESS({percent: 50})
+
+            res = await axios.get(props.url)
+
+            SUCCESS({
+                item: res.count,
+                percent: 100
+            })
         }
+        catch(e) {
+            callback(e)
+            FAIL({error: e.message})
+        }
+    }
+}
 ```
-NOTE: This design pattern will trigger a rerender on any component using BFuseBox or CFuseBox however, this is being called from AFuseBox
+In the example above, `GET_COUNT` is an asynchronous function that chains other actions such as `LOADING`, `PROGRESS`, and `SUCCESS` or `FAIL`. You can use any action you've created in chaining.
 
 #### <b>Chaining Websocket Actions</b>
-Similary, you can chain websocket actions just like async actions. There are 5 predetermined actions you can use when handling websockets: CONNECT, CONNECT_ERROR, MESSAGE_RECEIVED, DISCONNECT, & EMIT. Note that you can replace these action names.
-Below is an example of a SUBSCRIBE, UNSUBSCRIBE, & EMIT action using socket io:
-```
-    SUBSCRIBE: ({state, payload}, {CONNECT, CONNECT_ERROR}) => {
-        socket.on('connection', data => {
-            CONNECT()
-        })
+Just like asynchronous actions, you can chain websocket actions in React-Diffuse. There are 5 predetermined actions you can use when handling websockets: `CONNECT`, `CONNECT_ERROR`, `MESSAGE_RECEIVED`, `DISCONNECT`, & `EMIT`. 
 
-        socket.on('msg', (data) => {
-            MESSAGE_RECIEVED({message: data})
-        })
+```javascript
+SUBSCRIBE: ({state, payload}, {CONNECT, CONNECT_ERROR}) => {
+    socket.on('connection', data => {
+        CONNECT()
+    })
 
-        socket.on("connect_error", (err) => {
-            console.log(`connect_error due to ${err.message}`);
-            CONNECT_ERROR()
-        })
-    },
-    UNSUBSCRIBE: ({state, payload}, {DISCONNECT}) => {
-        socket.disconnect()
-        DISCONNECT()
-    }
-    EMIT_USER: ({state, payload}) => {
-        socket.emit("send_user", payload.username)
-    }
-```
-* CONNECT will change the state to 
-```
-    state: {
-        diffuse: {
-            ...,
-            connectionStatus: "CONNECTED"
-        }
-        // Some "payload", if any
-        ...
-    }
-```
-* DISCONNECT will change the state to 
-```
-    state: {
-        diffuse: {
-            ...,
-            connectionStatus: "DISCONNECTED"
-        }
-        // Some "payload", if any
-        ...
-    }
-```
-* CONNECT_ERROR will change the state to 
-```
-    state: {
-        diffuse: {
-            ...,
-            connectionStatus: "FAILED"
-        }
-        // Some "payload", if any
-        ...
-    }
-```
-* MESSAGE_RECIEVED will change the state to 
-```
-    state: {
-        ...
-        // Some "payload", if any
-        ...
-    }
-```
-* EMIT will change the state to 
-```
-    state: {
-        ...
-        // Some "payload", if any
-        ...
-    }
+    socket.on('msg', (data) => {
+        MESSAGE_RECIEVED({message: data})
+    })
+
+    socket.on("connect_error", (err) => {
+        console.log(`connect_error due to ${err.message}`);
+        CONNECT_ERROR()
+    })
+},
+UNSUBSCRIBE: ({state, payload}, {DISCONNECT}) => {
+    socket.disconnect()
+    DISCONNECT()
+}
+EMIT_USER: ({state, payload}) => {
+    socket.emit("send_user", payload.username)
+}
 ```
 
-### createFuseBox
-We have changed the name of the function for creating stores from "createStore" to "createFuseBox", Once you've created your reducer you can use it to create stores like below:
+### <b>Creating a FuseBox</b>
+React-Diffuse introduces the concept of a "FuseBox", which is a store created from a reducer. You can create multiple FuseBoxes from a single reducer, allowing you to manage different parts of your application state independently.
+
+```javascript
+// Stores.js 
+
+import count from "./count";
+
+const AFuseBox = count.createFuseBox('AFuseBox', props: {url: "www.example.com"})
+const BFuseBox = count.createFuseBox('BFuseBox', props: {url: "www.example2.com"})
+
+export {AFuseBox, BFuseBox}
 ```
-    // Stores.js 
-    
-    import count from "./count";
 
-    const AFuseBox = count.createFuseBox('AFuseBox', props: {url: "www.example.com"})
-    const BFuseBox = count.createFuseBox('BFuseBox', props: {url: "www.example2.com"})
+### <b>Using FuseBoxes</b> 
+FuseBoxes provide a simple and intuitive API for managing state in your React components.
 
-    export {AFuseBox, BFuseBox}
-```
-As you can see above we imported our count reducer we created above in the create reducer section. A single reducer can be used to create multiple stores. In this exstoreNameample we used the count reducer to create AFuseBox and BFuseBox
-
-### <b>Hooks (functional components) <b style='color: red'>(DEPRECATED)</b></b>
-*** NOTE: All hooks take in a store as there first argument. This means you must import your store whenever using a hook. In this example we import from our file we created above in the create store example. See the CodeSandbox example ***
-#### <b>useFuse <b style='color: red'>(DEPRECATED)</b></b>
-The useFuse hook you can use to select a reducer from global state. For example to get _item_ from the _AFuseBox_ you would use:
-
-```
-    import { AFuseBox } from '../StateManagement/Stores'
-
-    function Text(props) {
-        const item = useFuse(AFuseBox)
-
-        return (
-            <button>
-                {item}
-            </button>
-        )
-    }
-``` 
-#### <b>useSelectors and useFuseSelection <b style='color: red'>(DEPRECATED)</b></b>
-The useSelectors hook is used to get all selectors specified in the reducer. useFuseSelection is used to apply the selector and get a selection. In the example below first we useSelector, by passing in the Store. Next we useFuseSelection to get us the selection of data, by passing in the store and selection. In the example below we are selecting the item and turning it into a string.
-
-```
-    import { AFuseBox } from '../StateManagement/Stores'
-
-    function Text(props) {
-        const selectors = useSelector(AFuseBox)
-        const selection = useFuseSelection(AFuseBox, selector.toString)
-        return (
-            <div>
-                {selection}
-            </div>
-        )
-    }
-``` 
-You can also explicitly create your selector. Selectors are just an array of selection functions. If only one function, that function takes in state as an argument. If more than one function every function except the last function takes in state. The last function takes all previous returns as its arguments for example:
-```
-    import { AFuseBox } from '../StateManagement/Stores'
-
-    function Text(props) {
-        const sum = useFuseSelection(AFuseBox, [
-            (state) => state.item1, 
-            (state) => state.item2,
-            (item1, item2) => {
-                item1 + item2
-            }
-        ])
-
-        return (
-            <div>
-                {sum}
-            </div>
-        )
-    }
-``` 
-
-This will return AFuseBox's state and rerender the component using it whenever changed. 
-
-#### <b>useDispatch <b style='color: red'>(DEPRECATED)</b></b>
-The useDispatch hook allows you to dispatch actions for a specific reducer. For example if you wanted to dispatch actions for _AFuseBox_, it would look like this: 
-
-```
-    import { AFuseBox } from '../StateManagement/Stores'
-
-    function Text(props) {
-        const dispatch = useDispatch(AFuseBox)
-        
-        return (
-            <button onClick={() => dispatch({type: 'INCREMENT'})}>
-                Dispatch
-            </button>
-        )
-    }
-``` 
-
-`const dispatch = useDispatch(AFuseBox) `
-
-This will return me a dispatch function you can use to dispatch actions to the AFuseBox. For example lets say you wanted to run an INCREMENT action you defined, then it would look something like this 
-
-`dispatch({type: 'INCREMENT', payload: {}, callback: () => {}})`
-#### <b>useActions (DEPRECATED)</b>
-This useActions hook allows you to use actions directly instead of dispatch. First you get the actions for AFuseBox like so:
-
-```
-    import { AFuseBox } from '../StateManagement/Stores'
-
-    function Text(props) {
-        const actions = useActions(AFuseBox)
-        
-        return (
-            <button onClick={() => actions.INCREMENT()}>
-                Dispatch
-            </button>
-        )
-    }
-``` 
-Each action can take in a payload and callback like so:
-`actions.SOMEACTION(payload, callback)`
-
-<b>*NOTE: These 3 hooks deprecate `wire({fuseName: ..., Child: ...})`, however `wire` still has support because they are still necessary on class components.*</b>
-
-### <b>Using FuseBox</b>
 #### <b>useState</b>
-The "useState" hook is used to get the state of a fusebox. For example to get _item_ from the _AFuseBox_ state you would use:
+The `useState` hook is used to get the state of a FuseBox. For example, to get `item` from the `AFuseBox` state you would use:
 
+```javascript
+import { AFuseBox } from '../StateManagement/Stores'
+
+function Text(props) {
+    // Get item from state
+    const item = AFuseBox.getState().item
+
+    return (
+        <button>
+            {item}
+        </button>
+    )
+}
 ```
-    import { AFuseBox } from '../StateManagement/Stores'
+This will return `AFuseBox`'s state and rerender the component using it whenever the state is changed. 
 
-    function Text(props) {
-        const item = AFuseBox.getState().item
+#### <b>useFetchState & DiffuseBoundary</b>
+The `useFetchState` hook and `DiffuseBoundary` component are used together to handle loading and errors for asynchronous actions. The `useFetchState` hook fetches the state of a FuseBox while waiting for an asynchronous action to finish. The `DiffuseBoundary` component provides a fallback UI for loading and error states.
 
-        return (
-            <button>
-                {item}
-            </button>
-        )
+```javascript
+import { AFuseBox } from '../StateManagement/Stores'
+
+function Text(props) {
+    // Fetch text
+    const fuseBox = props.fetchText()
+
+    return (
+        <span>
+            {fuseBox.text}
+        </span>
+    )
+}
+
+function Main(props) {
+    useEffect(() => {
+        // Run get text asyncronous action
+        AFuseBox.actions.getText()
+    },[])
+    return (
+        <DiffuseBoundary 
+            SuspenseFallback={<>LOADING.................</>} 
+            ErrorFallbackComponent={({state}) => { console.log(state); return (<>{state.error}</>)}}
+        >
+            <Text fetchText={AFuseBox.useFetchState}/>
+        </DiffuseBoundary>
+    )
+}
+```
+In the example above, while waiting on the asynchronous action to finish, the `Text` component will fall back to `SuspenseFallback` and when an error occurs on the asynchronous action, the component will fallback to `ErrorFallbackComponent`.
+
+An fetch state being resolved or rejected is determined by "store.diffuse" in the default executor. The executor can be overwritten like so:
+```javascript
+    AFuseBox.useFetchState((state, resolve, reject) => {
+        if (store?.diffuse?.loading === false && store?.diffuse?.completed === true) {
+            resolve()
+        }
+        else if (store?.diffuse?.loading === false && store?.diffuse?.error !== false) {
+            reject()
+        }
+    })
+```
+NOTE: This an example of the default executor.
+
+#### <b>Actions</b>
+React-Diffuse allows you to use actions directly instead of dispatching. Here's how you can get the actions for a FuseBox and use them:
+
+```javascript
+import { AFuseBox } from '../StateManagement/Stores'
+
+function Text(props) {
+    const actions = AFuseBox.actions
+    
+    return (
+        <button onClick={() => actions.INCREMENT({}, callback)}>
+            Dispatch
+        </button>
+    )
+}
+```
+Each action can take in a payload and callback like so: `actions.SOMEACTION(payload, callback)`
+
+#### <b>Selectors</b>
+Selectors are used to get an aggregation of the current state, based on selector functions provided in the `createReducer` function. 
+
+```javascript
+import { AFuseBox } from '../StateManagement/Stores'
+
+function Text(props) {
+    const sum = AFuseBox.selectors.MySelector()
+
+    return (
+        <div>
+            {sum}
+        </div>
+    )
+}
+```
+This will return `AFuseBox`'s state aggregated using the selector and rerender the component using it whenever the selections value is changed. 
+
+### <b>Wire (for class components)</b>
+The `wire` function is used to connect a component to a global state. Below we will wire a `Text` component to a global state `AFuseBox`.
+
+```javascript
+import { useEffect, useState } from "react";
+import { wire } from "./Diffuse";
+import { AFuseBox } from "./StateManagement/States";
+
+class Text { 
+    constructor(props) {
+        super(props)
     }
-```
-This will return AFuseBox's state and rerender the component using it whenever the state is changed. 
 
-#### <b>actions</b>
-Next we have "actions", which allows you to use actions directly instead of dispatch. First you get the actions for AFuseBox like so:
-
-```
-    import { AFuseBox } from '../StateManagement/Stores'
-
-    function Text(props) {
-        const actions = AFuseBox.actions
-        
-        return (
-            <button onClick={() => actions.INCREMENT({}, callback)}>
-                Dispatch
-            </button>
-        )
+    componentWillUnmount() {
+        props.AFuseBox.actions.INITIALIZE_STORE()
     }
-``` 
-Each action can take in a payload and callback like so:
-`actions.SOMEACTION(payload, callback)`
 
-#### <b>selectors</b>
-Lastly, we have our "selectors". Selectors are used to get an aggregation the current state, based on selector functions provided in the createReducer Function. Each selector is function that is ran without props to return
-```
-    import { AFuseBox } from '../StateManagement/Stores'
-
-    function Text(props) {
-        const sum = AFuseBox.selectors.MySelector()
-
-        return (
-            <div>
-                {sum}
-            </div>
-        )
-    }
-``` 
-
-This will return AFuseBox's state aggregated using the selector and rerender the component using it whenever the selections value is changed. 
-
-### <b>Wire (class components)</b>
-Lastly, we have wire. Wire is used to wire a component to a global state. Below we will wire a Text compononent to a global state AFuseBox
-
-```
-    import { useEffect, useState } from "react";
-    import { wire } from "./Diffuse";
-    import { AFuseBox } from "./StateManagement/States";
-
-    const Text = (props) => {
-        useEffect(()=>{
-            return () => {
-                props.AFuseBox.actions.INITIALIZE_STORE()
-            }
-        }, [])
+    render() {
         return (
             <div style={{ backgroundColor: 'red' }} onClick={() =>
                 props.AFuseBox.actions.INCREMENT()
@@ -489,13 +331,28 @@ Lastly, we have wire. Wire is used to wire a component to a global state. Below 
             <Text2 />
             </div>
         );
-    };
+    }
+};
+}
 
-    export default wire([AFuseBox])(Text);
-
+export default wire([AFuseBox])(Text);
 ```
-(AFuseBox is a string equal to AFuseBox). Notice that we import "wire" at the top and use it at export on the bottom. We pass two parameters to the object the <b>fuseName</b> which is the reducer you'd like to reference and the <b>Child</b> which represents the component to wire the fuses to to get the store and dispatch of the reducer in your props. In this case Text will be fused to the AFuseBox component, causing it to rerender only when its props or AFuseBox's state changes.
+In this case, `Text` will be connected to the `AFuseBox` component, causing it to rerender only when its props or `AFuseBox`'s state changes. You can use `INITIALIZE_STORE` to initialize a global state to its initial state. You can pass through a payload that will be stored in the state on unmount.
 
-You can use INITIALIZE_STORE as shown above to initialize a global state to its initial state. You can pass through a payload that will be stored in the state on unmount
+## <b>Q&A: How React-Diffuse Tackles Common State Management Problems</b>
 
-Notice above we call the dispatch of AFuseBox by referencing it from props. ```props.AFuseBox.dispatch({type: 'INCREMENT'})``` this will cause ```props.AFuseBox.store.item``` to increment. Any other component inheriting the same reducer will rerender every time that dispatcher is called.
+React-Diffuse addresses several common problems in state management libraries:
+
+1. **Verbose and complex syntax**: Many state management libraries require a lot of boilerplate code to set up and use. React-Diffuse simplifies this with a straightforward API and intuitive concepts like reducers, actions, and selectors.
+
+2. **Difficulty in managing asynchronous actions**: Asynchronous actions are a common source of complexity in state management. React-Diffuse provides a simple way to chain asynchronous actions, making it easy to manage different states of an asynchronous operation.
+
+3. **Lack of flexibility in sharing state between components**: React-Diffuse introduces the concept of a FuseBox, which allows you to create multiple stores from a single reducer. This gives you the flexibility to manage different parts of your application state independently.
+
+4. **Difficulty in handling loading and error states**: React-Diffuse provides the `useFetchState` hook and `DiffuseBoundary` component to handle loading and error states for asynchronous actions. This makes it easy to provide a good user experience even when things go wrong.
+
+5. **Lack of support for class components**: While many state management libraries focus on hooks and functional components, React-Diffuse provides the `wire` function to connect class components to global state.
+
+6. **Lack of Intellisense support**: React-Diffuse supports Intellisense, providing autocomplete capabilities for reducers. This makes it easier to write and understand your code.
+
+By addressing these problems, React-Diffuse provides a lightweight and efficient solution for state management in React applications.

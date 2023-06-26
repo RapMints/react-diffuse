@@ -1,8 +1,9 @@
-import React from 'react'
+import React, { Suspense } from 'react'
 import Text from './Text'
 import Number from './Number'
-import CountAsync from './CountAsync'
+import CountAsync3 from './CountAsync3'
 import CountAsync2 from './CountAsync2'
+import { DiffuseBoundary } from 'react-diffuse'
 
 const App = (props) => {
   
@@ -15,6 +16,12 @@ const App = (props) => {
         <Number />
         <Text />
         <CountAsync2/>
+        <DiffuseBoundary 
+          SuspenseFallback={<>LOADING.................</>} 
+          ErrorFallbackComponent={({state}) => { console.log(state); return (<>{state.error}</>)}}
+        >
+          <CountAsync3 />
+        </DiffuseBoundary>
       </div>
     </>
   )

@@ -1,5 +1,4 @@
 import React, {  useLayoutEffect } from 'react'
-import { useActions, useFuse, useSelectors, useFuseSelection } from "react-diffuse";
 import { AsyncReducer } from "./StateManagement/States";
 
 function randomColor() {
@@ -10,11 +9,9 @@ function randomColor() {
 }
 
 const CountAsync = (props) => {
-  const actions = useActions(AsyncReducer)
-  
-  const fuse = useFuse(AsyncReducer)
-  const selectors = useSelectors(AsyncReducer)
-  const selection = useFuseSelection(AsyncReducer, selectors.MySelector)
+  const actions = AsyncReducer.actions
+  const fuse = AsyncReducer.useState()
+  const selection = AsyncReducer.selectors.MySelector()
   
   useLayoutEffect(() => {
     //actions.SUBSCRIBE()
@@ -22,7 +19,7 @@ const CountAsync = (props) => {
   
   return (
     <div disabled={fuse.diffuse?.loading === true} style={{ backgroundColor: `${randomColor()}` }} onClick={() => {
-      actions.GET_COUNT()
+      actions.GET_COUNT({})
       }
       }
     >
