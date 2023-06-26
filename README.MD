@@ -1,4 +1,4 @@
-# <b>Diffuse</b>
+# <b>Diffuse 3</b>
 A light-weight state management solution
 
 <p align="center">
