@@ -257,7 +257,7 @@ function Main(props) {
 In the example above, while waiting on the asynchronous action to finish, the `Text` component will fall back to `SuspenseFallback` and when an error occurs on the asynchronous action, the component will fallback to `ErrorFallbackComponent`.
 
 An fetch state being resolved or rejected is determined by "store.diffuse" in the default executor. The executor can be overwritten like so:
-```
+```javascript
     AFuseBox.useFetchState((state, resolve, reject) => {
         if (store?.diffuse?.loading === false && store?.diffuse?.completed === true) {
             resolve()
